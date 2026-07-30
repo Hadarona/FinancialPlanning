@@ -23,7 +23,7 @@
 }
 
 .summary-metric-label-income {
-  color: var(--color-blue-500);
+  color: var(--color-blue-700);
 }
 
 .summary-metric-label-planned {
@@ -49,7 +49,7 @@
 }
 
 .summary-metric-value-available {
-  color: var(--color-green-500);
+  color: var(--color-green-600);
 }
 
 .summary-metric-value-negative {
@@ -63,5 +63,13 @@
   gap: var(--space-2);
   margin: var(--space-3) 0 0;
   font-size: 14px;
-  color: var(--color-error);
+  color: var(--color-coral-700);
+}
+
+/* 320px-class viewports: three cells share ~280px; slightly smaller values
+ * keep "12,500" from clipping (D-RESP-F1). */
+@media (max-width: 359px) {
+  .summary-metric-value {
+    font-size: 20px;
+  }
 }

@@ -16,7 +16,7 @@
 }
 
 .expense-panel-error {
-  color: var(--color-error);
+  color: var(--color-coral-700);
 }
 
 .expense-panel-loading {

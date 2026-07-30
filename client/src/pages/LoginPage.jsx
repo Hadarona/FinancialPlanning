@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TextInput } from "../components/ui/TextInput.jsx";
 import { PasswordInput } from "../components/ui/PasswordInput.jsx";
 import { Button } from "../components/ui/Button.jsx";
@@ -28,6 +28,8 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get("reason") === "session-expired";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -65,6 +67,11 @@ export function LoginPage() {
       <div className="auth-card">
         <img src="/logo.svg" alt="" width={80} height={80} className="auth-logo" />
         <h1 className="auth-title">{copy.login.title}</h1>
+        {sessionExpired ? (
+          <p role="status" className="auth-session-expired">
+            {copy.session.expired}
+          </p>
+        ) : null}
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <TextInput
             label={copy.login.emailLabel}

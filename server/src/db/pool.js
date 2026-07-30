@@ -47,7 +47,10 @@ export function createPool(config) {
       throw new Error(`Invalid DB_SCHEMA: ${config.dbSchema}`);
     }
     // "BEGIN; SET LOCAL ..." goes out as one simple-protocol round trip.
-    const beginScoped = `BEGIN; SET LOCAL search_path TO "${config.dbSchema}", public`;
+    // Deliberately NO `public` fallback: if the isolated schema (or a table
+    // in it) is missing, the query must fail loudly instead of silently
+    // reading the real `public` data.
+    const beginScoped = `BEGIN; SET LOCAL search_path TO "${config.dbSchema}"`;
     pool.query = async function schemaScopedQuery(text, params) {
       const client = await pool.connect();
       try {

@@ -23,13 +23,14 @@
   background: var(--color-blue-600);
 }
 
+/* coral-700 keeps the white 16px label at >=4.5:1 (coral-600 is 4.28). */
 .btn-danger {
-  background: var(--color-coral-600);
+  background: var(--color-coral-700);
   color: var(--color-white);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: var(--color-coral-700);
+  filter: brightness(0.92);
 }
 
 .btn-secondary {

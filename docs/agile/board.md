@@ -85,14 +85,21 @@ accompanying narrative.
   `client/tests/InsightsPage.test.jsx`, `client/tests/chartMath.test.js`,
   `docs/agile/reviews/review-3-insights.md`.
 
-## Backlog (not yet started — later batches)
-
 ### Stage G — Responsive/accessibility/resilience (Sprint 6)
 
 - **Story:** As any user (including keyboard/zoom/reduced-motion users), the
   app works cleanly from 320px to 1440px and recovers from errors/session
   expiry without leaking stale data.
 - **Acceptance:** D-RESP-D1..D6, D-RESP-F1..F7, D-RESP-B1..B5, D-RESP-Q1..Q6.
+- **Evidence:** `client/src/app/{AuthProvider,ProtectedRoute}.jsx` (session
+  expiry), `client/src/app/router.jsx` (lazy Insights, styled 404),
+  `client/tests/SessionExpiry.test.jsx`,
+  `server/tests/integration/{errorContract,shutdown}.test.js`,
+  `server/src/db/pool.js` (no-fallback schema scoping),
+  `.workflow/sprints/delivery/iteration-01/developer/evidence/contrast.md`,
+  `.workflow/sprints/delivery/iteration-01/developer/evidence/a11y-keyboard-checklist.md`.
+
+## Backlog (not yet started — later batches)
 
 ### Stage H — Hardening (Sprint 7)
 

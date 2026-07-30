@@ -33,10 +33,21 @@
 
 .auth-form-error {
   margin: 0;
-  color: var(--color-error);
+  color: var(--color-coral-700);
   font-size: 14px;
 }
 
 .auth-submit {
   width: 100%;
+}
+
+.auth-session-expired {
+  margin: 0;
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-yellow-50);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  text-align: center;
 }

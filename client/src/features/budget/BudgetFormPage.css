@@ -54,7 +54,7 @@
 }
 
 .plan-totals-negative {
-  color: var(--color-error);
+  color: var(--color-coral-700);
 }
 
 .plan-warning {
@@ -65,7 +65,7 @@
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-coral-50);
-  color: var(--color-error);
+  color: var(--color-coral-700);
   font-size: 14px;
 }
 

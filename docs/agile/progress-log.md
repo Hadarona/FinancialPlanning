@@ -264,3 +264,49 @@ previous-month lookup with the current-month aggregation (perf guard
 soft budget logged as anticipated by plan risk #2). End-to-end demo check
 against a real server returned the exact kit numbers (842,000 / 918,000,
 shares 47/18/10/11/14).
+
+## Stage G — Responsive completion, accessibility, resilience (Sprint 6)
+
+**Frontend recovery.** Session expiry (D-RESP-F5): a 401 on any private
+call raises `session-expired`; AuthProvider drops the cached session and
+every cached private query (no stale private data can re-render),
+ProtectedRoute redirects to `/login?reason=session-expired`, and the login
+screen explains why (`role="status"`); a successful sign-in clears the
+flag. The Insights route is now code-split (`React.lazy` + a
+skeleton-matched Suspense fallback — no layout shift). The 404 page uses
+the shared state-panel styling with a link home. ErrorState adds an
+explicit offline hint when `navigator.onLine` is false. Viewport audit fix:
+summary metric values step down to 20px below 360px so "12,500" cannot
+clip at 320px.
+
+**Backend consistency.** New `errorContract.test.js` proves one error
+envelope (code/message/requestId + matching `X-Request-Id`, no stack
+traces, no driver text) across every failure class: unknown route 404,
+malformed path 400 + fieldErrors, missing session 401, duplicate month
+409, invalid body 400 with per-field messages, malformed transaction id
+404, forced internal 500. DB-failure path (D-RESP-B4): dropping the schema
+under a live server yields a safe 500 whose requestId appears in the
+external error log, while `/health` keeps answering — the process never
+crashes. New `shutdown.test.js` (D-RESP-B5, D-FND-B6): a real spawned
+`node src/index.js` receives SIGTERM, prints "Shutdown complete.", exits
+0, releases its port, and leaves flushed (not truncated) request logs.
+While building the DB-failure test, removed the `public` fallback from the
+schema-scoped pool's `SET LOCAL search_path`: with the fallback, a missing
+test schema silently read real `public` data instead of failing loudly —
+a test-isolation hazard.
+
+**Accessibility.** Full computed contrast audit recorded in
+`developer/evidence/contrast.md`. In-kit fixes applied: small error text
+coral-600→coral-700 (4.04→6.24), warning banners on coral-50 (3.88→5.99),
+danger buttons coral-700 (white label 4.28→6.62), Income metric label
+blue-500→blue-700 (3.60→6.94), Available value green-500→green-600
+(2.70→3.70 large), insights comparison amount sized 19px/700 so
+yellow-700's 4.17 clears the large-text bar. `tokens.css` untouched
+(byte-identical kit copy). Two kit-inherited deviations documented for
+design review instead of silently changed: white-on-blue-500 primary
+buttons/tab (3.60 vs 4.5; kit mandates the color and its checklist asks
+for exactly this check) and the 14px yellow-700 "Planned" label (4.17; no
+darker yellow exists in the palette). Keyboard/zoom/reduced-motion
+checklist recorded in `developer/evidence/a11y-keyboard-checklist.md`
+(automated coverage cited per row; real-browser walks deferred to the
+developer self-test phase, as in batch 2).
