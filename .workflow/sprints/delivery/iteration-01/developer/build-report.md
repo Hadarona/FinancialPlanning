@@ -609,3 +609,218 @@ Stage G started).
 
 None. Neon and the npm registry were reachable throughout; no schema or
 migration changes were needed (the pool fix is connection-layer only).
+
+## Batch 4 (Stages H–I)
+
+Scope: Stage H (Security, observability, coverage — roadmap Sprint 7) and
+Stage I (Documentation and reproducibility — roadmap Sprint 8), per the
+approved `developer/plan.md`. Branch: `feature/budgeting-app`. Commits:
+`19fb2b5` (Stage H, the release-candidate commit) and `d17ba8e` (Stage I).
+
+### What was built
+
+**Stage H — Security, observability, coverage (commit `19fb2b5`)**
+
+- `server/tests/integration/security.test.js` (9 tests, real HTTP against
+  isolated Neon schemas): helmet headers + hidden `x-powered-by`; CORS
+  allowlist (allowed origin gets ACAO + credentials; a foreign origin gets
+  no CORS headers on simple requests and failed preflights); oversized body
+  → documented 413 envelope; unparseable JSON → 400; five-string injection
+  corpus rejected as validation errors (email/month/category) or stored
+  verbatim as inert text and round-tripped (note) with the table intact;
+  a 7-endpoint ownership matrix (anonymous → 401 `UNAUTHENTICATED`;
+  foreign authenticated user → 404 `NOT_FOUND` with zero mutation, owner
+  data re-verified); `Secure` cookie flag proven on a real
+  `NODE_ENV=production` server instance.
+- Hardening fixes that fell out of writing those tests (product code):
+  `errorHandler.js` now maps body-parser failures onto the documented
+  envelope (`entity.too.large` → 413 `PAYLOAD_TOO_LARGE`,
+  `entity.parse.failed` → 400 `VALIDATION_ERROR` — both were opaque 500s);
+  `requestId` middleware moved before `express.json` so parse-stage
+  failures carry an id; CORS foreign origins get `callback(null, false)`
+  (headers withheld) instead of an error that surfaced as a 500.
+- `server/tests/unit/logRotation.test.js` (D-SEC-B5): drives the real
+  pino/pino-roll path with tiny bounds (paced batches — pino-roll sizes
+  per flushed chunk) and proves rotation plus retention (family ≤ keep+1,
+  every file within one flush of the size bound). `createLoggers` gained
+  optional `logRotateSize`/`logRotateKeep` overrides used only by this
+  test; production bounds stay 5 MB × 5.
+- `server/scripts/smoke.mjs` (`npm run smoke`, D-SEC-F2): 15 checks
+  against a really-running server (`SMOKE_BASE_URL`, default
+  `http://localhost:4000`): health + request id → register throwaway user
+  → create budget (asserting planned/available math) → add expense →
+  budget aggregate delta → insights coherence (Σ categories = total =
+  last cumulative; donut shares exactly 100) → delete → rollback → logout
+  → me 401. Verified passing (exit 0) against a live server and failing
+  (exit 1) with the server down.
+- Coverage (D-SEC-F1/B7): thresholds 70/70/70 (branches 60) were already
+  enforced in both `vitest.config.js` files; added targeted tests for the
+  weakest critical modules — `client/tests/apiClient.test.js` (envelope
+  parsing, fallback errors, session-expired dispatch rules, 204 handling,
+  `describeAuthError`), `ExpensePanel.test.jsx` (list rendering, per-
+  transaction delete naming, empty, error), `TextButton.test.jsx`.
+  `vitest.config.js` excluded from server coverage; eslint node-globals
+  glob widened to `server/**/*.{js,mjs}` so the smoke script is linted.
+- Release review: production bundle marker-scan clean (no
+  `DATABASE_URL`/`JWT_SECRET`/connection-string/`console.log|debug`
+  matches); `npm audit --omit=dev` 0 critical/high with 2 moderate
+  react-router 6.x advisories accepted with rationale; dev-only
+  `brace-expansion` highs accepted (never shipped; fix is a breaking major
+  bump). Full checklist:
+  `developer/evidence/security-checklist.md`. README gained the completed
+  mandatory-vs-bonus traceability tables; `ALL_LICENSES.md` verified
+  programmatically against all three `package.json` dependency lists (no
+  drift). Dead-code sweep: remaining `console.*` uses are operator-facing
+  CLI output only (config fail-fast, index bootstrap/shutdown,
+  migrate/seed status, ErrorBoundary).
+
+**Stage I — Documentation and reproducibility (commit `d17ba8e`)**
+
+- `docs/api.md`: full REST reference — conventions (cookie auth, request
+  ids, strict validation, 32 kb limit, rate limits, calendar-date policy,
+  ownership-as-404), the single error envelope + code/status table, and
+  every endpoint with sanitized examples matching the integration suite,
+  including the budget read-model semantics (negative available, progress
+  rounding, `normal`/`overspent`/`unplanned`) and insights coherence
+  guarantees.
+- `README.md` finalized: clone-to-running steps (npm ci → migrate → dev),
+  production-style `SERVE_CLIENT` run, guarded demo seed + credentials,
+  backup/reset note, mermaid architecture diagram, data model, env table,
+  scripts, testing/coverage summary with final numbers, logging/security
+  summary, design-source and agile pointers, completed traceability
+  tables, honest known limitations (no expense edit, savings semantics,
+  fixed categories, illustrative kit percentages, stateless logout,
+  accepted advisories, local-only hosting).
+- `docs/demo-script.md` (D-DOC-D*/F*): rehearsed Register → Budget → Add
+  Expense → Insights → Comparison (seeded `demo@example.com`) → Logout
+  walk, with fallback/recovery notes (server loss, session expiry, missing
+  seed, duplicate month, keyboard-only completion) and the pre-demo
+  `npm run smoke` health check.
+- `server/tests/integration/serveClient.test.js` (D-DOC-F2): with
+  `SERVE_CLIENT=true`, `/`, `/login`, `/budget`, `/budget/:month/edit`,
+  and `/insights` all serve `index.html` on refresh; real assets serve
+  directly; `/api` routes are never swallowed (JSON 404 envelope + live
+  health). Uses a stub `client/dist` under a temp `repoRoot`, so the suite
+  does not depend on a prior build; the real built app was verified in the
+  clean room.
+- Board: Stages H and I moved to Done with evidence (all A–I cards Done);
+  progress log records both stages and names `19fb2b5` as the release
+  candidate.
+
+### Commands run and results (final state, main repo)
+
+| Command | Result |
+|---|---|
+| `npm run lint` | exit 0, no errors/warnings |
+| `npm test -w server` | 5 files, 53 tests passed |
+| `npm run test:integration -w server` | 9 files, 55 tests passed (before Stage I; 10 files / 60 tests including `serveClient` verified in the clean room) |
+| `npm test -w client` | 15 files, 71 tests passed |
+| `npm run build` | exit 0 |
+| `npm run coverage -w server` | exit 0 — **96.75% stmts / 92.2% branches / 99.02% funcs** (thresholds 70/60/70 enforced) |
+| `npm run coverage -w client` | exit 0 — **84.71% stmts / 82.57% branches / 79.29% funcs** |
+| `npm run smoke` (server running on :4000) | 15/15 checks, exit 0; exit 1 verified with the server down |
+| Bundle scan / `npm audit` / license check | clean / accepted-with-rationale / no drift (see security-checklist.md) |
+
+### Clean-room validation (I2) — pristine `git clone` of `feature/budgeting-app` at `d17ba8e`
+
+Executed in a fresh clone (scratchpad `cleanroom/`), following only the
+README: `cp .env.example .env` + fill `DATABASE_URL`/`JWT_SECRET` (values
+supplied by copying the local `.env`; never printed).
+
+| Step | Exit | Notes |
+|---|---|---|
+| `npm ci` | 0 | single root lockfile |
+| `npm run lint` | 0 | |
+| `npm test -w server` / `-w client` | 0 / 0 | 53 / 71 tests |
+| `npm run test:integration` | 0 | 10 files, 60 tests vs. real Neon test schemas |
+| `npm run coverage` | 0 | server 97.11/92.28/99.02, client 84.71/82.57/79.29 (thresholds enforced) |
+| `npm run build` | 0 | |
+| `npm run migrate` (×2) | 0 / 0 | idempotent ("No pending migrations" on both — schema already live) |
+| `ALLOW_DEMO_SEED=true npm run seed:demo` | 0 | deterministic: months 2026-07/2026-06, totals 842000/918000 |
+| `PORT=4100 SERVE_CLIENT=true node src/index.js` + `curl /budget` | — | SPA fallback returns the real built `index.html`; `/api/v1/health` live |
+| `SMOKE_BASE_URL=http://localhost:4100 npm run smoke` | 0 | 15/15 checks against the production-style server |
+| `git status --short` after everything | empty | logs/dist/node_modules/.env all ignored (D-FND-Q2 re-proof) |
+
+### Deviations from the plan (with reasons)
+
+1. **CORS foreign-origin handling changed** (Stage H, product behavior):
+   the Stage A implementation surfaced disallowed origins as opaque 500s
+   (`callback(new Error(...))`). Now `callback(null, false)` withholds all
+   CORS headers — the standard `cors`-package pattern; browsers refuse the
+   response and credentialed JSON preflights fail, while SameSite=Lax
+   cookies remain the CSRF control. Asserted by two tests.
+2. **413/JSON-parse mapping added to `errorHandler.js` and `requestId`
+   moved before the body parser.** The plan's error contract documents
+   `PAYLOAD_TOO_LARGE` 413, but body-parser errors previously fell through
+   as 500s and parse-stage failures had no request id. In-plan-spirit fix
+   required by H1's "body limit 413 test".
+3. **Log-rotation proof is a committed unit test, not a throwaway script**
+   (plan says "in a script"): a permanent test is stronger, repeatable
+   evidence and counts toward coverage. It required optional
+   `logRotateSize`/`logRotateKeep` fields on `createLoggers`' config
+   (defaults unchanged) because pino-roll's 5 MB production bound cannot be
+   exercised quickly; the test paces writes because pino-roll evaluates
+   size per flushed chunk.
+4. **Bundle secret scan and `npm audit` recorded as evidence, not a
+   committed script**: one-off verifications with results captured in
+   `developer/evidence/security-checklist.md` (the plan's "in a script"
+   phrasing satisfied by the documented grep commands there).
+5. **Clean-room performed in a pristine temp `git clone`** rather than
+   `rm -rf node_modules` in place (plan I2): a clone is strictly more
+   pristine (also proves no untracked file is load-bearing) and safer for
+   the working tree. Same commands, all recorded above.
+6. **`developer/test-report.json` not produced in this batch.** The plan's
+   I2 text mentions producing it after the Stage I commit, but the
+   assignment scopes this batch to BUILD only and the skill assigns the
+   report template to the developer *self-test* phase, which starts next
+   and owns executing/recording the full acceptance-check matrix. Nothing
+   is lost: every automated proof it needs is committed and indexed here.
+7. **Real-browser verification remains deferred to the self-test phase**
+   (same recorded deferral as batches 2–3): demo-script browser walk at
+   390/1440, viewport screenshot matrix, keyboard/zoom/reduced-motion
+   walks, console-clean check (D-RESP-F7 browser half, D-DOC-F1's clean
+   browser session). The API-level equivalent of the demo journey is fully
+   proven by `npm run smoke` + the clean room.
+8. **`npm audit` items accepted, not fixed** (D-SEC-F4 allows accepted
+   items with rationale): react-router 6.x moderates are unreachable here
+   (no user-controlled navigation targets, no SSR) and fixable only via a
+   breaking v7 upgrade; `brace-expansion` highs are dev-tooling-only.
+   Full rationale in the security checklist.
+
+### Acceptance check status (developer-owned rows, this batch)
+
+- Stage H: D-SEC-F1..F5, D-SEC-B1..B7 — pass via the tests, scans, and
+  clean-install runs above (D-SEC-F5's "from clean install" proven in the
+  clean room). D-SEC-D1..D4 are design-review-owned (state inventory
+  supplied via README/api.md/demo-script); D-SEC-Q1..Q7 are QA-owned with
+  developer enablers in place (traceability matrix, three review records,
+  verified ALL_LICENSES, RC commit `19fb2b5` noted in the progress log).
+- Stage I: D-DOC-F1..F4 (F1's scripted browser walk deferred per deviation
+  #7; F2 proven by test + clean-room curl; F3/F4 by construction and
+  documented), D-DOC-B1..B5 — pass per the clean-room table (B3 = smoke,
+  B4 = external gitignored rotating logs re-proven, B5 = api.md examples
+  match the integration suite). D-DOC-D1..D4 SUB (kit) + demo script;
+  D-DOC-Q1..Q7 QA-owned with all developer-provided docs in place.
+- Release gates (roadmap §9): every R-* row's proving stage checks are now
+  implemented; the self-test phase's `test-report.json` lists them with
+  references, per the plan.
+
+### Delivery build complete — starting point for the self-test phase
+
+All nine stages (A–I) of the delivery plan are implemented and committed on
+`feature/budgeting-app` (latest: `d17ba8e`). Every automated gate is green
+end to end: lint, 53 server unit + 71 client component tests, 60
+real-HTTP integration tests (isolated Neon schemas), coverage far above the
+enforced ≥70% thresholds (server ~97%, client ~85%), production build,
+idempotent migrations, guarded deterministic seed, 15-check smoke against a
+production-style `SERVE_CLIENT` server, and a pristine-clone clean room
+reproducing all of it from the README alone. What remains for self-test:
+the real-browser evidence pass (screenshot matrix 320–1440, keyboard/zoom/
+reduced-motion walks, demo-script rehearsal, console-clean check), then
+compiling `developer/test-report.json` over the full D-*/R-* acceptance
+matrix with statuses and evidence paths.
+
+### Blockers
+
+None. Neon and the npm registry were reachable throughout; no schema or
+migration changes were needed in this batch.
