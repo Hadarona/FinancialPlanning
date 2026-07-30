@@ -51,18 +51,20 @@ export function createApp(config) {
     cors({
       origin(origin, callback) {
         // Same-origin / non-browser requests (no Origin header) are allowed.
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
-        callback(new Error("Not allowed by CORS"));
+        // A foreign Origin gets `false`: no Access-Control-Allow-* headers
+        // are emitted, so browsers refuse to share the response and every
+        // preflighted (credentialed JSON) request never leaves the browser.
+        // `callback(new Error(...))` would instead surface as an opaque 500.
+        callback(null, !origin || allowedOrigins.includes(origin));
       },
       credentials: true,
     }),
   );
+  // requestId comes before the body parser so even a request rejected while
+  // parsing (413 oversized / malformed JSON) is correlated by an id.
+  app.use(requestId);
   app.use(express.json({ limit: "32kb" }));
   app.use(cookieParser());
-  app.use(requestId);
   app.use(createHttpLogger(loggers.requestLogger));
   app.use(createGeneralRateLimit(config));
 

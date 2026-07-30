@@ -310,3 +310,45 @@ darker yellow exists in the palette). Keyboard/zoom/reduced-motion
 checklist recorded in `developer/evidence/a11y-keyboard-checklist.md`
 (automated coverage cited per row; real-browser walks deferred to the
 developer self-test phase, as in batch 2).
+
+## Stage H — Security, observability, coverage (Sprint 7)
+
+**Security tests.** New `security.test.js` proves the Stage H checklist over
+real HTTP: helmet headers (+ hidden `x-powered-by`), CORS allowlist (allowed
+origin gets credentials, a foreign origin gets no CORS headers on simple and
+preflight requests), oversized body → documented 413 envelope, unparseable
+JSON → 400 (both newly mapped in `errorHandler.js`; `requestId` middleware
+moved before the body parser so even parse failures carry an id), an
+injection corpus rejected as validation errors or stored verbatim as inert
+text (parameterized queries), a 7-endpoint ownership matrix (anonymous → 401,
+foreign authenticated user → 404 with zero mutation), and `Secure` on the
+session cookie under a real `NODE_ENV=production` server. CORS hardening:
+foreign origins now get `callback(null, false)` (headers withheld) instead of
+surfacing as an opaque 500.
+
+**Observability.** `logRotation.test.js` drives the production pino/pino-roll
+path with small bounds and proves rotation + retention bound file growth
+(`createLoggers` gained optional test-only bound overrides; production stays
+5 MB × 5). Log-content redaction proofs from stages A–G remain green.
+
+**Coverage and smoke.** Coverage thresholds (70/70/70 lines/statements/
+functions, 60 branches) have been enforced in both vitest configs since
+Stage A and now gate comfortably: server 96.8%/92.2%/99.0%, client
+84.7%/82.6%/79.3% (stmts/branch/funcs). Added focused tests for the
+previously weakest critical modules: `api/client.js` (envelope parsing,
+session-expired dispatch rules, fallback errors), `ExpensePanel` (list,
+delete naming, empty, error states), `TextButton`. New
+`server/scripts/smoke.mjs` (`npm run smoke`) runs register → create budget →
+add expense → aggregate delta → insights coherence (Σ categories = total =
+last cumulative; donut shares = 100) → delete → rollback → logout against a
+really-running server: 15/15 checks, exit 0 (exit 1 verified when the server
+is down).
+
+**Release review.** Production bundle scanned for secret markers and debug
+logging (clean). `npm audit --omit=dev`: 0 critical/high, 2 moderate
+react-router 6.x advisories accepted with rationale; dev-only
+`brace-expansion` highs accepted (never shipped) — full rationale in
+`developer/evidence/security-checklist.md`. README now carries the completed
+mandatory-vs-bonus traceability tables; `ALL_LICENSES.md` re-verified against
+all three `package.json` files (no drift). This commit is the release
+candidate for the delivery gate.

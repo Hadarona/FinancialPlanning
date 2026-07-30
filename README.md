@@ -131,18 +131,35 @@ server responses always carry integer `*Minor` fields.
   data is never touched.
 - Client component tests: `client/tests`, run with `npm test -w client`.
 
-## Mandatory vs. bonus requirements (traceability skeleton)
+## Mandatory vs. bonus requirements (traceability)
 
-Full traceability is completed at Stage H/I. Current slice:
+Course requirements from `docs/product/Project_requirements_English.md`.
+Every mandatory item was completed before bonus work, as the requirements
+recommend.
 
-| Requirement | Status | Evidence |
-|---|---|---|
-| Register/login/session/logout (mandatory per source-of-truth) | Done (Stage B) | `server/src/services/authService.js`, `server/tests/integration/auth.test.js`, `docs/agile/reviews/review-1-auth.md` |
-| Structured external logging, redaction (mandatory) | Implemented Stage A/B | `server/src/logging/*` |
-| Security headers, CORS allowlist, rate limiting, body limits (mandatory) | Implemented Stage A/B | `server/src/app.js`, `server/src/middleware/rateLimit.js` |
-| Design tokens consumed via CSS variables (mandatory) | Implemented Stage A | `client/src/styles/tokens.css` |
-| Budget/expenses/plans/insights (mandatory) | Not yet built (later stage batches) | — |
-| ≥70% coverage, lockfile, real-HTTP integration tests (bonus) | In progress; enforced via `vitest` coverage thresholds | `server/vitest.config.js`, `client/vitest.config.js` |
+### Mandatory
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| 1 | Developed on Linux/macOS, project directory, `README.md` with a description | Done | This repository (built on macOS); this README |
+| 2 | Git; `main` as main branch; feature branches; no system files uploaded | Done | Branch `feature/budgeting-app` → single PR to `main`; `.gitignore` excludes `.env`, `logs/`, `dist/`, `node_modules/`, OS files |
+| 3 | Unit tests | Done | `server/tests/unit/` (calc, schemas, auth service/middleware, log rotation), `client/tests/` — run `npm test` |
+| 4 | Third-party libraries to avoid reinventing the wheel; `ALL_LICENSES` file | Done | `package.json` ×3; `ALL_LICENSES.md` lists every direct dependency + license |
+| 5 | Package manager with dependency file; licenses in `ALL_LICENSES` | Done | npm workspaces; root/`server`/`client` `package.json`; `ALL_LICENSES.md` |
+| 6 | Agile: small tasks, user story per task, Kanban board, progress over time | Done | `docs/agile/board.md` (user stories + acceptance per card), `docs/agile/progress-log.md`, per-stage commits A–I |
+| 7 | ≥3 major changes code-reviewed; pull requests; comments addressed | Done (recorded substitution) | Three in-repo major review records `docs/agile/reviews/review-{1-auth,2-expenses,3-insights}.md` with findings and resolutions; one final PR per the repository's single-PR delivery rule |
+| 8 | Useful logs; errors logged; ≥1 log per server request; logs saved to external file | Done | `server/src/logging/` — rotating `logs/requests.log` + `logs/error.log` (pino/pino-roll), metadata-only with redaction; proven in `server/tests/integration/health.test.js`, `auth.test.js` |
+| 9 | Secure code, especially around user input | Done | zod validation on every input, parameterized queries only, helmet/CORS/rate limits/32 kb body limit, ownership filtering; `server/tests/integration/security.test.js` (injection corpus, ownership matrix, limits) |
+
+### Bonus
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| B1 | ≥70% code coverage, measured by a tool | Done | `npm run coverage` — vitest + V8 provider; thresholds (70% lines/statements/functions, 60% branches) enforced in `server/vitest.config.js` and `client/vitest.config.js`; final numbers in the build report |
+| B2 | API integration tests against a real server over HTTP | Done | `server/tests/integration/` — every suite boots a real listening server (`app.listen(0)`) and uses `fetch`; isolated per-run DB schemas |
+| B3 | `package-lock.json` committed | Done | Single root `package-lock.json` for both workspaces |
+| B4 | Basic authentication (username + password) | Done | Email + password register/login with bcrypt hashing and JWT-in-HTTP-only-cookie sessions (`server/src/services/authService.js`) |
+| B5 | Contribute to an open-source project | Not attempted | Explicit non-goal for this delivery (see developer plan §non-goals) |
 
 ## Known limitations (Stage A/B slice)
 

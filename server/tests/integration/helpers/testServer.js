@@ -25,7 +25,9 @@ export async function startTestServer(envOverrides = {}) {
   const { loadConfig } = await import("../../../src/config.js");
   const testEnv = {
     ...process.env,
-    NODE_ENV: "test",
+    // NODE_ENV is overridable so e.g. the production cookie-flag test can
+    // boot a production-mode app against an isolated test schema.
+    NODE_ENV: envOverrides.NODE_ENV ?? "test",
     DB_SCHEMA: schema,
     LOG_DIR: logDir,
   };

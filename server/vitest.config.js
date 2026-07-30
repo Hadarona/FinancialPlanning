@@ -13,6 +13,7 @@ export default defineConfig({
         "scripts/**",
         "tests/**",
         "src/index.js",
+        "vitest.config.js",
       ],
       thresholds: {
         lines: 70,

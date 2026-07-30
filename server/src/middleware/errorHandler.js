@@ -5,6 +5,16 @@ export function createErrorHandler(errorLogger) {
   return function errorHandler(err, req, res, next) {
     const requestId = req.id;
 
+    // Map body-parser failures onto the documented envelope instead of
+    // letting them fall through as opaque 500s: an oversized body is the
+    // documented 413 (32 kb limit), and unparseable JSON is a plain
+    // validation failure, not a server error.
+    if (err?.type === "entity.too.large") {
+      err = new AppError("PAYLOAD_TOO_LARGE", "Request body is too large.");
+    } else if (err?.type === "entity.parse.failed") {
+      err = new AppError("VALIDATION_ERROR", "Request body must be valid JSON.");
+    }
+
     if (err instanceof AppError) {
       if (err.status >= 500) {
         errorLogger.error(

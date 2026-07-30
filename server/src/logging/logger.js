@@ -18,14 +18,14 @@ function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-function createRollingLogger(logDir, fileName, level) {
+function createRollingLogger(logDir, fileName, level, { size = "5m", keep = 5 } = {}) {
   ensureDir(logDir);
   const transport = pino.transport({
     target: "pino-roll",
     options: {
       file: path.join(logDir, fileName),
-      size: "5m",
-      limit: { count: 5 },
+      size,
+      limit: { count: keep },
       mkdir: true,
       // pino-roll always appends a rotation number to `file`, producing
       // LOG_DIR/requests.log.1, LOG_DIR/requests.log.2, etc. (its `symlink`
@@ -64,8 +64,15 @@ function closeTransport(instance, timeoutMs = 5000) {
  * log directory, so test isolation cannot leak into the real `logs/` dir.
  */
 export function createLoggers(config) {
-  const requestLogger = createRollingLogger(config.logDir, "requests.log", "info");
-  const errorLogger = createRollingLogger(config.logDir, "error.log", "error");
+  // Rotation bounds are fixed in production (5 MB × 5 files); the optional
+  // config fields exist so the log-rotation proof test can exercise the same
+  // code path with tiny bounds instead of writing 25 MB per run.
+  const rotation = {
+    ...(config.logRotateSize ? { size: config.logRotateSize } : {}),
+    ...(config.logRotateKeep ? { keep: config.logRotateKeep } : {}),
+  };
+  const requestLogger = createRollingLogger(config.logDir, "requests.log", "info", rotation);
+  const errorLogger = createRollingLogger(config.logDir, "error.log", "error", rotation);
 
   async function close() {
     await Promise.allSettled([closeTransport(requestLogger), closeTransport(errorLogger)]);

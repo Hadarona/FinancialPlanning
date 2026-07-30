@@ -99,13 +99,20 @@ accompanying narrative.
   `.workflow/sprints/delivery/iteration-01/developer/evidence/contrast.md`,
   `.workflow/sprints/delivery/iteration-01/developer/evidence/a11y-keyboard-checklist.md`.
 
-## Backlog (not yet started — later batches)
-
 ### Stage H — Hardening (Sprint 7)
 
 - **Story:** As the team, we need ≥70% coverage, a clean security checklist,
   and observability guarantees before release.
 - **Acceptance:** D-SEC-F1..F5, D-SEC-B1..B7, D-SEC-Q1..Q7.
+- **Evidence:** `server/tests/integration/security.test.js` (headers, CORS,
+  413/JSON limits, injection corpus, ownership matrix, production cookie
+  flags), `server/tests/unit/logRotation.test.js`,
+  `server/scripts/smoke.mjs` (`npm run smoke`, 15 checks against a running
+  server), coverage thresholds in both `vitest.config.js` files,
+  README traceability tables,
+  `.workflow/sprints/delivery/iteration-01/developer/evidence/security-checklist.md`.
+
+## In progress
 
 ### Stage I — Docs/reproducibility (Sprint 8)
 
