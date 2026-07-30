@@ -352,3 +352,35 @@ react-router 6.x advisories accepted with rationale; dev-only
 mandatory-vs-bonus traceability tables; `ALL_LICENSES.md` re-verified against
 all three `package.json` files (no drift). This commit is the release
 candidate for the delivery gate.
+
+## Stage I — Documentation and reproducibility (Sprint 8)
+
+Release candidate from Stage H is commit `19fb2b5`.
+
+**Docs.** `docs/api.md` finalized: every endpoint with sanitized examples
+from the integration suite, the single error envelope, status-code table,
+money/date/ownership conventions, and the SERVE_CLIENT static-serving
+contract. `docs/demo-script.md`: the rehearsed Register → Budget → Add
+Expense → Insights → Comparison → Logout walk with fallback/recovery notes
+and the seeded `demo@example.com` comparison beat. README rewritten as the
+final delivery document: clone-to-running steps (verified by executing them
+in a pristine temp clone), production-style `SERVE_CLIENT` run, guarded demo
+seed, backup/reset note, mermaid architecture diagram, data model, env
+table, testing/coverage summary with final numbers, logging/security
+summary, design-source pointers, agile-process pointers, the completed
+mandatory-vs-bonus traceability tables, and honest known limitations.
+
+**Reproducibility proof.** New `serveClient.test.js` proves the SPA
+fallback: `/`, `/login`, `/budget`, `/budget/:month/edit`, `/insights` all
+serve index.html on refresh while `/api` routes keep their JSON contract
+and real assets serve directly. Clean-room validation executed in a fresh
+`git clone` of this branch with only the documented setup steps (see the
+batch-4 build report for the full command/exit-code log): npm ci, lint,
+unit + component tests, real-HTTP integration suite, coverage (thresholds
+enforced), production build, idempotent migrate, guarded deterministic
+seed, then a SERVE_CLIENT production-style server and `npm run smoke`
+(15/15 checks). Real-browser demo walks and screenshots remain with the
+developer self-test phase, as in every prior batch.
+
+Delivery build complete: stages A–I implemented, all automated checks
+green. Next: developer self-test phase, then QA and design review.

@@ -112,10 +112,17 @@ accompanying narrative.
   README traceability tables,
   `.workflow/sprints/delivery/iteration-01/developer/evidence/security-checklist.md`.
 
-## In progress
-
 ### Stage I — Docs/reproducibility (Sprint 8)
 
 - **Story:** As a new contributor/grader, I can clone, install, migrate,
   seed, run, and smoke-test the app from documented steps alone.
 - **Acceptance:** D-DOC-F1..F4, D-DOC-B1..B5, D-DOC-Q1..Q7.
+- **Evidence:** final `README.md` (clone-to-running steps verified in a
+  clean temp clone), `docs/api.md`, `docs/demo-script.md`,
+  `server/tests/integration/serveClient.test.js` (SPA refresh fallback),
+  clean-room command log in the batch-4 build report
+  (`.workflow/sprints/delivery/iteration-01/developer/build-report.md`).
+
+All stages A–I are Done. Remaining verification (real-browser walks,
+screenshots, QA/design review) belongs to the developer self-test, QA, and
+design-review phases — tracked in the workflow, not on this board.
