@@ -1,0 +1,23 @@
+{
+  "name": "Budgeting App Figma Source Kit",
+  "version": "1.0.0",
+  "approvedScreens": [
+    "Login",
+    "Budget",
+    "Insights"
+  ],
+  "viewports": {
+    "mobile": "390x844",
+    "desktop": "1440x900"
+  },
+  "fonts": [
+    "Inter",
+    "DM Serif Display"
+  ],
+  "sourceOfTruth": [
+    "data/content.json",
+    "tokens/",
+    "docs/",
+    "references/"
+  ]
+}

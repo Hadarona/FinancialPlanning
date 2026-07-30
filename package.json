@@ -1,0 +1,17 @@
+{
+  "name": "budgeting-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "workflow:init": "node tools/workflow.mjs init",
+    "workflow:status": "node tools/workflow.mjs status",
+    "workflow:start": "node tools/workflow.mjs start-iteration",
+    "workflow:evaluate": "node tools/workflow.mjs evaluate",
+    "workflow:validate": "node tools/workflow.mjs validate",
+    "test:workflow": "node --test tools/tests/*.test.mjs"
+  }
+}

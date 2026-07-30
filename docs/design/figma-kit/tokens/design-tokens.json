@@ -1,0 +1,121 @@
+{
+  "color": {
+    "blue": {
+      "50": "#EEF3FC",
+      "100": "#E7EEF9",
+      "500": "#5B86D6",
+      "600": "#476FB9",
+      "700": "#36558F"
+    },
+    "green": {
+      "50": "#EFF7F1",
+      "100": "#E6F1E9",
+      "500": "#5FA873",
+      "600": "#4C8E60",
+      "700": "#3B6F4A"
+    },
+    "yellow": {
+      "50": "#FCF7EA",
+      "100": "#F8EFD7",
+      "500": "#E2BE62",
+      "600": "#C29D40",
+      "700": "#927427"
+    },
+    "coral": {
+      "50": "#FDF1EF",
+      "100": "#F8E6E3",
+      "500": "#D97972",
+      "600": "#BD5E57",
+      "700": "#924640"
+    },
+    "neutral": {
+      "0": "#FFFFFF",
+      "50": "#FAF8F4",
+      "100": "#F3F1ED",
+      "200": "#E5E5E2",
+      "400": "#9CA3AF",
+      "600": "#4B5563",
+      "900": "#111827"
+    },
+    "semantic": {
+      "background": "#FAF8F4",
+      "surface": "#FFFDF9",
+      "textPrimary": "#111827",
+      "textSecondary": "#4B5563",
+      "border": "#E5E5E2",
+      "actionPrimary": "#5B86D6",
+      "positive": "#5FA873",
+      "comparison": "#E2BE62",
+      "fun": "#D97972",
+      "focus": "#36558F",
+      "error": "#BD5E57"
+    }
+  },
+  "font": {
+    "family": {
+      "sans": "Inter",
+      "display": "DM Serif Display"
+    },
+    "weight": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "size": {
+      "12": 12,
+      "14": 14,
+      "16": 16,
+      "20": 20,
+      "28": 28,
+      "32": 32,
+      "40": 40
+    },
+    "lineHeight": {
+      "16": 16,
+      "20": 20,
+      "24": 24,
+      "28": 28,
+      "36": 36,
+      "40": 40,
+      "48": 48
+    }
+  },
+  "space": {
+    "0": 0,
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32,
+    "10": 40,
+    "12": 48,
+    "16": 64
+  },
+  "radius": {
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "full": 999
+  },
+  "border": {
+    "default": 1,
+    "strong": 2
+  },
+  "shadow": {
+    "card": "0 4px 16px rgba(17, 24, 39, 0.08)"
+  },
+  "layout": {
+    "mobileFrameWidth": 390,
+    "mobileFrameHeight": 844,
+    "desktopFrameWidth": 1440,
+    "desktopFrameHeight": 900,
+    "mobilePagePadding": 20,
+    "desktopPagePadding": 64,
+    "desktopMaxContent": 1200
+  }
+}
+

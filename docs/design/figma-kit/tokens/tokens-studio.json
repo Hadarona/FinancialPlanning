@@ -1,0 +1,204 @@
+{
+  "core": {
+    "color": {
+      "blue": {
+        "100": {
+          "$type": "color",
+          "$value": "#E7EEF9"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "#5B86D6"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "#36558F"
+        }
+      },
+      "green": {
+        "100": {
+          "$type": "color",
+          "$value": "#E6F1E9"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "#5FA873"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "#3B6F4A"
+        }
+      },
+      "yellow": {
+        "100": {
+          "$type": "color",
+          "$value": "#F8EFD7"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "#E2BE62"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "#927427"
+        }
+      },
+      "coral": {
+        "100": {
+          "$type": "color",
+          "$value": "#F8E6E3"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "#D97972"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "#924640"
+        }
+      },
+      "neutral": {
+        "0": {
+          "$type": "color",
+          "$value": "#FFFFFF"
+        },
+        "50": {
+          "$type": "color",
+          "$value": "#FAF8F4"
+        },
+        "200": {
+          "$type": "color",
+          "$value": "#E5E5E2"
+        },
+        "600": {
+          "$type": "color",
+          "$value": "#4B5563"
+        },
+        "900": {
+          "$type": "color",
+          "$value": "#111827"
+        }
+      }
+    },
+    "space": {
+      "1": {
+        "$type": "dimension",
+        "$value": "4px"
+      },
+      "2": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "3": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "4": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "5": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "6": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "8": {
+        "$type": "dimension",
+        "$value": "32px"
+      },
+      "10": {
+        "$type": "dimension",
+        "$value": "40px"
+      },
+      "12": {
+        "$type": "dimension",
+        "$value": "48px"
+      },
+      "16": {
+        "$type": "dimension",
+        "$value": "64px"
+      }
+    },
+    "radius": {
+      "sm": {
+        "$type": "dimension",
+        "$value": "8px"
+      },
+      "md": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "full": {
+        "$type": "dimension",
+        "$value": "999px"
+      }
+    }
+  },
+  "semantic": {
+    "background": {
+      "$type": "color",
+      "$value": "{core.color.neutral.50}"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#FFFDF9"
+    },
+    "text": {
+      "primary": {
+        "$type": "color",
+        "$value": "{core.color.neutral.900}"
+      },
+      "secondary": {
+        "$type": "color",
+        "$value": "{core.color.neutral.600}"
+      }
+    },
+    "border": {
+      "$type": "color",
+      "$value": "{core.color.neutral.200}"
+    },
+    "action": {
+      "primary": {
+        "$type": "color",
+        "$value": "{core.color.blue.500}"
+      },
+      "focus": {
+        "$type": "color",
+        "$value": "{core.color.blue.700}"
+      }
+    },
+    "status": {
+      "positive": {
+        "$type": "color",
+        "$value": "{core.color.green.500}"
+      },
+      "comparison": {
+        "$type": "color",
+        "$value": "{core.color.yellow.500}"
+      },
+      "fun": {
+        "$type": "color",
+        "$value": "{core.color.coral.500}"
+      }
+    }
+  },
+  "$themes": [],
+  "$metadata": {
+    "tokenSetOrder": [
+      "core",
+      "semantic"
+    ]
+  }
+}
+

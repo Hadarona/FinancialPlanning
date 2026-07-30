@@ -1,0 +1,141 @@
+{
+  "locale": "en",
+  "currency": {
+    "code": "USD",
+    "symbol": "",
+    "format": "1,234"
+  },
+  "login": {
+    "title": "Welcome back",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitLabel": "Sign in",
+    "createAccountLabel": "Create account"
+  },
+  "budget": {
+    "title": "Budget",
+    "summary": {
+      "income": 12500,
+      "planned": 10200,
+      "available": 2300
+    },
+    "categories": [
+      {
+        "id": "housing",
+        "label": "Housing",
+        "amount": 4000,
+        "progressPercent": 63,
+        "color": "blue",
+        "icon": "House"
+      },
+      {
+        "id": "groceries",
+        "label": "Groceries",
+        "amount": 1500,
+        "progressPercent": 34,
+        "color": "green",
+        "icon": "ShoppingCart"
+      },
+      {
+        "id": "transport",
+        "label": "Transport",
+        "amount": 800,
+        "progressPercent": 26,
+        "color": "yellow",
+        "icon": "CarFront"
+      },
+      {
+        "id": "fun",
+        "label": "Fun",
+        "amount": 900,
+        "progressPercent": 28,
+        "color": "coral",
+        "icon": "PartyPopper"
+      },
+      {
+        "id": "savings",
+        "label": "Savings",
+        "amount": 3000,
+        "progressPercent": 56,
+        "color": "blue",
+        "icon": "PiggyBank"
+      }
+    ],
+    "addExpenseLabel": "Add expense"
+  },
+  "insights": {
+    "title": "Spending insights",
+    "currentMonth": "July",
+    "previousMonth": "June",
+    "currentTotal": 8420,
+    "previousTotal": 9180,
+    "comparisonLabel": "vs 9,180 last month",
+    "categoryChart": [
+      {
+        "id": "housing",
+        "label": "Housing",
+        "july": 3957,
+        "june": 4300,
+        "julyPercent": 47
+      },
+      {
+        "id": "groceries",
+        "label": "Groceries",
+        "july": 1516,
+        "june": 1700,
+        "julyPercent": 18
+      },
+      {
+        "id": "transport",
+        "label": "Transport",
+        "july": 842,
+        "june": 900,
+        "julyPercent": 10
+      },
+      {
+        "id": "fun",
+        "label": "Fun",
+        "july": 926,
+        "june": 1000,
+        "julyPercent": 11
+      },
+      {
+        "id": "savings",
+        "label": "Savings",
+        "july": 1179,
+        "june": 1280,
+        "julyPercent": 14
+      }
+    ],
+    "cashFlow": {
+      "labels": [
+        "Jul 1",
+        "Jul 6",
+        "Jul 11",
+        "Jul 16",
+        "Jul 21",
+        "Jul 26",
+        "Jul 31"
+      ],
+      "july": [
+        600,
+        1800,
+        3100,
+        4600,
+        5900,
+        7300,
+        8420
+      ],
+      "june": [
+        800,
+        2100,
+        3500,
+        5000,
+        6500,
+        7900,
+        9180
+      ]
+    }
+  }
+}
+
