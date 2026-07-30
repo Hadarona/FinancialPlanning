@@ -32,6 +32,15 @@ export function useLoginMutation() {
   });
 }
 
+export function useBudgetQuery(month) {
+  return useQuery({
+    queryKey: ["budget", month],
+    queryFn: () => apiClient.get(`/budgets/${month}`),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({

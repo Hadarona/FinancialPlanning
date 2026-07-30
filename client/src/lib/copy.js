@@ -21,6 +21,20 @@ export const copy = {
   budget: {
     title: "Budget",
     addExpenseLabel: "Add expense",
+    // Labels below mirror the approved Budget compositions
+    // (docs/design/approved/*-budget.jpg); state/action strings are
+    // voice-consistent extensions like the register section above.
+    incomeLabel: "Income",
+    plannedLabel: "Planned",
+    availableLabel: "Available",
+    createBudgetLabel: "Create budget",
+    emptyDescription: "Set your income and plan your categories to get started.",
+    loadErrorTitle: "Couldn't load your budget",
+    loadErrorDescription: "Check your connection and try again.",
+    retryLabel: "Try again",
+    overPlanLabel: "over plan",
+    unplannedLabel: "unplanned spending",
+    overAllocatedWarning: "You've planned more than your income.",
   },
   insights: {
     title: "Spending insights",

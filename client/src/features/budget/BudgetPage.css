@@ -1,0 +1,47 @@
+.budget-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-2) var(--page-padding-mobile) var(--space-8);
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .budget-main {
+    padding-left: var(--page-padding-desktop);
+    padding-right: var(--page-padding-desktop);
+    gap: var(--space-8);
+  }
+}
+
+.budget-month-label {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.budget-category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.budget-add-expense {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .budget-add-expense {
+    align-self: stretch;
+  }
+}
+
+.budget-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

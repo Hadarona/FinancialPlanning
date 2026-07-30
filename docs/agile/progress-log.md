@@ -104,3 +104,37 @@ only as a positive signal).
 
 - This commit (`Stage B: Auth — …`) — see build-report.md for the full
   verification log and its hash once recorded.
+
+## Stage C — Budget read model
+
+**Read model.** `GET /api/v1/budgets/:month` (strict `YYYY-MM` validation)
+returns a fully server-computed read model: `plannedMinor` = Σ category
+plans, `availableMinor` = income − planned (may go negative — over-allocation
+is allowed per decision #2), per-category `actualMinor` from a
+`SUM(amount_minor) GROUP BY category_id` over the authenticated user's
+transactions only. Progress rule (decision #10): `Math.round(actual/planned
+× 100)`; a zero-plan category never divides by zero — `progressPercent` is
+`null` and the state is `unplanned` when money was spent. States: `normal` |
+`overspent` (>100 preserved) | `unplanned`. Ownership: every repo query
+filters `user_id`; a month owned by another user is indistinguishable from a
+missing one (404).
+
+**Demo seed (guarded, deterministic).** `npm run seed:demo` refuses unless
+`ALLOW_DEMO_SEED=true` and `NODE_ENV !== 'production'` (verified both
+refusals). Creates/refreshes only `demo@example.com` (cascade delete + fresh
+insert, idempotent — verified two consecutive runs) with budgets for the
+current and previous calendar months; fixed expense lists reproduce the
+authoritative kit totals: current 842,000 minor units, previous 918,000.
+Recorded decision (plan risk #1): with one coherent dataset the Budget
+progress bars show ~99/101/105/103/39%, not the illustrative kit percentages
+— content.json §2.2 totals win.
+
+**Budget screen.** `features/budget/BudgetPage.jsx` with four states
+(skeleton / empty "No budget for <Month> yet" + Create action / error +
+retry that keeps the authenticated shell / data), `SummaryMetrics` (Income /
+Planned / Available with the kit's semantic colors, over-allocation warning
+with icon + text), `CategoryRow` (tinted icon circle, planned amount, 8px
+progress track, screen-reader sentence "Housing: 2,520 spent of 4,000
+planned, 63%", overspent/unplanned flagged by icon + text — never color
+alone). Add-expense button rendered disabled until Stage D wires the dialog.
+

@@ -11,7 +11,10 @@ import { createErrorHandler } from "./middleware/errorHandler.js";
 import { createApiRouter } from "./routes/index.js";
 import { createPool } from "./db/pool.js";
 import { createUserRepo } from "./repositories/userRepo.js";
+import { createBudgetRepo } from "./repositories/budgetRepo.js";
+import { createTransactionRepo } from "./repositories/transactionRepo.js";
 import { createAuthService } from "./services/authService.js";
+import { createBudgetService } from "./services/budgetService.js";
 import { createRequireAuth } from "./middleware/auth.js";
 import { createGeneralRateLimit, createAuthRateLimit } from "./middleware/rateLimit.js";
 
@@ -29,7 +32,10 @@ export function createApp(config) {
   const pool = createPool(config);
   const loggers = createLoggers(config);
   const userRepo = createUserRepo(pool);
+  const budgetRepo = createBudgetRepo(pool);
+  const transactionRepo = createTransactionRepo(pool);
   const authService = createAuthService({ userRepo, config });
+  const budgetService = createBudgetService({ budgetRepo, transactionRepo });
   const requireAuth = createRequireAuth({ authService, userRepo });
 
   app.locals.config = config;
@@ -67,6 +73,7 @@ export function createApp(config) {
     createApiRouter({
       config,
       authService,
+      budgetService,
       requireAuth,
       authRateLimit: createAuthRateLimit(config),
     }),

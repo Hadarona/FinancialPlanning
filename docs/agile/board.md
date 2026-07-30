@@ -31,13 +31,19 @@ accompanying narrative.
   `client/src/pages/LoginPage.jsx`, `client/src/pages/RegisterPage.jsx`,
   `server/tests/integration/auth.test.js`, `docs/agile/reviews/review-1-auth.md`.
 
-## Backlog (not yet started — later batches)
-
 ### Stage C — Budget read model (Sprint 2)
 
 - **Story:** As a user, I see my monthly budget summary (income, planned,
   available, per-category actual/progress) computed entirely server-side.
 - **Acceptance:** D-BUD-D1..D5, D-BUD-F1..F6, D-BUD-B1..B7, D-BUD-Q1..Q6.
+- **Evidence:** `server/src/services/{calc,budgetService}.js`,
+  `server/src/repositories/{budgetRepo,transactionRepo}.js`,
+  `server/src/seed/demoSeed.js`, `server/tests/unit/calc.test.js`,
+  `server/tests/integration/budget.test.js`,
+  `client/src/features/budget/{BudgetPage,SummaryMetrics,CategoryRow}.jsx`,
+  `client/tests/BudgetPage.test.jsx`.
+
+## Backlog (not yet started — later batches)
 
 ### Stage D — Expenses (Sprint 3)
 
