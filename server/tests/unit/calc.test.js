@@ -7,7 +7,7 @@ describe("previousMonth", () => {
   });
 
   it("rolls back across a year boundary (January -> previous December)", () => {
-    expect(previousMonth("2026-01")).toBe("2025-11");
+    expect(previousMonth("2026-01")).toBe("2025-12");
   });
 
   it("rejects a malformed month", () => {

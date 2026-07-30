@@ -1,0 +1,39 @@
+// Copy strings mirrored verbatim from docs/design/figma-kit/data/content.json.
+// The kit does not define a dedicated "register" section; those strings are a
+// minimal, voice-consistent extension (noted as a deviation in the build
+// report) and should be reconciled with design review if the kit is updated.
+
+export const copy = {
+  login: {
+    title: "Welcome back",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    submitLabel: "Sign in",
+    createAccountLabel: "Create account",
+  },
+  register: {
+    title: "Create account",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    submitLabel: "Create account",
+    haveAccountLabel: "Already have an account? Sign in",
+  },
+  budget: {
+    title: "Budget",
+    addExpenseLabel: "Add expense",
+  },
+  insights: {
+    title: "Spending insights",
+  },
+  password: {
+    show: "Show password",
+    hide: "Hide password",
+  },
+  session: {
+    expired: "Your session expired — please sign in again.",
+  },
+  errors: {
+    generic: "Something went wrong. Please try again.",
+    network: "You appear to be offline. Check your connection and try again.",
+  },
+};
