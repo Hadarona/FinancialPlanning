@@ -8,21 +8,32 @@ import { createHttpLogger } from "./logging/httpLogger.js";
 import { createLoggers } from "./logging/logger.js";
 import { notFound } from "./middleware/notFound.js";
 import { createErrorHandler } from "./middleware/errorHandler.js";
-import apiRouter from "./routes/index.js";
+import { createApiRouter } from "./routes/index.js";
+import { createPool } from "./db/pool.js";
+import { createUserRepo } from "./repositories/userRepo.js";
+import { createAuthService } from "./services/authService.js";
+import { createRequireAuth } from "./middleware/auth.js";
+import { createGeneralRateLimit, createAuthRateLimit } from "./middleware/rateLimit.js";
 
 /**
- * Builds one fully-wired Express app instance. Loggers are created here,
- * scoped to the given `config`, and exposed via `app.locals.cleanup()` —
- * there is no shared module-level singleton, so a real process and any
- * number of isolated test servers can coexist safely in the same Node
- * process.
+ * Builds one fully-wired Express app instance. Every stateful resource
+ * (DB pool, loggers) is created here, scoped to the given `config`, and
+ * exposed via `app.locals.cleanup()` — there are no shared module-level
+ * singletons, so a real process and any number of isolated test servers can
+ * coexist safely in the same Node process.
  */
 export function createApp(config) {
   const app = express();
   const allowedOrigins = config.corsOrigin.split(",").map((origin) => origin.trim());
 
+  const pool = createPool(config);
   const loggers = createLoggers(config);
+  const userRepo = createUserRepo(pool);
+  const authService = createAuthService({ userRepo, config });
+  const requireAuth = createRequireAuth({ authService, userRepo });
+
   app.locals.config = config;
+  app.locals.pool = pool;
 
   app.disable("x-powered-by");
   app.use(helmet());
@@ -43,6 +54,7 @@ export function createApp(config) {
   app.use(cookieParser());
   app.use(requestId);
   app.use(createHttpLogger(loggers.requestLogger));
+  app.use(createGeneralRateLimit(config));
 
   if (config.nodeEnv === "test") {
     app.get("/api/v1/__test/error", () => {
@@ -50,7 +62,15 @@ export function createApp(config) {
     });
   }
 
-  app.use("/api/v1", apiRouter);
+  app.use(
+    "/api/v1",
+    createApiRouter({
+      config,
+      authService,
+      requireAuth,
+      authRateLimit: createAuthRateLimit(config),
+    }),
+  );
 
   if (config.serveClient) {
     const clientDist = path.join(config.repoRoot ?? process.cwd(), "client", "dist");
@@ -64,6 +84,7 @@ export function createApp(config) {
   app.use(createErrorHandler(loggers.errorLogger));
 
   app.locals.cleanup = async () => {
+    await pool.end();
     await loggers.close();
   };
 

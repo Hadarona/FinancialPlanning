@@ -137,7 +137,7 @@ Full traceability is completed at Stage H/I. Current slice:
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Register/login/session/logout (mandatory per source-of-truth) | Auth API + unit/integration tests built (Stage B) | `server/src/services/authService.js`, `server/tests/**` |
+| Register/login/session/logout (mandatory per source-of-truth) | Done (Stage B) | `server/src/services/authService.js`, `server/tests/integration/auth.test.js`, `docs/agile/reviews/review-1-auth.md` |
 | Structured external logging, redaction (mandatory) | Implemented Stage A/B | `server/src/logging/*` |
 | Security headers, CORS allowlist, rate limiting, body limits (mandatory) | Implemented Stage A/B | `server/src/app.js`, `server/src/middleware/rateLimit.js` |
 | Design tokens consumed via CSS variables (mandatory) | Implemented Stage A | `client/src/styles/tokens.css` |
@@ -147,5 +147,10 @@ Full traceability is completed at Stage H/I. Current slice:
 ## Known limitations (Stage A/B slice)
 
 - Budget, expenses, plan editing, and insights are not implemented yet in
-  this batch; `/budget` and `/insights` routes render placeholders.
-- Demo seed script and clean-room smoke test are introduced in later stages.
+  this batch; `/budget` and `/insights` routes render an authenticated
+  placeholder shell (header + working Logout only).
+- Demo seed script, demo credentials, and the clean-room smoke test are
+  introduced in later stages.
+- `npm run coverage` (unscoped) runs unit and integration tests without
+  `--no-file-parallelism`; `npm run test:integration` is the command used to
+  validate this batch and always runs serially, as the plan specifies.

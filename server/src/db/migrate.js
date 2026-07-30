@@ -26,40 +26,48 @@ export async function migrate({ databaseUrl, schema = "public" } = {}) {
   });
   await client.connect();
   try {
-    if (schema !== "public") {
-      await client.query(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
-    }
-    await client.query(`SET search_path TO "${schema}", public`);
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
-        name text PRIMARY KEY,
-        applied_at timestamptz NOT NULL DEFAULT now()
-      )
-    `);
-
     const entries = await fs.readdir(migrationsDir);
     const files = entries.filter((name) => name.endsWith(".sql")).sort();
-
     const applied = [];
-    for (const file of files) {
-      const existing = await client.query(
-        "SELECT 1 FROM schema_migrations WHERE name = $1",
-        [file],
-      );
-      if (existing.rowCount > 0) {
-        continue;
+
+    // The whole run (schema creation, search_path, and every migration
+    // file) executes inside ONE transaction. This is required, not just
+    // tidy: Neon's pooled connection endpoint can silently fail to keep a
+    // bare `SET search_path` in effect for later statements on the same
+    // client when connections are established concurrently (observed as
+    // migrations landing in `public` instead of the target schema under
+    // concurrent test runs). `SET LOCAL` inside a single transaction is
+    // scoped to — and guaranteed for — that one transaction/connection.
+    await client.query("BEGIN");
+    try {
+      if (schema !== "public") {
+        await client.query(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
       }
-      const sql = await fs.readFile(path.join(migrationsDir, file), "utf8");
-      await client.query("BEGIN");
-      try {
+      await client.query(`SET LOCAL search_path TO "${schema}", public`);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+          name text PRIMARY KEY,
+          applied_at timestamptz NOT NULL DEFAULT now()
+        )
+      `);
+
+      for (const file of files) {
+        const existing = await client.query(
+          "SELECT 1 FROM schema_migrations WHERE name = $1",
+          [file],
+        );
+        if (existing.rowCount > 0) {
+          continue;
+        }
+        const sql = await fs.readFile(path.join(migrationsDir, file), "utf8");
         await client.query(sql);
         await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [file]);
-        await client.query("COMMIT");
         applied.push(file);
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
       }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
     }
     return { schema, applied };
   } finally {

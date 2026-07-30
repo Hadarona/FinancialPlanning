@@ -7,13 +7,14 @@ export function Button({
   disabled = false,
   loading = false,
   onClick,
+  className = "",
   ...rest
 }) {
   const isDisabled = disabled || loading;
   return (
     <button
       type={type}
-      className={`btn btn-${variant}`}
+      className={`btn btn-${variant}${className ? ` ${className}` : ""}`}
       disabled={isDisabled}
       aria-busy={loading || undefined}
       onClick={onClick}

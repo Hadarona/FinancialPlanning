@@ -8,26 +8,34 @@ import { generateSchemaName } from "./testDb.js";
 /**
  * Boots a real listening HTTP server against an isolated DB schema and a
  * temporary log directory. Every product module (config/app/pool/loggers) is
- * imported dynamically *after* the test-specific environment variables are
- * set, and `createApp(config)` builds its own pool/loggers scoped to that
- * config (no shared singletons), so each test server is fully isolated.
+ * built from a *local* env object, never by mutating the shared global
+ * `process.env` — mutating it would race with any other test file whose
+ * `beforeAll` happens to interleave (e.g. `npm run coverage` runs unit and
+ * integration files without `--no-file-parallelism`), since two files could
+ * end up reading each other's DB_SCHEMA/LOG_DIR overrides.
  */
 export async function startTestServer(envOverrides = {}) {
   const schema = envOverrides.schema ?? generateSchemaName();
   const logDir = path.join(os.tmpdir(), `budgeting-app-test-logs-${randomUUID()}`);
 
-  process.env.NODE_ENV = "test";
-  process.env.DB_SCHEMA = schema;
-  process.env.LOG_DIR = logDir;
+  // Importing config.js runs its one-time dotenv.config() side effect
+  // (populating process.env.DATABASE_URL etc. the first time only), which
+  // this local testEnv object then reads — without ever writing back to
+  // the shared process.env.
+  const { loadConfig } = await import("../../../src/config.js");
+  const testEnv = {
+    ...process.env,
+    NODE_ENV: "test",
+    DB_SCHEMA: schema,
+    LOG_DIR: logDir,
+  };
   if (envOverrides.RATE_LIMIT_AUTH_MAX) {
-    process.env.RATE_LIMIT_AUTH_MAX = String(envOverrides.RATE_LIMIT_AUTH_MAX);
+    testEnv.RATE_LIMIT_AUTH_MAX = String(envOverrides.RATE_LIMIT_AUTH_MAX);
   }
   if (envOverrides.RATE_LIMIT_MAX) {
-    process.env.RATE_LIMIT_MAX = String(envOverrides.RATE_LIMIT_MAX);
+    testEnv.RATE_LIMIT_MAX = String(envOverrides.RATE_LIMIT_MAX);
   }
-
-  const { loadConfig } = await import("../../../src/config.js");
-  const config = loadConfig(process.env);
+  const config = loadConfig(testEnv);
 
   const { migrate } = await import("../../../src/db/migrate.js");
   await migrate({ databaseUrl: config.databaseUrl, schema: config.dbSchema });

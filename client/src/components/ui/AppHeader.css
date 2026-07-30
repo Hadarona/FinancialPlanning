@@ -1,0 +1,21 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--page-padding-mobile);
+}
+
+@media (min-width: 768px) {
+  .app-header {
+    padding: var(--space-4) var(--page-padding-desktop);
+  }
+}
+
+.app-header-logo {
+  border-radius: var(--radius-sm);
+}
+
+.app-header-title {
+  flex: 1;
+  font-size: 20px;
+}

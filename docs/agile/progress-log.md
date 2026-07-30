@@ -43,11 +43,64 @@ lines/statements/functions, ≥60% branches) are enforced via
 actually catches regressions (not just passes trivially), `server/src/services/calc.js`
 was introduced with its first pure function, `previousMonth`, together with
 a unit test that initially asserted a deliberately wrong expectation. That
-commit was run and observed failing, then the expectation was corrected in
-the following commit. Commit references are recorded below once made.
+commit was run and observed failing (`npm test -w server` — 1 failed, 21
+passed), then the expectation was corrected in the following commit.
 
-<!-- Commit references appended after the corresponding git commits: -->
+- Commit `5736938` — `test(server): add calc.previousMonth with an
+  intentionally wrong expectation` — red (`npm test -w server` failed: 1
+  test).
+- Commit `d99bf9d` — `Stage A: Foundation — …` — includes the fix (green:
+  `npm test -w server` passed, 22 tests) plus the rest of Stage A.
+
+**Stage A commit scoping (recorded deviation).** `server/src/app.js` and
+`server/src/routes/index.js` are committed in Stage B, not Stage A, even
+though they are Stage A files per the plan's file layout. Reason: wiring
+Stage B's DB-backed auth surfaced two pre-existing infrastructure bugs
+(below) that required changing these two files' dependency-wiring pattern;
+splitting the change across two commits would have meant committing a
+known-broken intermediate version. Stage A's own acceptance checks (health
+endpoint, structured logging, forced-error handling, env fail-fast) were
+independently verified against a temporarily-reverted, Stage-A-only version
+of both files before Stage B implementation began (see build-report.md).
 
 ## Stage B — Auth
 
-<!-- Appended when Stage B is committed. -->
+**Auth implementation.** `bcryptjs` password hashing, `jsonwebtoken` HS256
+sessions (24h) in an HTTP-only `SameSite=Lax` cookie (`bb_session`, `Secure`
+in production), generic `UNAUTHENTICATED` error for both unknown-email and
+wrong-password login attempts (one bcrypt compare always runs, against a
+precomputed dummy hash when no user exists, to equalize timing), and a
+strict `express-rate-limit` limiter on `/auth/*` separate from the general
+limiter.
+
+**Infrastructure bugs found and fixed while wiring Stage B (see
+`docs/agile/reviews/review-1-auth.md` for full detail):**
+
+1. An eagerly-created module-level `config` singleton locked in
+   `process.env` at first import, before test-specific `DB_SCHEMA`/`LOG_DIR`
+   overrides were set, silently defeating test isolation. Fixed by removing
+   the singleton (`config.js` now only exports `loadConfig()`) and turning
+   `db/pool.js` and `logging/logger.js` into per-call factories.
+2. Neon's pooled connection endpoint rejects the `options=-c search_path=…`
+   startup parameter. Fixed by setting `search_path` via a `SET` query on
+   the pool's `connect` event instead.
+3. A bare (non-transactional) `SET search_path` on a plain `pg.Client` can
+   silently fail to apply under concurrent connection establishment against
+   Neon's pooled endpoint, observed as `server/src/db/migrate.js` migrating
+   the wrong (`public`) schema under concurrent test runs (`npm run
+   coverage`, which does not pass `--no-file-parallelism`). Fixed by
+   wrapping the whole migration run in one transaction with `SET LOCAL`.
+4. The test harness itself mutated the shared `process.env` to pass
+   per-test overrides to the next dynamic import, which raced when two test
+   files' `beforeAll` hooks interleaved. Fixed by building a local env
+   object instead of writing to `process.env`.
+
+All four are infrastructure/test-harness fixes, not product-behavior
+changes; auth business logic was unaffected. Verified via a direct
+concurrent-`migrate()` repro (3/3 runs succeeded after the fix) and a full
+`npm run coverage -w server` run (32/32 tests passed, 83.5% line coverage on
+the Stage A/B code so far — coverage itself is a Stage H gate, recorded here
+only as a positive signal).
+
+- This commit (`Stage B: Auth — …`) — see build-report.md for the full
+  verification log and its hash once recorded.
