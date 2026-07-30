@@ -19,7 +19,7 @@ performs well-specified execution.
 
 Use fresh phase agents when the model changes. Pass:
 
-- current sprint and iteration;
+- current delivery iteration;
 - exact phase;
 - source and report paths;
 - issue IDs;

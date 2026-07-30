@@ -3,76 +3,10 @@
   "roadmap": "docs/product/Budgeting_App_Development_Roadmap.md",
   "sprints": [
     {
-      "id": "sprint-0",
+      "id": "delivery",
       "order": 0,
-      "title": "Product contract, foundation, and delivery evidence",
-      "roadmapHeading": "Sprint 0 — Product contract, foundation, and delivery evidence",
-      "duration": "3 working days",
-      "majorReview": false
-    },
-    {
-      "id": "sprint-1",
-      "order": 1,
-      "title": "Account creation, login, session restoration, and logout",
-      "roadmapHeading": "Sprint 1 — Account creation, login, session restoration, and logout",
-      "duration": "1 week",
-      "majorReview": true
-    },
-    {
-      "id": "sprint-2",
-      "order": 2,
-      "title": "Monthly budget read model and Budget screen",
-      "roadmapHeading": "Sprint 2 — Monthly budget read model and Budget screen",
-      "duration": "1 week",
-      "majorReview": false
-    },
-    {
-      "id": "sprint-3",
-      "order": 3,
-      "title": "Add and delete expenses end to end",
-      "roadmapHeading": "Sprint 3 — Add and delete expenses end to end",
-      "duration": "1 week",
-      "majorReview": true
-    },
-    {
-      "id": "sprint-4",
-      "order": 4,
-      "title": "Create and edit monthly plans",
-      "roadmapHeading": "Sprint 4 — Create and edit monthly plans",
-      "duration": "1 week",
-      "majorReview": false
-    },
-    {
-      "id": "sprint-5",
-      "order": 5,
-      "title": "Spending Insights and month comparison",
-      "roadmapHeading": "Sprint 5 — Spending Insights and month comparison",
-      "duration": "1 week",
-      "majorReview": true
-    },
-    {
-      "id": "sprint-6",
-      "order": 6,
-      "title": "Responsive completion, accessibility, and resilient experience",
-      "roadmapHeading": "Sprint 6 — Responsive completion, accessibility, and resilient experience",
-      "duration": "1 week",
-      "majorReview": false
-    },
-    {
-      "id": "sprint-7",
-      "order": 7,
-      "title": "Security, observability, coverage, and release hardening",
-      "roadmapHeading": "Sprint 7 — Security, observability, coverage, and release hardening",
-      "duration": "1 week",
-      "majorReview": false
-    },
-    {
-      "id": "sprint-8",
-      "order": 8,
-      "title": "Documentation, deployment/reproducibility, and final presentation",
-      "roadmapHeading": "Sprint 8 — Documentation, deployment/reproducibility, and final presentation",
-      "duration": "1 week",
-      "majorReview": false
+      "title": "Budgeting app — full delivery",
+      "roadmapHeading": "# Budgeting App — Product and Development Roadmap"
     }
   ]
 }

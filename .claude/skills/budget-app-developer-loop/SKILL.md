@@ -1,11 +1,11 @@
 ---
 name: budget-app-developer-loop
-description: Execute the developer phase of the budgeting-app sprint workflow, including implementation planning, planned code changes, developer testing, and fix cycles driven by developer, QA, or design findings. Use for any sprint feature, bug fix, or design correction in the React, Node.js/Express, and Neon-hosted PostgreSQL budgeting-app repository governed by its workflow files.
+description: Execute the developer phase of the budgeting-app delivery workflow, including implementation planning, planned code changes, developer testing, and fix cycles driven by developer, QA, or design findings. Use for any feature, bug fix, or design correction in the React, Node.js/Express, and Neon-hosted PostgreSQL budgeting-app repository governed by its workflow files.
 ---
 
 # Budget App Developer Loop
 
-Operate only inside the current sprint and assigned phase. Let the parent
+Operate only inside the current delivery iteration and assigned phase. Let the parent
 orchestrator choose the model and reasoning effort for each phase.
 
 ## Establish context
@@ -13,12 +13,12 @@ orchestrator choose the model and reasoning effort for each phase.
 1. Read the repository `CLAUDE.md`.
 2. Read `docs/workflow/source-of-truth.md`,
    `docs/workflow/artifact-contract.md`, and `.workflow/state.json`.
-3. Read only the current sprint section in
-   `docs/product/Budgeting_App_Development_Roadmap.md`, plus any linked product
+3. Read the entire `docs/product/Budgeting_App_Development_Roadmap.md` — it is
+   the full scope contract for the single delivery — plus any linked product
    or design source needed for the assigned work.
 4. Read the latest developer self-test findings, final QA product-issue report,
    final design report, and feedback addressed to `developer`.
-5. Stop and report a blocker if the sprint, iteration, sources, or required
+5. Stop and report a blocker if the delivery iteration, sources, or required
    handoff is missing or contradictory. Do not guess product behavior.
 
 Preserve unrelated changes. Never weaken tests, acceptance criteria, security,
@@ -30,7 +30,8 @@ Create the iteration's `developer/plan.md` before editing product code. Make it
 detailed enough for a smaller implementation model to follow mechanically.
 Include:
 
-- sprint goal, in-scope acceptance criteria, and explicit non-goals;
+- delivery goal, in-scope acceptance criteria (every mandatory roadmap
+  requirement), and explicit non-goals;
 - current behavior and evidence;
 - every QA, design, and developer issue being handled;
 - ordered tasks with exact files/symbols, data flow, API/schema impact, and
@@ -78,7 +79,7 @@ check passes and `openIssues` is empty.
 When self-testing finds an issue, repeat Plan → Build → Test inside the same
 developer phase using a numbered `cycle-NN` subdirectory. Continue until the
 developer report passes or a real blocker requires user input. On the next
-sprint iteration, treat QA product issues and design issues as mandatory plan
+delivery iteration, treat QA product issues and design issues as mandatory plan
 inputs and repeat the same loop.
 
 ## Handoff
@@ -91,5 +92,5 @@ Return a concise summary containing:
 - exact report paths;
 - remaining risk.
 
-Do not claim sprint acceptance. QA, design review, and the orchestrator own the
-final gate.
+Do not claim delivery acceptance. QA, design review, and the orchestrator own
+the final gate.

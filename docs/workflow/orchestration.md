@@ -1,15 +1,15 @@
-# Sprint Orchestration
+# Delivery Orchestration
 
 ## Lifecycle
 
 ```mermaid
 flowchart TD
-    A["Start roadmap sprint"] --> B["Developer: plan → build → test"]
+    A["Start delivery"] --> B["Developer: plan → build → test"]
     B --> C{"Developer pass?"}
     C -- No --> B
     C -- Yes --> D["QA + design review"]
     D --> E{"QA tests clean and design clean?"}
-    E -- Yes --> F["Accept sprint and advance"]
+    E -- Yes --> F["Accept delivery and open the single PR"]
     E -- No --> G{"Iteration budget left?"}
     G -- Yes --> B
     G -- No --> H["User checkpoint"]
@@ -41,9 +41,9 @@ orchestrator.
 
 QA's own work is valid when all test issues are repaired and every planned test
 either passed or exposed a documented product bug. A documented product bug
-still fails the sprint gate and returns to the developer.
+still fails the delivery gate and returns to the developer.
 
-The sprint closes naturally only when:
+The delivery closes naturally only when:
 
 - developer status is `pass` and `openIssues` is empty;
 - QA `testIssues` and `productIssues` are empty;
@@ -53,13 +53,13 @@ The sprint closes naturally only when:
 
 ## Five-iteration checkpoint
 
-Each sprint begins with an iteration limit of five. If it cannot close after
+The delivery begins with an iteration limit of five. If it cannot close after
 iteration 5, the controller changes state to `awaiting_user_feedback` and all
 agents stop.
 
-`continue` adds five to the same sprint's limit; it does not reset evidence or
+`continue` adds five to the delivery's limit; it does not reset evidence or
 erase earlier reports. `good enough` snapshots open issues as accepted
-deviations, closes the current sprint with exceptions, and advances.
+deviations and closes the delivery with exceptions.
 
 ## Commands
 

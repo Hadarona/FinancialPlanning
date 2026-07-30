@@ -1,6 +1,6 @@
 ---
 name: budget-app-qa-loop
-description: Execute the functional QA phase of the budgeting-app sprint workflow by planning coverage, building independent tests, running and verifying them, classifying failures as test or product issues, repairing broken tests, and producing final evidence. Use after the developer phase of any budgeting-app sprint or rerun.
+description: Execute the functional QA phase of the budgeting-app delivery workflow by planning coverage, building independent tests, running and verifying them, classifying failures as test or product issues, repairing broken tests, and producing final evidence. Use after the developer phase of the delivery or any rerun.
 ---
 
 # Budget App QA Loop
@@ -13,15 +13,15 @@ effort for each phase.
 
 1. Read the repository `CLAUDE.md`.
 2. Read `docs/workflow/source-of-truth.md`,
-   `docs/workflow/artifact-contract.md`, `.workflow/state.json`, and the current
-   sprint section of the roadmap.
+   `docs/workflow/artifact-contract.md`, `.workflow/state.json`, and the entire
+   roadmap (the full scope contract for the single delivery).
 3. Read the developer plan, build report, and final developer test report.
 4. Read feedback addressed to `qa`.
 5. Inspect the real implementation and existing tests. Do not trust a developer
    summary without evidence.
 
 Stop if the developer report is not passing, the app cannot be started from
-documented commands, or the current sprint contract is missing.
+documented commands, or the delivery contract is missing.
 
 ## Plan coverage
 
@@ -93,6 +93,6 @@ The QA phase is internally accepted only when:
 - all failures are classified with evidence;
 - coverage and required commands are recorded.
 
-Product bugs may remain in the QA report, but they fail the sprint gate and
-must return to the developer on the next sprint iteration. QA never marks the
-sprint complete.
+Product bugs may remain in the QA report, but they fail the delivery gate and
+must return to the developer on the next delivery iteration. QA never marks
+the delivery complete.

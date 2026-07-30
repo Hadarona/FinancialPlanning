@@ -4,7 +4,7 @@ Use all sources, but resolve conflicts in this order.
 
 ## 1. Explicit user decisions
 
-The user's newest sprint feedback is authoritative for the scope it addresses.
+The user's newest delivery feedback is authoritative for the scope it addresses.
 Feedback must be stored verbatim and routed only to the named roles.
 
 An explicit `good enough` decision creates an accepted baseline. Its recorded
@@ -24,11 +24,12 @@ the course labels authentication as a bonus.
 
 `docs/product/Budgeting_App_Development_Roadmap.md` defines:
 
-- Sprint 0 and Sprints 1–8, in order;
+- the full product scope; its sprint sections are the scope checklist and a
+  recommended build order inside the single delivery, not separate cycles;
 - product scope and explicit non-goals;
 - data model and REST direction;
 - calculation, ownership, money, date, security, logging, and test rules;
-- per-sprint design, frontend, backend, and QA acceptance criteria;
+- per-section design, frontend, backend, and QA acceptance criteria;
 - release and evidence gates.
 
 Use the roadmap—not visual approximations—to resolve functional meaning. In
@@ -82,6 +83,6 @@ When two same-priority sources still conflict:
 1. record the exact conflict and affected acceptance criterion;
 2. avoid irreversible or broad implementation;
 3. ask the user for the smallest decision needed;
-4. store the answer as sprint feedback.
+4. store the answer as delivery feedback.
 
 Never silently choose a convenient interpretation.

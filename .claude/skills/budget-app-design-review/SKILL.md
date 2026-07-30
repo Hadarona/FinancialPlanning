@@ -1,6 +1,6 @@
 ---
 name: budget-app-design-review
-description: Review the budgeting-app frontend for visual and responsive fidelity against the approved mobile/desktop screenshots, Figma-like source kit, roadmap, and accepted user baselines. Use after a developer sprint phase to capture implemented UI, identify every actionable UI mismatch, and produce an evidence-backed design report without editing product code.
+description: Review the budgeting-app frontend for visual and responsive fidelity against the approved mobile/desktop screenshots, Figma-like source kit, roadmap, and accepted user baselines. Use after the developer phase of the delivery to capture implemented UI, identify every actionable UI mismatch, and produce an evidence-backed design report without editing product code.
 ---
 
 # Budget App Design Review
@@ -13,9 +13,9 @@ sources. Let the parent orchestrator choose the model and reasoning effort.
 1. Read the repository `CLAUDE.md`.
 2. Read `docs/workflow/source-of-truth.md`,
    `docs/design/approved-screens.md`, `docs/workflow/artifact-contract.md`,
-   `.workflow/state.json`, and the current sprint section of the roadmap.
-3. Read feedback addressed to `design` and any accepted baseline for this
-   sprint.
+   `.workflow/state.json`, and the roadmap (all screens are in scope: Login,
+   Budget, and Insights at mobile and desktop).
+3. Read feedback addressed to `design` and any accepted baseline.
 4. Read the developer handoff, then inspect the running UI independently.
 
 Use explicit user feedback and accepted baselines first. Within the design kit,
@@ -47,7 +47,7 @@ Check every affected view for:
   and visual hierarchy;
 - responsive reflow, clipping, overflow, target sizes, and zoom behavior;
 - loading, empty, validation, error, disabled, focus, overspending, and
-  session-expired states required by the current sprint;
+  session-expired states required by the roadmap;
 - consistency with reusable tokens and components rather than one-off visual
   approximations;
 - regressions on previously accepted screens touched by the change.
@@ -75,5 +75,5 @@ Do not collapse several independently fixable mismatches into a vague
 accepted baseline as defects.
 
 Set the report to `pass` only when `issues` is empty. Use `not_applicable` only
-when the sprint has no implemented or affected UI and state why. The
-orchestrator—not the reviewer—marks a sprint complete.
+when the delivery has no implemented or affected UI and state why. The
+orchestrator—not the reviewer—marks the delivery complete.

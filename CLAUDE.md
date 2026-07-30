@@ -2,11 +2,14 @@
 
 ## Mission
 
-Build the budgeting app through Sprint 0, then Sprints 1–8 in the exact order
-defined by `docs/product/Budgeting_App_Development_Roadmap.md`.
+Build the complete budgeting app in a single delivery cycle. The full scope is
+defined by `docs/product/Budgeting_App_Development_Roadmap.md`; its sprint
+sections are the scope checklist and recommended build order, not separate
+delivery cycles. Every mandatory roadmap requirement must be satisfied before
+the delivery closes, and the result ships as one pull request.
 
-The product stack is React, Node.js/Express, and PostgreSQL (hosted on Neon). Every sprint must
-produce integrated, testable behavior and auditable evidence.
+The product stack is React, Node.js/Express, and PostgreSQL (hosted on Neon).
+The delivery must produce integrated, testable behavior and auditable evidence.
 
 ## Required sources
 
@@ -64,15 +67,16 @@ Escalate a `sonnet` phase to `fable` only after recording concrete evidence
 that the assigned model cannot resolve an ambiguity. Never escalate merely
 because a test failed.
 
-## Sprint state machine
+## Delivery state machine
 
 Use `node tools/workflow.mjs` for state changes. Do not hand-edit
-`.workflow/state.json`.
+`.workflow/state.json`. The manifest contains a single `delivery` entry
+covering the entire roadmap scope.
 
-For each sprint:
+For the delivery:
 
 1. Run `start-iteration`.
-2. Run the developer Plan → Build → Test loop.
+2. Run the developer Plan → Build → Test loop over the full roadmap scope.
 3. If developer self-testing finds issues, repeat its loop inside the same
    outer iteration until it passes or is blocked.
 4. After the developer report passes, run QA and design review. They may run in
@@ -82,26 +86,27 @@ For each sprint:
 6. Run `evaluate`.
 7. If QA reports product bugs or design reports issues, begin the next outer
    iteration with a developer fix plan that addresses every issue ID.
-8. End the sprint automatically only when developer checks pass, QA has no test
-   or product issues and every planned test passed, and design has no issues.
+8. The delivery closes automatically only when developer checks pass, QA has no
+   test or product issues and every planned test passed, and design has no
+   issues.
 
-The initial outer-iteration limit is five. At the limit, stop all sprint work
-and wait for the user.
+The initial outer-iteration limit is five. At the limit, stop all work and wait
+for the user.
 
 ## User checkpoint
 
 At an `awaiting_user_feedback` state:
 
-- `good enough` accepts the current behavior and UI as the new baseline for
-  this sprint, stores every open deviation, ends this sprint loop, and advances
-  to the next roadmap sprint unless the user explicitly stops the project.
+- `good enough` accepts the current behavior and UI as the delivered baseline,
+  stores every open deviation as an accepted exception, and closes the
+  delivery.
 - `continue` adds exactly five outer iterations. Preserve the user's wording
   verbatim and route it only to the roles they addressed.
 - If the user does not identify a role and the feedback cannot be routed
   safely, ask one concise clarification before continuing.
 
-Previously accepted deviations are not defects in later sprints unless the user
-reopens them or a later change regresses beyond the accepted baseline.
+Previously accepted deviations are not defects in later iterations unless the
+user reopens them or a later change regresses beyond the accepted baseline.
 
 ## File ownership
 
@@ -120,18 +125,22 @@ Only the orchestrator changes workflow state through the controller.
 ## Delivery rules
 
 - Preserve unrelated user changes and avoid concurrent product-code writers.
-- Use a focused feature or bug-fix branch; never develop directly on `main`.
+- All work happens on the single branch `feature/budgeting-app`; never develop
+  directly on `main`.
+- When the delivery gate closes, the orchestrator pushes the branch and opens
+  exactly one pull request to `main` on `origin`
+  (github.com/Hadarona/FinancialPlanning).
 - Keep plans detailed enough for the conserving build model to execute without
   rediscovering architecture.
 - Use real HTTP tests for API integration, not direct controller-only calls.
 - Run relevant unit tests, integration tests, lint, coverage, and production
-  build as the sprint requires.
+  build as the roadmap requires.
 - Treat skipped, flaky, false-positive, or unexecuted tests as broken.
 - Never alter a correct test expectation to hide a product bug.
 - Log every server request externally without passwords, tokens, cookies,
   notes, or full financial bodies.
 - Update dependency licenses in the same change as any dependency addition.
-- Record evidence under `.workflow/sprints/<sprint>/iteration-NN/`.
+- Record evidence under `.workflow/sprints/delivery/iteration-NN/`.
 - Summaries must cite report and evidence paths instead of pasting raw logs into
   the primary thread.
 
