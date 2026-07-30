@@ -1,6 +1,6 @@
 # Developer Plan
 
-## Sprint goal and scope
+## Delivery goal and scope
 
 ## Acceptance criteria
 

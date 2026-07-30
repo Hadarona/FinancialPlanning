@@ -103,4 +103,4 @@ and whether it is new or regressed.
 ## Completion
 
 The controller validates report structure and state transitions. A syntactically
-valid report can still fail the sprint if its content does not meet the gate.
+valid report can still fail the delivery if its content does not meet the gate.
