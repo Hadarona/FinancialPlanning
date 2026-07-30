@@ -43,6 +43,24 @@ export function createTransactionRepo(pool) {
       return totals;
     },
 
+    /** Per-day actual spending for one user-owned budget period:
+     * `{ "YYYY-MM-DD": integer minor units }`. `occurred_on::text` keeps the
+     * key a plain calendar string (decision #6 — pg date parsing bypassed). */
+    async sumByDay(userId, budgetPeriodId) {
+      const result = await pool.query(
+        `SELECT occurred_on::text AS occurred_on, SUM(amount_minor) AS total_minor
+         FROM transactions
+         WHERE user_id = $1 AND budget_period_id = $2
+         GROUP BY occurred_on`,
+        [userId, budgetPeriodId],
+      );
+      const totals = {};
+      for (const row of result.rows) {
+        totals[row.occurred_on] = Number(row.total_minor);
+      }
+      return totals;
+    },
+
     /**
      * Inserts one expense. When `clientRequestId` collides with an existing
      * row of the same budget period (the partial unique index), the existing

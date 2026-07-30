@@ -19,10 +19,21 @@ function isLocalHost(databaseUrl) {
  * `DB_SCHEMA` overrides in tests are honored instead of silently defaulting
  * to `public` on the real database.
  *
- * Schema selection is applied via a `SET search_path` query on every new
- * physical connection rather than the `options=-c search_path=...` startup
- * parameter: Neon's pooled connection endpoint rejects that startup
- * parameter outright ("unsupported startup parameter in options").
+ * Schema selection (non-`public` schemas, i.e. isolated test schemas) wraps
+ * every `pool.query` in its own transaction with `SET LOCAL search_path`:
+ *
+ * - Neon's pooled connection endpoint rejects the `options=-c
+ *   search_path=...` startup parameter outright ("unsupported startup
+ *   parameter in options").
+ * - A session-level `SET search_path` on the pool's `connect` event is
+ *   silently unreliable there too: the pooled endpoint is pgbouncer in
+ *   transaction-pooling mode, so consecutive autocommit queries from one
+ *   client can run on different server backends — a later query can land on
+ *   a backend that never saw the SET and read the wrong (default) schema.
+ *   Observed as intermittent empty aggregates during Stage F.
+ * - A transaction pins one backend from BEGIN to COMMIT, and `SET LOCAL`
+ *   scopes the search_path to exactly that transaction, so every query is
+ *   deterministically schema-scoped regardless of backend assignment.
  */
 export function createPool(config) {
   const pool = new Pool({
@@ -35,13 +46,26 @@ export function createPool(config) {
     if (!SAFE_SCHEMA_NAME.test(config.dbSchema)) {
       throw new Error(`Invalid DB_SCHEMA: ${config.dbSchema}`);
     }
-    pool.on("connect", (client) => {
-      client.query(`SET search_path TO "${config.dbSchema}", public`).catch((err) => {
-        // Surface connection-setup failures on the client itself so the
-        // caller's query rejects instead of silently using the wrong schema.
-        client.emit("error", err);
-      });
-    });
+    // "BEGIN; SET LOCAL ..." goes out as one simple-protocol round trip.
+    const beginScoped = `BEGIN; SET LOCAL search_path TO "${config.dbSchema}", public`;
+    pool.query = async function schemaScopedQuery(text, params) {
+      const client = await pool.connect();
+      try {
+        await client.query(beginScoped);
+        const result = await client.query(text, params);
+        await client.query("COMMIT");
+        return result;
+      } catch (err) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // The original error is the one worth surfacing.
+        }
+        throw err;
+      } finally {
+        client.release();
+      }
+    };
   }
 
   return pool;

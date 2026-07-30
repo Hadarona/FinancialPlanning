@@ -14,7 +14,7 @@ async function registerUser(baseUrl) {
   const res = await client.request("/auth/register", {
     method: "POST",
     body: JSON.stringify({ email: uniqueEmail("budget"), password: PASSWORD }),
-  });
+  }, 30000);
   expect(res.status).toBe(201);
   const body = await res.json();
   return { client, userId: body.user.id };
@@ -60,7 +60,7 @@ describe("GET /budgets/:month", () => {
   afterAll(async () => {
     await pool.end();
     await ctx.close();
-  });
+  }, 30000);
 
   it("returns the kit fixture read model: income 12,500 / planned 10,200 / available 2,300", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
@@ -110,7 +110,7 @@ describe("GET /budgets/:month", () => {
       progressPercent: 63,
       state: "normal",
     });
-  });
+  }, 30000);
 
   it("includes first/last-day-of-month transactions and excludes adjacent months", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
@@ -144,7 +144,7 @@ describe("GET /budgets/:month", () => {
     const groceries = budget.categories.find((category) => category.id === "groceries");
     expect(groceries.actualMinor).toBe(3000);
     expect(budget.actualMinor).toBe(3000);
-  });
+  }, 30000);
 
   it("handles a zero-plan category with spending: no NaN/Infinity/500, state 'unplanned'", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
@@ -168,7 +168,7 @@ describe("GET /budgets/:month", () => {
     expect(fun.state).toBe("unplanned");
     expect(fun.progressPercent).toBeNull();
     expect(JSON.stringify(budget)).not.toMatch(/NaN|Infinity/);
-  });
+  }, 30000);
 
   it("strictly validates the :month segment (D-BUD-B1)", async () => {
     const { client } = await registerUser(ctx.baseUrl);
@@ -178,7 +178,7 @@ describe("GET /budgets/:month", () => {
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
     }
-  });
+  }, 30000);
 
   it("rejects unauthenticated reads with 401", async () => {
     const anonymous = createCookieJarFetch(ctx.baseUrl);
@@ -186,7 +186,7 @@ describe("GET /budgets/:month", () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe("UNAUTHENTICATED");
-  });
+  }, 30000);
 
   it("returns 404 (not data) when another user owns a budget for that month (D-BUD-B4)", async () => {
     const userA = await registerUser(ctx.baseUrl);
@@ -198,7 +198,7 @@ describe("GET /budgets/:month", () => {
     const body = await res.json();
     expect(body.error.code).toBe("NOT_FOUND");
     expect(JSON.stringify(body)).not.toContain(userA.userId);
-  });
+  }, 30000);
 
   it("enforces the unique (user_id, month) index at the database level (D-BUD-B5)", async () => {
     const { userId } = await registerUser(ctx.baseUrl);
@@ -206,5 +206,5 @@ describe("GET /budgets/:month", () => {
     await expect(insertBudget({ userId, month: "2026-05" })).rejects.toMatchObject({
       code: "23505",
     });
-  });
+  }, 30000);
 });

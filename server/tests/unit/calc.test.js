@@ -5,6 +5,10 @@ import {
   monthRange,
   summarizeBudget,
   largestRemainderShares,
+  monthName,
+  shortDateLabel,
+  cashFlowSampleDates,
+  cumulativeAtDates,
 } from "../../src/services/calc.js";
 
 describe("previousMonth", () => {
@@ -156,5 +160,75 @@ describe("largestRemainderShares", () => {
 
   it("returns all zeros for an all-zero input", () => {
     expect(largestRemainderShares([0, 0, 0])).toEqual([0, 0, 0]);
+  });
+});
+
+describe("monthName / shortDateLabel", () => {
+  it("maps months to fixed English names", () => {
+    expect(monthName("2026-07")).toBe("July");
+    expect(monthName("2026-01")).toBe("January");
+    expect(monthName("2025-12")).toBe("December");
+  });
+
+  it("builds short chart labels by pure string arithmetic", () => {
+    expect(shortDateLabel("2026-07-01")).toBe("Jul 1");
+    expect(shortDateLabel("2026-07-16")).toBe("Jul 16");
+    expect(shortDateLabel("2025-12-31")).toBe("Dec 31");
+  });
+
+  it("rejects malformed input", () => {
+    expect(() => monthName("2026-7")).toThrow();
+    expect(() => shortDateLabel("2026-07")).toThrow();
+  });
+});
+
+describe("cashFlowSampleDates", () => {
+  it("samples days 1,6,11,16,21,26 and the clamped last day of a 31-day month", () => {
+    expect(cashFlowSampleDates("2026-07")).toEqual([
+      "2026-07-01",
+      "2026-07-06",
+      "2026-07-11",
+      "2026-07-16",
+      "2026-07-21",
+      "2026-07-26",
+      "2026-07-31",
+    ]);
+  });
+
+  it("clamps the last sample to 30, 28, and 29 (leap February)", () => {
+    expect(cashFlowSampleDates("2026-06").at(-1)).toBe("2026-06-30");
+    expect(cashFlowSampleDates("2026-02").at(-1)).toBe("2026-02-28");
+    expect(cashFlowSampleDates("2028-02").at(-1)).toBe("2028-02-29");
+  });
+});
+
+describe("cumulativeAtDates", () => {
+  const sampleDates = cashFlowSampleDates("2026-07");
+
+  it("accumulates per-day sums up to and including each sample date", () => {
+    const sums = {
+      "2026-07-01": 60000, // included in the Jul 1 point (boundary)
+      "2026-07-03": 50000,
+      "2026-07-06": 70000, // included in the Jul 6 point (boundary)
+      "2026-07-19": 10000,
+      "2026-07-31": 25000, // included in the final point (boundary)
+    };
+    expect(cumulativeAtDates(sampleDates, sums)).toEqual([
+      60000, 180000, 180000, 180000, 190000, 190000, 215000,
+    ]);
+  });
+
+  it("returns an all-zero series for a month with no spending", () => {
+    expect(cumulativeAtDates(sampleDates, {})).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("ends at the month's total spending (coherence with per-category sums)", () => {
+    const sums = { "2026-07-02": 111, "2026-07-15": 222, "2026-07-28": 333 };
+    const series = cumulativeAtDates(sampleDates, sums);
+    expect(series.at(-1)).toBe(666);
+    // Monotonically non-decreasing by construction.
+    for (let i = 1; i < series.length; i += 1) {
+      expect(series[i]).toBeGreaterThanOrEqual(series[i - 1]);
+    }
   });
 });

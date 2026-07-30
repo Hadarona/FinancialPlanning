@@ -63,6 +63,18 @@ export function useUpdateBudgetMutation(month) {
   });
 }
 
+/** One coherent insights payload per month (D-INS-F1). The ["insights"]
+ * key prefix is already invalidated by every expense/plan mutation. */
+export function useInsightsQuery(month) {
+  return useQuery({
+    queryKey: ["insights", month],
+    queryFn: () => apiClient.get(`/insights/${month}`),
+    enabled: Boolean(month),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useTransactionsQuery(month) {
   return useQuery({
     queryKey: ["transactions", month],

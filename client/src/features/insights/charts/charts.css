@@ -1,0 +1,149 @@
+.chart-figure {
+  position: relative;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.chart-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Accessible text summary — visible to everyone, not color-dependent. */
+.chart-caption {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  order: 1;
+}
+
+.chart-plot {
+  order: 0;
+}
+
+/* Axis + grid: recessive, never competing with the data marks. */
+.chart-gridline {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-axis-label,
+.chart-x-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  fill: var(--color-text-secondary);
+}
+
+.chart-mark {
+  cursor: default;
+}
+
+.chart-mark:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, calc(-100% - 8px));
+  background: var(--color-text-primary);
+  color: var(--color-white);
+  font-size: 12px;
+  line-height: 1.4;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.chart-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-5);
+  order: 2;
+}
+
+.chart-legend-vertical {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.chart-legend-marker {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.chart-legend-marker-square {
+  border-radius: 3px;
+}
+
+.chart-legend-marker-dot {
+  border-radius: var(--radius-full);
+}
+
+.chart-legend-label {
+  min-width: 0;
+}
+
+.chart-legend-detail {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend:not(.chart-legend-vertical) .chart-legend-detail {
+  margin-left: var(--space-1);
+}
+
+/* Donut layout: legend right >=768px, below otherwise (kit rule). */
+.donut-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .donut-layout {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .donut-layout .chart-legend {
+    min-width: 180px;
+  }
+}
+
+.donut-center-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  fill: var(--color-text-primary);
+}
+
+.donut-center-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  fill: var(--color-text-secondary);
+}

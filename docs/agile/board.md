@@ -70,14 +70,22 @@ accompanying narrative.
   `client/tests/BudgetFormPage.test.jsx`,
   `client/tests/BudgetPage.test.jsx` (month-navigation empty state).
 
-## Backlog (not yet started — later batches)
-
 ### Stage F — Insights (Sprint 5)
 
 - **Story:** As a user, I can compare this month's spending to last month
   via bar/donut/cash-flow charts with accessible text summaries.
 - **Acceptance:** D-INS-D1..D6, D-INS-F1..F6, D-INS-B1..B7, D-INS-Q1..Q6
   (+ `review-3-insights.md`).
+- **Evidence:** `server/src/services/{insightsService,calc}.js`,
+  `server/src/routes/insightsRoutes.js`,
+  `server/tests/integration/insights.test.js`,
+  `client/src/features/insights/InsightsPage.jsx`,
+  `client/src/features/insights/charts/`,
+  `client/src/components/ui/MonthTabs.jsx`,
+  `client/tests/InsightsPage.test.jsx`, `client/tests/chartMath.test.js`,
+  `docs/agile/reviews/review-3-insights.md`.
+
+## Backlog (not yet started — later batches)
 
 ### Stage G — Responsive/accessibility/resilience (Sprint 6)
 

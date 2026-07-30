@@ -5,6 +5,25 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** Fixed sample days for the cumulative cash-flow series (REST contract):
+ * 1, 6, 11, 16, 21, 26, and the month's last day (clamped by month length). */
+const CASH_FLOW_BASE_DAYS = [1, 6, 11, 16, 21, 26];
+
 function assertMonth(month) {
   if (!MONTH_PATTERN.test(month)) {
     throw new Error(`Invalid month: ${month}`);
@@ -56,6 +75,54 @@ export function monthRange(month) {
     firstDay: `${month}-01`,
     lastDay: `${month}-${String(daysInMonth(month)).padStart(2, "0")}`,
   };
+}
+
+/** English month name for a "YYYY-MM" month (fixed table, no locale/Date
+ * dependency), e.g. "2026-07" -> "July". */
+export function monthName(month) {
+  assertMonth(month);
+  return MONTH_NAMES[Number(month.split("-")[1]) - 1];
+}
+
+/** Short chart label for a calendar date string, e.g. "2026-07-16" -> "Jul 16".
+ * Pure string arithmetic — no Date parsing, no timezone math (decision #6). */
+export function shortDateLabel(isoDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+    throw new Error(`Invalid date: ${isoDate}`);
+  }
+  const monthNum = Number(isoDate.slice(5, 7));
+  const day = Number(isoDate.slice(8, 10));
+  return `${MONTH_NAMES[monthNum - 1].slice(0, 3)} ${day}`;
+}
+
+/**
+ * The seven cash-flow sample dates of a month as "YYYY-MM-DD" strings:
+ * days 1, 6, 11, 16, 21, 26 and the last day of the month (leap-aware).
+ */
+export function cashFlowSampleDates(month) {
+  assertMonth(month);
+  const lastDay = daysInMonth(month);
+  return [...CASH_FLOW_BASE_DAYS, lastDay].map(
+    (day) => `${month}-${String(day).padStart(2, "0")}`,
+  );
+}
+
+/**
+ * Cumulative totals at each sample date: for every sample date D, the sum of
+ * all per-day totals whose date is <= D (pure string comparison, decision
+ * #6). `sumsByDate` is `{ "YYYY-MM-DD": integer minor units }`.
+ */
+export function cumulativeAtDates(sampleDates, sumsByDate) {
+  const entries = Object.entries(sumsByDate).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  let runningTotal = 0;
+  let entryIndex = 0;
+  return sampleDates.map((sampleDate) => {
+    while (entryIndex < entries.length && entries[entryIndex][0] <= sampleDate) {
+      runningTotal += entries[entryIndex][1];
+      entryIndex += 1;
+    }
+    return runningTotal;
+  });
 }
 
 /**

@@ -135,8 +135,17 @@ export function BudgetPage() {
       <AppHeader
         title={copy.budget.title}
         onLogout={handleLogout}
-        editBudgetEnabled={budgetQuery.isSuccess}
-        onEditBudget={() => navigate(`/budget/${month}/edit`)}
+        menuItems={[
+          {
+            label: "Edit budget",
+            disabled: !budgetQuery.isSuccess,
+            onSelect: () => navigate(`/budget/${month}/edit`),
+          },
+          {
+            label: copy.insights.menuLabel,
+            onSelect: () => navigate(`/insights?month=${month}`),
+          },
+        ]}
       />
       <main className="budget-main">
         <MonthNav month={month} onNavigate={(nextValue) => navigate(`/budget?month=${nextValue}`)} />

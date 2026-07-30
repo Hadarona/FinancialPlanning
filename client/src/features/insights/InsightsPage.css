@@ -1,0 +1,112 @@
+.insights-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-2) var(--page-padding-mobile) var(--space-8);
+  width: 100%;
+  max-width: var(--content-max-desktop);
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .insights-main {
+    padding-left: var(--page-padding-desktop);
+    padding-right: var(--page-padding-desktop);
+    gap: var(--space-8);
+  }
+}
+
+.insights-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.insights-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.insights-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.insights-hero-total {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 44px;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+}
+
+.insights-hero-comparison {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* yellow-700 keeps the kit's golden comparison accent AA-readable on the
+ * warm background (yellow-500 text would be ~1.8:1). */
+.insights-hero-comparison-amount {
+  color: var(--color-yellow-700);
+  font-weight: 600;
+}
+
+.insights-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.insights-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 280px;
+  min-width: 0;
+}
+
+.insights-card-title {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Donut + cash-flow share a row only when each column keeps >=150px
+ * (kit responsive rule: 2×150px + 12px gap + 40px page padding = 352px);
+ * below that they stack. */
+@media (min-width: 360px) {
+  .insights-charts {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+
+  .insights-card-bar {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Desktop main grid: bar 8 of 12 columns, donut 4, cash-flow 12 below. */
+@media (min-width: 1024px) {
+  .insights-charts {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+
+  .insights-card-bar {
+    grid-column: span 8;
+  }
+
+  .insights-card-donut {
+    grid-column: span 4;
+  }
+
+  .insights-card-line {
+    grid-column: 1 / -1;
+  }
+}

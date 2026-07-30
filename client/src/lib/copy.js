@@ -77,6 +77,25 @@ export const copy = {
   },
   insights: {
     title: "Spending insights",
+    // "vs 9,180 last month" (kit comparisonLabel pattern); chart titles
+    // mirror the approved Insights compositions. State/action strings are
+    // voice-consistent extensions like the register section above.
+    comparisonPattern: (amount) => `vs ${amount} last month`,
+    barChartTitle: "Spending by category",
+    donutChartTitle: "Spending by category",
+    lineChartTitle: "Cash flow trend",
+    menuLabel: "View insights",
+    backToBudgetLabel: "Back to budget",
+    noComparison: "No data to compare",
+    noComparisonDetail: (previousLabel) =>
+      `There's no ${previousLabel} budget yet, so there's nothing to compare.`,
+    noSpending: (monthLabelText) => `No expenses recorded for ${monthLabelText} yet.`,
+    totalLabel: (monthLabelText) => `Total spent in ${monthLabelText}`,
+    loadErrorTitle: "Couldn't load your insights",
+    loadErrorDescription: "Check your connection and try again.",
+    retryLabel: "Try again",
+    emptyTitle: (monthLabelText) => `No budget for ${monthLabelText} yet`,
+    emptyDescription: "Create this month's budget to see spending insights.",
   },
   password: {
     show: "Show password",

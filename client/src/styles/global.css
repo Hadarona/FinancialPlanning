@@ -58,6 +58,19 @@ a {
   outline-offset: 2px;
 }
 
+/* Screen-reader-only content (e.g. chart data tables). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .transition {
     transition-duration: 180ms;

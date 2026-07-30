@@ -205,3 +205,62 @@ check rejects cross-realm signals and crashed every data-router navigation.
 A test-setup-only `Request` shim drops the foreign signal (impossible in a
 real browser — single realm); no product code changed.
 
+
+## Stage F — Insights + month comparison (Sprint 5)
+
+**API.** `GET /api/v1/insights/:month` (auth + strict month validation)
+returns one coherent payload: month/previous-month labels, totals,
+per-category comparison with donut shares, and two cumulative cash-flow
+series sampled at days 1/6/11/16/21/26/last. Shares use the documented
+largest-remainder rounding (decision #10) and always total exactly 100.
+The service aggregates each month twice (per category, per day — both
+`GROUP BY` queries covered by `transactions_user_period_idx`, verified via
+EXPLAIN) and refuses to serve an incoherent response. January compares with
+the previous year's December; a missing previous month is an explicit
+`hasPrevious: false` (200, previous values null/empty), never a 500. Other
+users' transactions can't enter the aggregation (user-scoped repo queries;
+integration-tested with two users on identical months). A 1,000-transaction
+perf guard logs a soft <500 ms budget and hard-fails above 2 s.
+
+**Charts.** Hand-rolled SVG per the plan (no chart library): grouped bar,
+donut, and cash-flow line. Kit semantics: current month solid blue-500,
+previous month yellow-500 with a diagonal-line pattern (bars) or dashed
+stroke (line) so series never differ by color alone. Every data mark is
+keyboard-focusable with a tooltip (category/date — month: value USD) and
+each chart carries a visible data-derived text summary plus a
+visually-hidden real table. Charts render at measured container width so
+labels stay legible at 320 px; category labels rotate in tight columns; the
+donut scales 128–200 px with fixed-size center total. Savings' donut
+segment uses blue-700 (kit token) because the kit gives Housing and Savings
+the same blue — recorded for design review (`review-3-insights.md`).
+
+**Screen.** Month tabs (`role=tablist`, arrow-key selection, selected
+current = blue/white, selected previous = yellow/near-black), hero total
+with the kit's "vs 9,180 last month" comparison (amount in yellow-700 for
+AA contrast), no-comparison and no-spending states that never fabricate a
+zero-change claim, loading skeletons, 404 → create-budget empty state,
+error → retry. Selecting a tab refetches `/insights/<month>` so the title,
+hero, all three charts, legends, and summaries update together. Grid: bar 8
+/ donut 4 / line 12 on desktop per the responsive spec; donut+line two-up
+on mobile only while both columns keep ≥150 px.
+
+**Infrastructure bug found and fixed (`server/src/db/pool.js`).** The
+service's coherence guard intermittently returned 500 with "category total
+0 != cumulative total 842000" — one of two concurrent aggregation queries
+ran against the wrong schema. Root cause: the Neon DATABASE_URL is the
+pooled endpoint (pgbouncer, transaction pooling), where the batch-1
+session-level `SET search_path` on the pool's `connect` event is silently
+unreliable: autocommit queries from one client can run on different server
+backends, and a backend that never saw the SET reads the default schema.
+Fix: for non-`public` (test) schemas, `pool.query` wraps every statement in
+its own transaction with `SET LOCAL search_path`, pinning one backend per
+statement. Proven with an 80-iteration repro (failed by attempt 3 before)
+and two consecutive fully green integration runs; `public`-schema behavior
+(dev/production) is untouched. Fallout handled: explicit 30 s timeouts
+added to `budget.test.js` (the extra round trips per query pushed two tests
+past vitest's 5 s default), and the insights service parallelizes its
+previous-month lookup with the current-month aggregation (perf guard
+1.6–1.8 s per 1,000 tx on remote Neon, inside the 2 s hard cap; <500 ms
+soft budget logged as anticipated by plan risk #2). End-to-end demo check
+against a real server returned the exact kit numbers (842,000 / 918,000,
+shares 47/18/10/11/14).

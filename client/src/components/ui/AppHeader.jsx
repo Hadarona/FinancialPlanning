@@ -1,20 +1,23 @@
+import { ArrowLeft } from "lucide-react";
+import { IconButton } from "./IconButton.jsx";
 import { Menu } from "./Menu.jsx";
 import "./AppHeader.css";
 
-/** Shared authenticated-shell header: logo, page title, and the overflow
- * menu (Edit budget / Logout). "Edit budget" stays disabled until Stage E
- * wires the plan-editing screen. */
-export function AppHeader({ title, onLogout, editBudgetEnabled = false, onEditBudget }) {
+/**
+ * Shared authenticated-shell header: logo (or a back button), page title,
+ * and the overflow menu. `menuItems` are page-specific entries
+ * (`[{ label, onSelect?, disabled? }]`); Logout is always appended last.
+ */
+export function AppHeader({ title, onLogout, menuItems = [], onBack, backLabel = "Back" }) {
   return (
     <header className="app-header">
-      <img src="/logo.svg" alt="" width={32} height={32} className="app-header-logo" />
+      {onBack ? (
+        <IconButton icon={ArrowLeft} label={backLabel} onClick={onBack} />
+      ) : (
+        <img src="/logo.svg" alt="" width={32} height={32} className="app-header-logo" />
+      )}
       <h1 className="app-header-title">{title}</h1>
-      <Menu
-        items={[
-          { label: "Edit budget", disabled: !editBudgetEnabled, onSelect: onEditBudget },
-          { label: "Logout", onSelect: onLogout },
-        ]}
-      />
+      <Menu items={[...menuItems, { label: "Logout", onSelect: onLogout }]} />
     </header>
   );
 }
