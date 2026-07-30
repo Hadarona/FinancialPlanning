@@ -391,3 +391,221 @@ green before the next stage started).
 
 None. Neon and the npm registry were reachable throughout; no schema or
 migration changes were needed beyond Stage A's `001_init.sql`.
+
+## Batch 3 (Stages F–G)
+
+Scope: Stage F (Insights + month comparison, hand-rolled accessible SVG
+charts) and Stage G (Responsive completion, accessibility, resilient
+experience), per the approved `developer/plan.md`. Branch:
+`feature/budgeting-app`. Commits: `fa5b8d7` (Stage F), `c724c41` (Stage G).
+
+### What was built
+
+**Stage F — Insights (commit `fa5b8d7`)**
+
+- API `GET /api/v1/insights/:month` (requireAuth + strict month param):
+  one coherent payload — month/previous labels (fixed English table),
+  `hasPrevious`, totals, per-category comparison with donut shares via the
+  documented largest-remainder rule (always exactly 100), and two
+  cumulative cash-flow series sampled at days 1/6/11/16/21/26/last
+  (leap-aware clamp). `calc.js` gained `monthName`, `shortDateLabel`,
+  `cashFlowSampleDates`, `cumulativeAtDates`; `transactionRepo` gained
+  `sumByDay` (`occurred_on::text`, per the batch-2 note). The service runs
+  two independent aggregations per month (per-category, per-day) and
+  refuses to respond on mismatch (500 + server-side diagnostic only);
+  January compares with the previous year's December; a missing previous
+  month is an explicit `hasPrevious:false` 200 (null/empty previous
+  fields). The independent previous-month lookup runs in parallel with the
+  current-month aggregation. EXPLAIN confirms both `GROUP BY` aggregations
+  use `transactions_user_period_idx`.
+- **Infrastructure bug found and fixed (`server/src/db/pool.js`).** The
+  coherence guard intermittently fired ("category total 0 != cumulative
+  total 842000"): the Neon DATABASE_URL is the pooled endpoint (pgbouncer,
+  transaction pooling), where batch 1's session-level `SET search_path` on
+  the pool's `connect` event is unreliable — consecutive autocommit
+  queries from one client may run on different backends, and one that
+  never saw the SET reads the default schema. Fix: for non-`public`
+  (test) schemas, `pool.query` wraps each statement in its own transaction
+  (`BEGIN; SET LOCAL search_path …` → query → `COMMIT`), pinning one
+  backend per statement. Verified by an 80-iteration repro harness
+  (previously failed by attempt 3) and consecutive fully green integration
+  runs. `public`-schema (dev/production) behavior unchanged.
+- Charts (`client/src/features/insights/charts/`, no chart library): pure
+  chart math in `chartMath.js` (nice axis scale, compact "5K" labels,
+  donut segment geometry, line points, rounded-top bar paths —
+  unit-tested); `BarChart` (grouped pairs; previous-month bars carry a
+  diagonal SVG pattern), `DonutChart` (center total; savings segment uses
+  kit blue-700 — see deviations), `LineChart` (current solid blue-500,
+  previous dashed yellow-500), shared `ChartTooltip` (focus + hover),
+  `Legend`, `VisuallyHiddenTable` (real table per chart), measured-width
+  rendering (`useMeasuredWidth`) so label text keeps a fixed legible size
+  at 320px (bar labels rotate in tight columns; line chart tightens its
+  gutter; donut scales 128–200px with fixed-size center text).
+- Screen: `MonthTabs` (tablist, roving tabindex, arrow keys; selected
+  current = blue/white, selected previous = yellow/near-black),
+  `InsightsPage` (hero total + kit "vs 9,180 last month" comparison with
+  the amount in yellow-700; honest no-comparison / no-spending states;
+  skeleton / 404-create-budget / error-retry states; desktop grid bar 8 /
+  donut 4 / line 12; donut+line two-up on mobile only while each column
+  keeps ≥150px). `useInsightsQuery(["insights", month])` benefits from the
+  existing mutation invalidations. Navigation: Budget menu → "View
+  insights"; Insights back arrow + menu → Budget. `AppHeader` generalized
+  to `menuItems` + optional back button.
+- `docs/agile/reviews/review-3-insights.md`; board/progress-log updated.
+- Chart palette validated with the dataviz method: kit blue-500/yellow-500
+  pass CVD separation (worst ΔE 27+); the kit yellow's low
+  surface-contrast is relieved by the mandated secondary encodings
+  (pattern/dash/gaps/labels/tables). Donut adjacency validated (worst
+  adjacent pair ΔE 11.4; savings blue-700 vs housing blue-500 ΔE 17).
+
+**Stage G — Responsive/accessibility/resilience (commit `c724c41`)**
+
+- Session expiry (D-RESP-F5): the API client's `session-expired` event now
+  has a consumer — AuthProvider drops the cached session and every cached
+  private query, ProtectedRoute redirects to
+  `/login?reason=session-expired`, LoginPage explains via `role="status"`;
+  login/register clear the flag. Insights route code-split (`React.lazy`
+  + skeleton-matched fallback). In-app 404 restyled with a route home.
+  ErrorState shows an explicit offline hint when `navigator.onLine` is
+  false. Viewport audit fix: summary metric values 20px below 360px.
+- Error contract (D-RESP-B1/B2): `errorContract.test.js` asserts the
+  single envelope (code/message/requestId, matching `X-Request-Id` header,
+  no stacks/paths/driver text) for unknown route, malformed path,
+  unauthenticated, conflict, invalid body (per-field messages), malformed
+  transaction id, and forced 500.
+- DB failure (D-RESP-B4): schema dropped under a live server → safe 500
+  correlated by requestId in the external error log; `/health` keeps
+  serving; process survives. While building this, removed the `public`
+  fallback from the schema-scoped pool's search_path: with it, a missing
+  test schema silently fell back to real `public` tables (the test
+  initially got a 401 because the server "found" `public.users`) — now a
+  broken schema fails loudly.
+- Graceful shutdown (D-RESP-B5, closes D-FND-B6's process-level proof):
+  `shutdown.test.js` spawns the real `node src/index.js`, waits for
+  health, sends SIGTERM, asserts "Shutdown complete.", exit 0, port
+  refusal, and flushed (not truncated) rotating request logs.
+- Accessibility (D-RESP-D3..D6, G3): computed contrast audit in
+  `developer/evidence/contrast.md`; in-kit fixes applied (small error text
+  and warning banners → coral-700; danger buttons → coral-700; Income
+  label → blue-700; Available value → green-600; comparison amount
+  19px/700 so yellow-700 clears the large-text bar). `tokens.css` remains
+  byte-identical to the kit. Keyboard/zoom/reduced-motion checklist in
+  `developer/evidence/a11y-keyboard-checklist.md` with per-row automated
+  evidence; heading/live-region sweep done (one h1 per page, alerts and
+  status regions associated to inputs).
+
+### Commands run and results (final state)
+
+| Command | Result |
+|---|---|
+| `npm run lint` | exit 0, no errors/warnings |
+| `npm test -w server` | 4 files, 52 tests passed (calc +8 for insights helpers) |
+| `npm run test:integration -w server` | 8 files, 46 tests passed against real listening servers + isolated Neon `test_*` schemas (health 3, auth 7, budget 7, transactions 8, plans 6, insights 6, error contract 8, shutdown 1); run twice consecutively green after the pool fix |
+| `npm test -w client` | 13 files, 55 tests passed (insights page 7, chart math 12, session expiry/404/offline 4) |
+| `npm run build` | exit 0; `InsightsPage-*.js` emitted as a separate lazy chunk |
+| End-to-end demo check | real server + seeded `demo@example.com`: `GET /api/v1/insights/2026-07` → July/June, 842000/918000, shares [47,18,10,11,14], cumulative endpoints equal totals |
+| EXPLAIN (one-off script) | both insights aggregations use `transactions_user_period_idx` |
+| Repro harness (scratchpad, not committed) | pooled-endpoint schema bug: failed by attempt 3 before the pool fix; 80/80 attempts clean after |
+
+Checks were run per-stage before each commit (Stage F suites green before
+Stage G started).
+
+### Deviations from the plan (with reasons)
+
+1. **`db/pool.js` schema scoping rewritten (not in the plan).** Plan/batch-1
+   mechanism (session `SET search_path` on `connect`) is unsound on Neon's
+   pooled endpoint (pgbouncer transaction pooling) — see Stage F notes
+   above. Product behavior on `public` unchanged; only isolated-schema
+   (test) behavior became deterministic. The extra per-query round trips
+   pushed two `budget.test.js` tests past vitest's 5 s default, so that
+   file gained the same explicit 30 s timeouts the other integration files
+   already had (assertions unchanged).
+2. **Donut Savings segment uses kit token blue-700, not the category's
+   blue-500.** The kit maps both Housing and Savings to "blue"; identical
+   fills meet where the donut ring wraps and would be indistinguishable.
+   Same blue family, validated ΔE 17 separation; legend + hidden table
+   carry identities regardless. Flagged for design review
+   (`review-3-insights.md` #3).
+3. **Desktop insights grid follows the responsive-layout spec (bar 8 +
+   donut 4, line 12 below) rather than the approved desktop composition's
+   full-width bar.** The two kit sources disagree; the spec is the explicit
+   normative document and the plan repeats it. Mobile matches the approved
+   composition. Flagged for design review (`review-3-insights.md` #7).
+4. **Insights perf guard (D-INS-B7) is soft at 500 ms.** Measured 1.6–1.8 s
+   over 1,000 transactions against remote Neon (hard cap 2 s per the plan's
+   risk #2 — remote latency dominates: every query now carries transaction
+   pinning). The soft-budget warning is logged by the test as designed.
+5. **Copy/navigation extensions beyond content.json** (same pattern as
+   batches 1–2, marked in `lib/copy.js`): chart titles, no-comparison and
+   no-data strings, "View insights"/"Back to budget" navigation entries
+   (the kit defines no route between Budget and Insights; the mobile
+   composition's back arrow motivated the header back button), tooltip
+   "<Category/date> — <Month>: <value> USD" wording per the kit checklist's
+   category/month/value/unit requirement.
+6. **Contrast remedies changed which kit tokens some components consume**
+   (coral-700/blue-700/green-600 swaps and the 19px comparison amount —
+   full before/after table in `developer/evidence/contrast.md`);
+   `tokens.css` itself is untouched. Two kit-internal conflicts were NOT
+   silently fixed and are documented for design review instead:
+   white-on-blue-500 primary buttons/selected tab (3.60 vs 4.5 — the kit
+   mandates the color and its checklist asks for exactly this
+   verification) and the 14px yellow-700 "Planned" label (4.17 — no darker
+   yellow token exists).
+7. **`AppHeader` API changed** from `editBudgetEnabled`/`onEditBudget` to
+   generic `menuItems` (+ optional `onBack`) to host the new navigation
+   items; BudgetPage behavior is unchanged and covered by existing tests.
+8. **Browser-based verification deferred to the developer self-test
+   phase** (same recorded deferral as batch 2): viewport screenshot matrix
+   (320/390/768/1024/1440), real-browser keyboard walk, 200% zoom, reduced
+   -motion emulation, and console-clean checks (D-RESP-F7's browser half).
+   All layout is responsive CSS from the kit specs and every mechanism has
+   component-test coverage; the a11y checklist marks per-row what is
+   automated vs deferred.
+
+### Acceptance check status (developer-owned rows, this batch)
+
+- Stage F: D-INS-D1..D6 (implementation; visual conformance is
+  design-review-owned), D-INS-F1..F6, D-INS-B1..B7 — pass via the unit/
+  integration/component tests and the end-to-end demo check above.
+  D-INS-B7's <500 ms soft budget is a logged warning on remote Neon
+  (deviation #4).
+- Stage G: D-RESP-D1..D6 (implementation; D-RESP-D1/D3 final call is
+  design-review-owned), D-RESP-F1..F6, D-RESP-B1..B5 — pass via the tests
+  and evidence docs above. D-RESP-F7 (production build console-clean) is
+  built and lint/build-verified; the in-browser console check is part of
+  the deferred browser pass (deviation #8).
+
+### What batch 4 (Stages H–I) must know
+
+- **Pool contract**: `pool.query` on non-`public` schemas is now
+  transaction-per-statement. If Stage H adds any multi-statement atomic
+  flow against a test schema, acquire a client and manage
+  `BEGIN; SET LOCAL search_path …`/`COMMIT` manually (see `demoSeed.js` /
+  `migrate.js` patterns). Never re-introduce session-level `SET
+  search_path` — the pooled endpoint reassigns backends.
+- **Integration timing**: expect ~2.5–3 min for the full suite (8 files,
+  serial) — the schema-scoping transactions add round trips. Give any new
+  multi-round-trip test an explicit ≥30 s timeout up front.
+- **Coverage (Stage H)**: charts have fixture-driven component tests
+  (chartMath 100% unit-covered); `useMeasuredWidth`'s ResizeObserver
+  branch and `ChartTooltip` positioning run only in real browsers — jsdom
+  coverage counts the fallback paths. `server/src/index.js` is excluded
+  from coverage but now has a real process-level test
+  (`shutdown.test.js`).
+- **Smoke script (H2)**: `GET /insights/:month` is live; assert the
+  coherence triple (Σ categories = total = last cumulative) like
+  `insights.test.js` does.
+- **Security file inventory (H1)**: new endpoints since batch 2 —
+  `/api/v1/insights/:month` (requireAuth; include it in the
+  ownership-matrix test).
+- **Error contract**: `errorContract.test.js`'s `expectErrorEnvelope`
+  helper is reusable for the injection-corpus and 413 tests.
+- **Session expiry** is fully wired client-side; Stage I's demo script can
+  show it by deleting the cookie.
+- `.workflow/state.json` was modified by another role during this batch;
+  left untouched and uncommitted, as in batch 2.
+
+### Blockers
+
+None. Neon and the npm registry were reachable throughout; no schema or
+migration changes were needed (the pool fix is connection-layer only).
