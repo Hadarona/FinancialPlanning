@@ -138,3 +138,36 @@ progress track, screen-reader sentence "Housing: 2,520 spent of 4,000
 planned, 63%", overspent/unplanned flagged by icon + text — never color
 alone). Add-expense button rendered disabled until Stage D wires the dialog.
 
+## Stage D — Expenses
+
+**API.** `POST/GET /budgets/:month/transactions`, `DELETE …/:id`. The budget
+is always resolved by `(authenticated user id, month)` first; category ids
+are validated against that budget's fixed set; date membership in `:month`
+is a pure string comparison against the calendar bounds (decision #6), which
+also rejects impossible days. Non-positive/non-integer/malformed amounts and
+oversized notes are rejected without mutation. Duplicate-submission
+protection (decision #8): a client-generated `clientRequestId` UUID hits the
+partial unique index and the retry gets the existing row back with 200 — one
+row, ever. Deletes of missing, unowned, or malformed ids all share one 404
+body (no existence/ownership leak). History ordering is deterministic
+(`occurred_on DESC, created_at DESC, id DESC`) with enforced limit bounds
+(1–200, default 50). Notes never reach the logs (metadata-only logging,
+asserted by test).
+
+**UI.** Shared `Dialog` (portal, `aria-modal`, focus moved in / trapped /
+returned to opener, Escape closes; bottom sheet <768px, centered 480px card
+above). `AddExpenseDialog` string-parses amounts to integer cents, offers
+the five fixed categories with icons, bounds the date input to the month,
+counts note characters, keeps all values with a Retry on failed save, and
+generates one `clientRequestId` per submission attempt-set. `ExpensePanel`
+lists recent expenses with delete buttons whose accessible names identify
+the exact transaction; `DeleteExpenseConfirm` requires explicit,
+transaction-naming confirmation. Successful add/delete invalidates the
+budget/transactions/insights queries so progress recalculates without a
+reload, and announces via a `role="status"` live region.
+
+**Bug found by the component tests (fixed).** The dialog's focus effect
+originally depended on the `onClose` prop identity, so every keystroke
+re-ran it and yanked focus back to the first field. See
+`docs/agile/reviews/review-2-expenses.md` finding #1.
+

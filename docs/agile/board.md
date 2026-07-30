@@ -43,14 +43,22 @@ accompanying narrative.
   `client/src/features/budget/{BudgetPage,SummaryMetrics,CategoryRow}.jsx`,
   `client/tests/BudgetPage.test.jsx`.
 
-## Backlog (not yet started — later batches)
-
 ### Stage D — Expenses (Sprint 3)
 
 - **Story:** As a user, I can add and delete expenses and see the budget
   update instantly.
 - **Acceptance:** D-EXP-D1..D5, D-EXP-F1..F6, D-EXP-B1..B6, D-EXP-Q1..Q6
   (+ `review-2-expenses.md`).
+- **Evidence:** `server/src/services/transactionService.js`,
+  `server/src/repositories/transactionRepo.js`,
+  `server/src/routes/transactionRoutes.js`,
+  `server/tests/integration/transactions.test.js`,
+  `client/src/components/ui/Dialog.jsx`,
+  `client/src/features/budget/{AddExpenseDialog,ExpensePanel,DeleteExpenseConfirm}.jsx`,
+  `client/tests/{AddExpenseDialog,DeleteExpenseConfirm}.test.jsx`,
+  `docs/agile/reviews/review-2-expenses.md`.
+
+## Backlog (not yet started — later batches)
 
 ### Stage E — Plans + month navigation (Sprint 4)
 

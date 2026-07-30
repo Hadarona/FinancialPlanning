@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../../components/ui/AppHeader.jsx";
@@ -11,6 +12,9 @@ import { copy } from "../../lib/copy.js";
 import { currentMonth, monthLabel } from "../../lib/dates.js";
 import { SummaryMetrics } from "./SummaryMetrics.jsx";
 import { CategoryRow } from "./CategoryRow.jsx";
+import { ExpensePanel } from "./ExpensePanel.jsx";
+import { AddExpenseDialog } from "./AddExpenseDialog.jsx";
+import { DeleteExpenseConfirm } from "./DeleteExpenseConfirm.jsx";
 import "./BudgetPage.css";
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -34,6 +38,16 @@ export function BudgetPage() {
   const month = MONTH_PATTERN.test(requestedMonth ?? "") ? requestedMonth : currentMonth();
 
   const budgetQuery = useBudgetQuery(month);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const statusTimerRef = useRef(null);
+
+  function announce(message) {
+    setStatusMessage(message);
+    clearTimeout(statusTimerRef.current);
+    statusTimerRef.current = setTimeout(() => setStatusMessage(""), 5000);
+  }
 
   async function handleLogout() {
     await logout();
@@ -78,11 +92,39 @@ export function BudgetPage() {
             <CategoryRow key={category.id} category={category} />
           ))}
         </ul>
-        {/* Wired to the expense dialog in Stage D. */}
-        <Button className="budget-add-expense" disabled title="Available soon">
+        <Button className="budget-add-expense" onClick={() => setAddOpen(true)}>
           <Plus size={24} aria-hidden="true" />
           {copy.budget.addExpenseLabel}
         </Button>
+        <ExpensePanel
+          month={month}
+          categories={budget.categories}
+          onDeleteRequest={(transaction) => setDeleteTarget(transaction)}
+        />
+        <AddExpenseDialog
+          open={addOpen}
+          month={month}
+          categories={budget.categories}
+          onClose={() => setAddOpen(false)}
+          onSuccess={() => {
+            setAddOpen(false);
+            announce(copy.expense.addedStatus);
+          }}
+        />
+        <DeleteExpenseConfirm
+          open={deleteTarget !== null}
+          month={month}
+          transaction={deleteTarget}
+          categoryName={
+            budget.categories.find((category) => category.id === deleteTarget?.categoryId)?.name ??
+            deleteTarget?.categoryId
+          }
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            announce(copy.expense.deletedStatus);
+          }}
+        />
       </>
     );
   }
@@ -93,6 +135,9 @@ export function BudgetPage() {
       <main className="budget-main">
         <p className="budget-month-label">{monthLabel(month)}</p>
         {renderContent()}
+        <p role="status" aria-live="polite" className="budget-status">
+          {statusMessage}
+        </p>
       </main>
     </div>
   );

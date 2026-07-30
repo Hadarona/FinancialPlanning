@@ -80,3 +80,34 @@ export function monthYearLabel(month) {
   const [year] = month.split("-");
   return `${monthLabel(month)} ${year}`;
 }
+
+/** Short label for a calendar date string, e.g. "2026-07-15" -> "Jul 15".
+ * Pure string arithmetic — no Date parsing, no timezone math. */
+export function shortDateLabel(isoDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+    throw new Error(`Invalid date: ${isoDate}`);
+  }
+  const monthNum = Number(isoDate.slice(5, 7));
+  const day = Number(isoDate.slice(8, 10));
+  return `${MONTH_NAMES[monthNum - 1].slice(0, 3)} ${day}`;
+}
+
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+function isLeapYear(year) {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+/** First/last calendar dates of a month ("YYYY-MM-DD"), leap-year aware.
+ * Mirrors server/src/services/calc.js monthRange. */
+export function monthRange(month) {
+  assertMonth(month);
+  const [yearStr, monthStr] = month.split("-");
+  const monthNum = Number(monthStr);
+  const days =
+    monthNum === 2 && isLeapYear(Number(yearStr)) ? 29 : DAYS_IN_MONTH[monthNum - 1];
+  return {
+    firstDay: `${month}-01`,
+    lastDay: `${month}-${String(days).padStart(2, "0")}`,
+  };
+}

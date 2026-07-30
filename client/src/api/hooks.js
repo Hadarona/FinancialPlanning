@@ -41,6 +41,40 @@ export function useBudgetQuery(month) {
   });
 }
 
+export function useTransactionsQuery(month) {
+  return useQuery({
+    queryKey: ["transactions", month],
+    queryFn: () => apiClient.get(`/budgets/${month}/transactions`),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/** Invalidate everything an expense mutation can change: the budget read
+ * model (actuals/progress), the history list, and insights aggregates. */
+function invalidateExpenseData(queryClient, month) {
+  queryClient.invalidateQueries({ queryKey: ["budget", month] });
+  queryClient.invalidateQueries({ queryKey: ["transactions", month] });
+  queryClient.invalidateQueries({ queryKey: ["insights"] });
+}
+
+export function useCreateTransactionMutation(month) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiClient.post(`/budgets/${month}/transactions`, payload),
+    onSuccess: () => invalidateExpenseData(queryClient, month),
+  });
+}
+
+export function useDeleteTransactionMutation(month) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (transactionId) =>
+      apiClient.delete(`/budgets/${month}/transactions/${transactionId}`),
+    onSuccess: () => invalidateExpenseData(queryClient, month),
+  });
+}
+
 export function useLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({

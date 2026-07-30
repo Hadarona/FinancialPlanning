@@ -15,6 +15,7 @@ import { createBudgetRepo } from "./repositories/budgetRepo.js";
 import { createTransactionRepo } from "./repositories/transactionRepo.js";
 import { createAuthService } from "./services/authService.js";
 import { createBudgetService } from "./services/budgetService.js";
+import { createTransactionService } from "./services/transactionService.js";
 import { createRequireAuth } from "./middleware/auth.js";
 import { createGeneralRateLimit, createAuthRateLimit } from "./middleware/rateLimit.js";
 
@@ -36,6 +37,7 @@ export function createApp(config) {
   const transactionRepo = createTransactionRepo(pool);
   const authService = createAuthService({ userRepo, config });
   const budgetService = createBudgetService({ budgetRepo, transactionRepo });
+  const transactionService = createTransactionService({ budgetRepo, transactionRepo });
   const requireAuth = createRequireAuth({ authService, userRepo });
 
   app.locals.config = config;
@@ -74,6 +76,7 @@ export function createApp(config) {
       config,
       authService,
       budgetService,
+      transactionService,
       requireAuth,
       authRateLimit: createAuthRateLimit(config),
     }),

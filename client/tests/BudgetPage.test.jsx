@@ -44,10 +44,15 @@ function budgetFixture(overrides = {}) {
   };
 }
 
-function mockApi({ budget }) {
+function mockApi({ budget, transactions } = {}) {
   apiClient.get.mockImplementation((path) => {
     if (path === "/auth/me") {
       return Promise.resolve(USER);
+    }
+    if (path.includes("/transactions")) {
+      return Promise.resolve(
+        transactions ?? { transactions: [], total: 0, limit: 50, offset: 0 },
+      );
     }
     if (path.startsWith("/budgets/")) {
       return typeof budget === "function" ? budget() : budget;

@@ -1,0 +1,19 @@
+.delete-expense-text {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.delete-expense-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+.delete-expense-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
