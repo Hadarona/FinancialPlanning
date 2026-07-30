@@ -87,7 +87,12 @@ export function RegisterPage() {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="auth-submit" loading={submitting} disabled={submitting}>
+          <Button
+            type="submit"
+            className="auth-submit"
+            loading={submitting}
+            disabled={submitting}
+          >
             {copy.register.submitLabel}
           </Button>
         </form>

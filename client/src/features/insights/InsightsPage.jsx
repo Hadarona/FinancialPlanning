@@ -35,7 +35,9 @@ function InsightsHero({ insights }) {
   return (
     <div className="insights-hero">
       <p className="insights-hero-total">
-        <span className="visually-hidden">{copy.insights.totalLabel(insights.monthLabel)}: </span>
+        <span className="visually-hidden">
+          {copy.insights.totalLabel(insights.monthLabel)}:{" "}
+        </span>
         {formatMoney(insights.currentTotalMinor)}
       </p>
       {insights.hasPrevious ? (
@@ -53,7 +55,9 @@ function InsightsHero({ insights }) {
         </p>
       )}
       {insights.currentTotalMinor === 0 ? (
-        <p className="insights-hero-comparison">{copy.insights.noSpending(insights.monthLabel)}</p>
+        <p className="insights-hero-comparison">
+          {copy.insights.noSpending(insights.monthLabel)}
+        </p>
       ) : null}
     </div>
   );
@@ -64,7 +68,9 @@ export function InsightsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedMonth = searchParams.get("month");
-  const baseMonth = MONTH_PATTERN.test(requestedMonth ?? "") ? requestedMonth : currentMonth();
+  const baseMonth = MONTH_PATTERN.test(requestedMonth ?? "")
+    ? requestedMonth
+    : currentMonth();
 
   const [selectedMonth, setSelectedMonth] = useState(baseMonth);
   useEffect(() => {
@@ -79,7 +85,11 @@ export function InsightsPage() {
   }
 
   const tabOptions = [
-    { value: previousMonth(baseMonth), label: monthLabel(previousMonth(baseMonth)), tone: "previous" },
+    {
+      value: previousMonth(baseMonth),
+      label: monthLabel(previousMonth(baseMonth)),
+      tone: "previous",
+    },
     { value: baseMonth, label: monthLabel(baseMonth), tone: "current" },
   ];
 

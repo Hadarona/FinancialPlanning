@@ -9,11 +9,12 @@ matching commit.
 **Architecture.** npm workspaces monorepo (`client/`, `server/`) in one repo,
 one eventual PR. Server: Express + `pg` against Neon Postgres, `pino` +
 `pino-roll` structured/rotating logs, `zod` validation. Client: Vite + React
-+ React Router + TanStack Query, hand-rolled SVG charts (no chart library —
-keeps license/audit surface minimal and gives full control over
-keyboard-focusable data points and dashed-line semantics required later for
-insights). See `developer/plan.md` → "Architecture reference" for the full
-rationale and package table.
+
+- React Router + TanStack Query, hand-rolled SVG charts (no chart library —
+  keeps license/audit surface minimal and gives full control over
+  keyboard-focusable data points and dashed-line semantics required later for
+  insights). See `developer/plan.md` → "Architecture reference" for the full
+  rationale and package table.
 
 **Data model decision (#7 — fixed category set).** The five budget
 categories (Housing, Groceries, Transport, Fun, Savings) are a constant
@@ -47,7 +48,7 @@ commit was run and observed failing (`npm test -w server` — 1 failed, 21
 passed), then the expectation was corrected in the following commit.
 
 - Commit `5736938` — `test(server): add calc.previousMonth with an
-  intentionally wrong expectation` — red (`npm test -w server` failed: 1
+intentionally wrong expectation` — red (`npm test -w server` failed: 1
   test).
 - Commit `d99bf9d` — `Stage A: Foundation — …` — includes the fix (green:
   `npm test -w server` passed, 22 tests) plus the rest of Stage A.
@@ -88,7 +89,7 @@ limiter.
    silently fail to apply under concurrent connection establishment against
    Neon's pooled endpoint, observed as `server/src/db/migrate.js` migrating
    the wrong (`public`) schema under concurrent test runs (`npm run
-   coverage`, which does not pass `--no-file-parallelism`). Fixed by
+coverage`, which does not pass `--no-file-parallelism`). Fixed by
    wrapping the whole migration run in one transaction with `SET LOCAL`.
 4. The test harness itself mutated the shared `process.env` to pass
    per-test overrides to the next dynamic import, which raced when two test
@@ -204,7 +205,6 @@ jsdom's `AbortController` while keeping Node's undici `Request`, whose brand
 check rejects cross-realm signals and crashed every data-router navigation.
 A test-setup-only `Request` shim drops the foreign signal (impossible in a
 real browser — single realm); no product code changed.
-
 
 ## Stage F — Insights + month comparison (Sprint 5)
 

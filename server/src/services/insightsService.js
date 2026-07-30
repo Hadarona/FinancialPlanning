@@ -32,7 +32,10 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
    * from independent aggregations; a mismatch means corrupted aggregation
    * and must never be served as insight data. */
   function assertCoherent(month, byCategory, cumulative) {
-    const categoryTotal = Object.values(byCategory).reduce((sum, value) => sum + value, 0);
+    const categoryTotal = Object.values(byCategory).reduce(
+      (sum, value) => sum + value,
+      0,
+    );
     const cumulativeTotal = cumulative[cumulative.length - 1];
     if (categoryTotal !== cumulativeTotal) {
       // A plain Error (not AppError) so the error handler logs the
@@ -62,7 +65,11 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
     const hasPrevious = prevBudgetRow !== null;
     const previous = hasPrevious ? await aggregateMonth(userId, prevBudgetRow) : null;
 
-    const currentTotalMinor = assertCoherent(month, current.byCategory, current.cumulative);
+    const currentTotalMinor = assertCoherent(
+      month,
+      current.byCategory,
+      current.cumulative,
+    );
     const previousTotalMinor = hasPrevious
       ? assertCoherent(prevMonth, previous.byCategory, previous.cumulative)
       : null;

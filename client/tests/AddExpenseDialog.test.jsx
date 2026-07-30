@@ -79,7 +79,9 @@ describe("AddExpenseDialog", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(apiClient.post).not.toHaveBeenCalled();
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "open dialog" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "open dialog" }),
+    );
   });
 
   it("shows field errors for invalid input and never calls the API (D-EXP-F2)", async () => {

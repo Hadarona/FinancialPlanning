@@ -32,7 +32,9 @@ const envSchema = z.object({
 function loadConfig(rawEnv = process.env) {
   const result = envSchema.safeParse(rawEnv);
   if (!result.success) {
-    const missingOrInvalid = [...new Set(result.error.issues.map((issue) => issue.path[0]))];
+    const missingOrInvalid = [
+      ...new Set(result.error.issues.map((issue) => issue.path[0])),
+    ];
     // Never print values, only the names of the offending variables.
     console.error(
       `Configuration error: invalid or missing environment variable(s): ${missingOrInvalid.join(", ")}`,

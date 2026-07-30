@@ -39,7 +39,8 @@ async function request(path, init = {}) {
   const cookieStr = cookieHeader();
   if (cookieStr) headers.Cookie = cookieStr;
   const res = await fetch(`${API}${path}`, { ...init, headers });
-  const raw = typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
+  const raw =
+    typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
   for (const entry of raw) {
     const [pair] = entry.split(";");
     const eq = pair.indexOf("=");
@@ -73,7 +74,10 @@ async function main() {
     method: "POST",
     body: JSON.stringify({ email, password: `Smoke-${randomUUID()}` }),
   });
-  check("POST /auth/register -> 201 + session cookie", register.status === 201 && cookies.bb_session);
+  check(
+    "POST /auth/register -> 201 + session cookie",
+    register.status === 201 && cookies.bb_session,
+  );
 
   // 3. Create a budget for the current month
   const createBudget = await request("/budgets", {
@@ -91,7 +95,11 @@ async function main() {
     }),
   });
   const created = await createBudget.json();
-  check("POST /budgets -> 201", createBudget.status === 201, JSON.stringify(created.error ?? ""));
+  check(
+    "POST /budgets -> 201",
+    createBudget.status === 201,
+    JSON.stringify(created.error ?? ""),
+  );
   check(
     "budget math: planned 1,020,000 / available 230,000 / actual 0",
     created.budget.plannedMinor === 1020000 &&
@@ -132,7 +140,8 @@ async function main() {
   check("GET /insights/:month -> 200", insightsRes.status === 200);
   check(
     "insights coherence: category sum == total == last cumulative point",
-    categorySum === insights.currentTotalMinor && lastCumulative === insights.currentTotalMinor,
+    categorySum === insights.currentTotalMinor &&
+      lastCumulative === insights.currentTotalMinor,
     `sum=${categorySum} total=${insights.currentTotalMinor} cumulative=${lastCumulative}`,
   );
   check(

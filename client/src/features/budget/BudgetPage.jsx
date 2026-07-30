@@ -36,7 +36,9 @@ export function BudgetPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedMonth = searchParams.get("month");
-  const month = MONTH_PATTERN.test(requestedMonth ?? "") ? requestedMonth : currentMonth();
+  const month = MONTH_PATTERN.test(requestedMonth ?? "")
+    ? requestedMonth
+    : currentMonth();
 
   const budgetQuery = useBudgetQuery(month);
   const [addOpen, setAddOpen] = useState(false);
@@ -117,8 +119,8 @@ export function BudgetPage() {
           month={month}
           transaction={deleteTarget}
           categoryName={
-            budget.categories.find((category) => category.id === deleteTarget?.categoryId)?.name ??
-            deleteTarget?.categoryId
+            budget.categories.find((category) => category.id === deleteTarget?.categoryId)
+              ?.name ?? deleteTarget?.categoryId
           }
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {
@@ -148,7 +150,10 @@ export function BudgetPage() {
         ]}
       />
       <main className="budget-main">
-        <MonthNav month={month} onNavigate={(nextValue) => navigate(`/budget?month=${nextValue}`)} />
+        <MonthNav
+          month={month}
+          onNavigate={(nextValue) => navigate(`/budget?month=${nextValue}`)}
+        />
         {renderContent()}
         <p role="status" aria-live="polite" className="budget-status">
           {statusMessage}

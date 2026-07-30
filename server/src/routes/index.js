@@ -16,7 +16,10 @@ export function createApiRouter({
 }) {
   const router = Router();
   router.use(healthRoutes);
-  router.use("/auth", createAuthRoutes({ authService, config, requireAuth, authRateLimit }));
+  router.use(
+    "/auth",
+    createAuthRoutes({ authService, config, requireAuth, authRateLimit }),
+  );
   router.use("/insights", createInsightsRoutes({ insightsService, requireAuth }));
   // Nested transaction routes stay mounted BEFORE /budgets so the
   // mergeParams router wins on the shared prefix.

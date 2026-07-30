@@ -45,19 +45,29 @@ describe("apiClient (fetch wrapper)", () => {
   });
 
   it("POSTs a JSON body with the JSON content type", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ user: { id: "u1" } }, { status: 201 }));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ user: { id: "u1" } }, { status: 201 }),
+    );
 
-    await apiClient.post("/auth/register", { email: "a@example.com", password: "longenough" });
+    await apiClient.post("/auth/register", {
+      email: "a@example.com",
+      password: "longenough",
+    });
 
     const [, init] = fetchMock.mock.calls[0];
     expect(init.method).toBe("POST");
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
-    expect(JSON.parse(init.body)).toEqual({ email: "a@example.com", password: "longenough" });
+    expect(JSON.parse(init.body)).toEqual({
+      email: "a@example.com",
+      password: "longenough",
+    });
   });
 
   it("returns null for an empty (204) response body", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(null, { status: 204 }));
-    await expect(apiClient.delete("/budgets/2026-07/transactions/tx1")).resolves.toBeNull();
+    await expect(
+      apiClient.delete("/budgets/2026-07/transactions/tx1"),
+    ).resolves.toBeNull();
   });
 
   it("throws a fully-populated ApiError from the documented error envelope", async () => {
@@ -85,7 +95,9 @@ describe("apiClient (fetch wrapper)", () => {
   });
 
   it("falls back to a safe generic error when the failure body is not the envelope", async () => {
-    fetchMock.mockResolvedValueOnce(new Response("<html>gateway error</html>", { status: 502 }));
+    fetchMock.mockResolvedValueOnce(
+      new Response("<html>gateway error</html>", { status: 502 }),
+    );
 
     const err = await apiClient.get("/budgets/2026-07").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
@@ -97,7 +109,13 @@ describe("apiClient (fetch wrapper)", () => {
   it("dispatches session-expired on a private 401, but not on auth bootstrap paths", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(
-        { error: { code: "UNAUTHENTICATED", message: "Sign in required.", requestId: "r" } },
+        {
+          error: {
+            code: "UNAUTHENTICATED",
+            message: "Sign in required.",
+            requestId: "r",
+          },
+        },
         { status: 401 },
       ),
     );

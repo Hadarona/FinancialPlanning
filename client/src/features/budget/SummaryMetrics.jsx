@@ -34,7 +34,9 @@ export function SummaryMetrics({ incomeMinor, plannedMinor, availableMinor }) {
           <dt className="summary-metric-label">{copy.budget.availableLabel}</dt>
           <dd
             className={`summary-metric-value ${
-              overAllocated ? "summary-metric-value-negative" : "summary-metric-value-available"
+              overAllocated
+                ? "summary-metric-value-negative"
+                : "summary-metric-value-available"
             }`}
           >
             {formatMoney(availableMinor)}

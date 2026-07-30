@@ -20,7 +20,11 @@ const InsightsPage = lazy(() =>
 
 function InsightsRouteFallback() {
   return (
-    <div aria-busy="true" aria-label="Loading insights" style={{ padding: "var(--space-5)" }}>
+    <div
+      aria-busy="true"
+      aria-label="Loading insights"
+      style={{ padding: "var(--space-5)" }}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
         <Skeleton height={56} />
         <Skeleton height={88} />

@@ -50,7 +50,9 @@ describe("log rotation and retention (D-SEC-B5)", () => {
     }
     await loggers.close();
 
-    const files = (await fs.readdir(logDir)).filter((name) => name.startsWith("requests.log"));
+    const files = (await fs.readdir(logDir)).filter((name) =>
+      name.startsWith("requests.log"),
+    );
     // Rotation happened (more than one file in the family)...
     expect(files.length).toBeGreaterThan(1);
     // ...and retention bounded the family: at most `keep` completed files

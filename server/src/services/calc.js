@@ -113,7 +113,9 @@ export function cashFlowSampleDates(month) {
  * #6). `sumsByDate` is `{ "YYYY-MM-DD": integer minor units }`.
  */
 export function cumulativeAtDates(sampleDates, sumsByDate) {
-  const entries = Object.entries(sumsByDate).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const entries = Object.entries(sumsByDate).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  );
   let runningTotal = 0;
   let entryIndex = 0;
   return sampleDates.map((sampleDate) => {
@@ -161,7 +163,10 @@ export function summarizeBudget(budgetRow, actualsByCategory = {}) {
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .map((category) => {
       const actualMinor = actualsByCategory[category.id] ?? 0;
-      const { progressPercent, state } = categoryProgress(category.plannedMinor, actualMinor);
+      const { progressPercent, state } = categoryProgress(
+        category.plannedMinor,
+        actualMinor,
+      );
       return {
         id: category.id,
         name: category.name,
@@ -175,7 +180,10 @@ export function summarizeBudget(budgetRow, actualsByCategory = {}) {
       };
     });
 
-  const plannedMinor = categories.reduce((sum, category) => sum + category.plannedMinor, 0);
+  const plannedMinor = categories.reduce(
+    (sum, category) => sum + category.plannedMinor,
+    0,
+  );
   const actualMinor = categories.reduce((sum, category) => sum + category.actualMinor, 0);
 
   return {

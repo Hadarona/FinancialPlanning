@@ -33,11 +33,61 @@ function budgetFixture(overrides = {}) {
       availableMinor: 230000,
       actualMinor: 252000,
       categories: [
-        { id: "housing", name: "Housing", icon: "House", color: "blue", displayOrder: 1, plannedMinor: 400000, actualMinor: 252000, progressPercent: 63, state: "normal" },
-        { id: "groceries", name: "Groceries", icon: "ShoppingCart", color: "green", displayOrder: 2, plannedMinor: 150000, actualMinor: 51000, progressPercent: 34, state: "normal" },
-        { id: "transport", name: "Transport", icon: "CarFront", color: "yellow", displayOrder: 3, plannedMinor: 80000, actualMinor: 20800, progressPercent: 26, state: "normal" },
-        { id: "fun", name: "Fun", icon: "PartyPopper", color: "coral", displayOrder: 4, plannedMinor: 90000, actualMinor: 25200, progressPercent: 28, state: "normal" },
-        { id: "savings", name: "Savings", icon: "PiggyBank", color: "blue", displayOrder: 5, plannedMinor: 300000, actualMinor: 168000, progressPercent: 56, state: "normal" },
+        {
+          id: "housing",
+          name: "Housing",
+          icon: "House",
+          color: "blue",
+          displayOrder: 1,
+          plannedMinor: 400000,
+          actualMinor: 252000,
+          progressPercent: 63,
+          state: "normal",
+        },
+        {
+          id: "groceries",
+          name: "Groceries",
+          icon: "ShoppingCart",
+          color: "green",
+          displayOrder: 2,
+          plannedMinor: 150000,
+          actualMinor: 51000,
+          progressPercent: 34,
+          state: "normal",
+        },
+        {
+          id: "transport",
+          name: "Transport",
+          icon: "CarFront",
+          color: "yellow",
+          displayOrder: 3,
+          plannedMinor: 80000,
+          actualMinor: 20800,
+          progressPercent: 26,
+          state: "normal",
+        },
+        {
+          id: "fun",
+          name: "Fun",
+          icon: "PartyPopper",
+          color: "coral",
+          displayOrder: 4,
+          plannedMinor: 90000,
+          actualMinor: 25200,
+          progressPercent: 28,
+          state: "normal",
+        },
+        {
+          id: "savings",
+          name: "Savings",
+          icon: "PiggyBank",
+          color: "blue",
+          displayOrder: 5,
+          plannedMinor: 300000,
+          actualMinor: 168000,
+          progressPercent: 56,
+          state: "normal",
+        },
       ],
       ...overrides,
     },
@@ -118,7 +168,11 @@ describe("BudgetPage", () => {
     mockApi({
       budget: () =>
         Promise.reject(
-          new ApiError({ code: "NOT_FOUND", status: 404, message: "No budget for this month." }),
+          new ApiError({
+            code: "NOT_FOUND",
+            status: 404,
+            message: "No budget for this month.",
+          }),
         ),
     });
     render(renderProviders(<BudgetPage />));
@@ -143,7 +197,11 @@ describe("BudgetPage", () => {
       }
       if (path === `/budgets/${prev}`) {
         return Promise.reject(
-          new ApiError({ code: "NOT_FOUND", status: 404, message: "No budget for this month." }),
+          new ApiError({
+            code: "NOT_FOUND",
+            status: 404,
+            message: "No budget for this month.",
+          }),
         );
       }
       return Promise.reject(new Error(`Unexpected GET ${path}`));
@@ -172,7 +230,11 @@ describe("BudgetPage", () => {
         calls += 1;
         if (calls === 1) {
           return Promise.reject(
-            new ApiError({ code: "INTERNAL", status: 500, message: "Something went wrong." }),
+            new ApiError({
+              code: "INTERNAL",
+              status: 500,
+              message: "Something went wrong.",
+            }),
           );
         }
         return Promise.resolve(budgetFixture());

@@ -151,7 +151,13 @@ describe("budget create/update API", () => {
 
       const badBodies = [
         // Unknown category id.
-        { month: "2026-07", incomeMinor: 1, categories: defaultPlans().map((c) => (c.id === "fun" ? { ...c, id: "yachts" } : c)) },
+        {
+          month: "2026-07",
+          incomeMinor: 1,
+          categories: defaultPlans().map((c) =>
+            c.id === "fun" ? { ...c, id: "yachts" } : c,
+          ),
+        },
         // Duplicate ids (still 5 entries).
         {
           month: "2026-07",

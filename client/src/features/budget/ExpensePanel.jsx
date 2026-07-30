@@ -21,7 +21,11 @@ export function ExpensePanel({ month, categories, onDeleteRequest }) {
   function renderBody() {
     if (transactionsQuery.isLoading) {
       return (
-        <div className="expense-panel-loading" aria-busy="true" aria-label="Loading expenses">
+        <div
+          className="expense-panel-loading"
+          aria-busy="true"
+          aria-label="Loading expenses"
+        >
           <Skeleton height={48} />
           <Skeleton height={48} />
         </div>
@@ -55,13 +59,18 @@ export function ExpensePanel({ month, categories, onDeleteRequest }) {
               <div className="expense-item-body">
                 <span className="expense-item-title">
                   {categoryName}
-                  <span className="expense-item-date"> · {shortDateLabel(transaction.occurredOn)}</span>
+                  <span className="expense-item-date">
+                    {" "}
+                    · {shortDateLabel(transaction.occurredOn)}
+                  </span>
                 </span>
                 {transaction.note ? (
                   <span className="expense-item-note">{transaction.note}</span>
                 ) : null}
               </div>
-              <span className="expense-item-amount">{formatMoney(transaction.amountMinor)}</span>
+              <span className="expense-item-amount">
+                {formatMoney(transaction.amountMinor)}
+              </span>
               <IconButton
                 icon={Trash2}
                 label={`Delete ${categoryName} ${formatMoney(transaction.amountMinor)} on ${shortDateLabel(transaction.occurredOn)}`}

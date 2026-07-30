@@ -49,7 +49,9 @@ describe("requireAuth middleware", () => {
 
   it("attaches req.user and calls next() with no error for a valid session", async () => {
     const authService = { verifySession: vi.fn(() => ({ sub: "user-1" })) };
-    const userRepo = { findById: vi.fn(async () => ({ id: "user-1", email: "a@b.com" })) };
+    const userRepo = {
+      findById: vi.fn(async () => ({ id: "user-1", email: "a@b.com" })),
+    };
     const requireAuth = createRequireAuth({ authService, userRepo });
     const req = makeReq({ [SESSION_COOKIE_NAME]: "valid" });
     const next = vi.fn();

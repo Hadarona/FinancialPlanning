@@ -93,7 +93,12 @@ export function LoginPage() {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" className="auth-submit" loading={submitting} disabled={submitting}>
+          <Button
+            type="submit"
+            className="auth-submit"
+            loading={submitting}
+            disabled={submitting}
+          >
             {copy.login.submitLabel}
           </Button>
         </form>

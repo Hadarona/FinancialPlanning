@@ -24,9 +24,7 @@ export function axisScale(maxValue, maxTickCount = 6) {
         for (let value = 0; value <= max; value += step) {
           ticks.push(value);
         }
-        return maxValue > 0
-          ? { max, step, ticks }
-          : axisScale(10000, maxTickCount); // 100.00 fallback for all-zero data
+        return maxValue > 0 ? { max, step, ticks } : axisScale(10000, maxTickCount); // 100.00 fallback for all-zero data
       }
     }
     magnitude *= 10;

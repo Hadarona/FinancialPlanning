@@ -41,7 +41,11 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener("session-expired", handleSessionExpired);
   }, [queryClient]);
 
-  const status = meQuery.isLoading ? "pending" : meQuery.data?.user ? "authenticated" : "anonymous";
+  const status = meQuery.isLoading
+    ? "pending"
+    : meQuery.data?.user
+      ? "authenticated"
+      : "anonymous";
   const user = meQuery.data?.user ?? null;
 
   const value = useMemo(

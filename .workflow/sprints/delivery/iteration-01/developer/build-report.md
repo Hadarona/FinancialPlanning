@@ -824,3 +824,94 @@ matrix with statuses and evidence paths.
 
 None. Neon and the npm registry were reachable throughout; no schema or
 migration changes were needed in this batch.
+
+## Fix cycle 01 (2026-07-31) — resolve the two self-test findings
+
+Plan: `cycle-01/plan.md`. Inputs: `test-report.json` openIssues
+DEV-SELFTEST-001 (medium) and DEV-SELFTEST-002 (low). Both resolved; the
+developer report is now `pass` with `openIssues` empty (the findings moved to
+`resolvedIssues` with their resolutions).
+
+### DEV-SELFTEST-001 — Insights horizontal scroll at 320px (D-INS-F6, D-RESP-F1, R-FE-1)
+
+Root cause (from the self-test diagnostic): `.visually-hidden` sets
+`width: 1px`, but Chromium's automatic table layout treats an explicit width
+on a `<table>` as a minimum and sized the three hidden chart tables to
+269–335px, pushing the page to scrollWidth 371 at a 320px viewport.
+
+Fix (root-cause, not symptomatic):
+
+- `client/src/features/insights/charts/VisuallyHiddenTable.jsx` — the
+  `visually-hidden` class now sits on a new `<div>` wrapper instead of the
+  `<table>`. A block wrapper honors `width: 1px` + `overflow: hidden`, so it
+  clips the table out of the layout entirely; the table's
+  caption/`th scope` semantics are untouched, preserving the screen-reader
+  data view (D-INS-F4).
+- `client/src/styles/global.css` — documented the table pitfall on the
+  `.visually-hidden` comment and added
+  `.visually-hidden table, table.visually-hidden { table-layout: fixed; width: 1px; }`
+  as defense in depth so cell content can never drive min-content sizing.
+  Honest caveat recorded in the comment: Chromium still widens the table
+  wrapper box to a nowrap `<caption>`'s width, so the 1px clipped wrapper is
+  the load-bearing containment (measured: table box still ~335px *inside*
+  the wrapper, wrapper 1px, page scrollWidth exactly 320 — no propagation).
+- `client/tests/InsightsPage.test.jsx` — new regression test
+  ("keeps hidden chart tables out of the layout width") asserting the
+  structural contract jsdom can verify: all three chart tables never carry
+  the class themselves, always sit inside a `div.visually-hidden` wrapper,
+  and keep caption + column/row-header semantics. The real layout claim is
+  proven by DOM measurement (below), since jsdom computes no layout.
+
+Verification (Chromium via the scratchpad Playwright install, real UI login
+with seeded demo data, `SERVE_CLIENT=true` server on port 4050):
+`document.scrollingElement.scrollWidth` is exactly **320 on Login, Budget,
+and Insights** at a 320px viewport (was 371 on Insights), all
+`.visually-hidden` wrappers measure 1px, zero pageerrors. Evidence:
+`cycle-01/evidence/insights-320-recheck.json` +
+`cycle-01/evidence/screenshots/{login,budget,insights}-320-cycle01.png`.
+
+### DEV-SELFTEST-002 — `npm run format:check` exits 1 (D-SEC-F5/R-QE-1 adjacent)
+
+Decision: conform the writable files to the repo's own declared style
+contract (`.prettierrc.json`, printWidth 90) rather than hide product files
+behind ignore entries, and ignore only what the developer must not rewrite.
+
+- New `.prettierignore` with per-entry justification: `.workflow/`
+  (phase-owned role reports/evidence), `tools/` (orchestrator-owned
+  controller), `docs/design/`, `docs/product/`, `docs/workflow/`,
+  `Project_requirements_English.md` (read-only sources per CLAUDE.md's
+  ownership table; the figma-kit export must stay byte-identical),
+  `CLAUDE.md` (governance doc, byte-stable), and
+  `client/src/styles/tokens.css` (must stay byte-identical to
+  `docs/design/figma-kit/tokens/design-tokens.css` per D-FND-D1 — formatting
+  it would silently break the verbatim-copy invariant).
+- `npx prettier --write .` then reformatted **66 files** (all 32 flagged
+  product source files under `server/` and `client/`, developer-owned tests,
+  scripts, and developer-authored docs). `npm run format:check` now exits 0.
+- Zero behavior change verified: unit/component suites green immediately
+  before the rewrite, and the **full** suite green after it (below);
+  `git diff` is whitespace/line-wrapping only.
+
+### Cycle-01 check suite (all from the repo root, after both fixes)
+
+| Command | Exit | Result |
+| --- | --- | --- |
+| `npm run lint` | 0 | pass |
+| `npm run format:check` | 0 | pass (was 1) |
+| `npm test -w server` | 0 | 53 tests |
+| `npm run test:integration -w server` | 0 | 60 tests (real HTTP, isolated Neon schemas) |
+| `npm test -w client` | 0 | 72 tests (71 + 1 new regression guard) |
+| `npm run coverage` | 0 | server 97.06/92.3/99.02; client 85.19/82.57/79.29 |
+| `npm run build` | 0 | production build clean |
+| `npm run smoke` (running server, port 4050) | 0 | 15/15 checks |
+| `npm run workflow:validate` | 0 | `{"ok":true,"errors":[],"warnings":[]}` |
+| `npm audit --omit dev` | 1 | only the 2 accepted moderate react-router advisories (unchanged) |
+| Playwright 320px re-check (Login/Budget/Insights) | 0 | scrollWidth 320 everywhere, pass |
+
+### Deviations and housekeeping
+
+- No plan deviations; both tasks executed as written in `cycle-01/plan.md`.
+- The cycle's server (port 4050) was stopped afterward; demo seed re-run
+  (exit 0) before the browser pass.
+- Untouched, per constraints: `.workflow/state.json`, `qa/`, design areas,
+  `tools/`. `DATABASE_URL`/`JWT_SECRET` never printed or logged.

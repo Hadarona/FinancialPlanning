@@ -28,7 +28,7 @@ charts.
    in `db/pool.js`).** The coherence guard (#1) intermittently fired with
    "category total 0 != cumulative total 842000": one of the two concurrent
    aggregation queries ran against the wrong schema. Root cause: the
-   Neon DATABASE_URL is the *pooled* endpoint (pgbouncer in
+   Neon DATABASE_URL is the _pooled_ endpoint (pgbouncer in
    transaction-pooling mode), where batch 1's session-level
    `SET search_path` on the pool's `connect` event is silently unreliable —
    consecutive autocommit queries from one client can run on different

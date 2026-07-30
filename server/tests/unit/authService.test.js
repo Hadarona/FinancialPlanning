@@ -22,7 +22,10 @@ describe("authService.register", () => {
     const userRepo = makeUserRepo();
     const authService = createAuthService({ userRepo, config: testConfig });
 
-    const user = await authService.register({ email: "a@b.com", password: "supersecret" });
+    const user = await authService.register({
+      email: "a@b.com",
+      password: "supersecret",
+    });
 
     expect(user).toEqual({ id: expect.any(String), email: "a@b.com" });
     expect(user.passwordHash).toBeUndefined();
@@ -41,9 +44,9 @@ describe("authService.register", () => {
     });
     const authService = createAuthService({ userRepo, config: testConfig });
 
-    await expect(authService.register({ email: "a@b.com", password: "supersecret" })).rejects.toMatchObject(
-      { code: "CONFLICT", status: 409 },
-    );
+    await expect(
+      authService.register({ email: "a@b.com", password: "supersecret" }),
+    ).rejects.toMatchObject({ code: "CONFLICT", status: 409 });
   });
 
   it("rethrows unrelated repository errors", async () => {
@@ -64,7 +67,10 @@ describe("authService.login", () => {
   it("logs in with correct credentials", async () => {
     const userRepo = makeUserRepo();
     const authService = createAuthService({ userRepo, config: testConfig });
-    const registered = await authService.register({ email: "a@b.com", password: "supersecret" });
+    const registered = await authService.register({
+      email: "a@b.com",
+      password: "supersecret",
+    });
 
     const [[{ passwordHash }]] = userRepo.createUser.mock.calls;
     userRepo.findByEmail.mockResolvedValueOnce({
@@ -119,7 +125,10 @@ describe("authService.login", () => {
 
 describe("authService session tokens", () => {
   it("signs and verifies a round-trip session", () => {
-    const authService = createAuthService({ userRepo: makeUserRepo(), config: testConfig });
+    const authService = createAuthService({
+      userRepo: makeUserRepo(),
+      config: testConfig,
+    });
     const token = authService.signSession({ id: "user-1", email: "a@b.com" });
     const payload = authService.verifySession(token);
     expect(payload.sub).toBe("user-1");
@@ -127,12 +136,18 @@ describe("authService session tokens", () => {
   });
 
   it("returns null for a malformed or invalid token", () => {
-    const authService = createAuthService({ userRepo: makeUserRepo(), config: testConfig });
+    const authService = createAuthService({
+      userRepo: makeUserRepo(),
+      config: testConfig,
+    });
     expect(authService.verifySession("not-a-real-token")).toBeNull();
   });
 
   it("returns null for a token signed with a different secret", () => {
-    const authService = createAuthService({ userRepo: makeUserRepo(), config: testConfig });
+    const authService = createAuthService({
+      userRepo: makeUserRepo(),
+      config: testConfig,
+    });
     const otherService = createAuthService({
       userRepo: makeUserRepo(),
       config: { ...testConfig, jwtSecret: "a-different-secret" },

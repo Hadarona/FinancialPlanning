@@ -61,7 +61,9 @@ export function LineChart({
   const labelIndexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
 
   const currentEnd = currentSeries[currentSeries.length - 1] ?? 0;
-  const previousEnd = hasPrevious ? (previousSeries[previousSeries.length - 1] ?? 0) : null;
+  const previousEnd = hasPrevious
+    ? (previousSeries[previousSeries.length - 1] ?? 0)
+    : null;
   const caption = hasPrevious
     ? `Cumulative spending through ${monthLabel} reached ${formatMoney(currentEnd)}, versus ${formatMoney(previousEnd)} through ${previousMonthLabel}.`
     : `Cumulative spending through ${monthLabel} reached ${formatMoney(currentEnd)}. No ${previousMonthLabel} data to compare.`;
@@ -109,7 +111,12 @@ export function LineChart({
                   y1={y}
                   y2={y}
                 />
-                <text className="chart-axis-label" x={MARGIN.left - 8} y={y + 4} textAnchor="end">
+                <text
+                  className="chart-axis-label"
+                  x={MARGIN.left - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                >
                   {compactAxisLabel(tick)}
                 </text>
               </g>
@@ -127,7 +134,9 @@ export function LineChart({
                 className="chart-x-label"
                 x={MARGIN.left + point.x}
                 y={MARGIN.top + PLOT_HEIGHT + 20}
-                textAnchor={index === 0 ? "start" : index === labels.length - 1 ? "end" : "middle"}
+                textAnchor={
+                  index === 0 ? "start" : index === labels.length - 1 ? "end" : "middle"
+                }
               >
                 {labels[index]}
               </text>
@@ -153,7 +162,12 @@ export function LineChart({
           />
 
           {hasPrevious
-            ? renderPoints(previousPoints, previousSeries, previousMonthLabel, SERIES_COLORS.previous)
+            ? renderPoints(
+                previousPoints,
+                previousSeries,
+                previousMonthLabel,
+                SERIES_COLORS.previous,
+              )
             : null}
           {renderPoints(currentPoints, currentSeries, monthLabel, SERIES_COLORS.current)}
         </svg>

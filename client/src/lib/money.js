@@ -42,7 +42,8 @@ export function minorToInputValue(minor) {
   const abs = Math.abs(Math.trunc(minor));
   const whole = Math.floor(abs / 100);
   const cents = abs % 100;
-  const formatted = cents === 0 ? String(whole) : `${whole}.${String(cents).padStart(2, "0")}`;
+  const formatted =
+    cents === 0 ? String(whole) : `${whole}.${String(cents).padStart(2, "0")}`;
   return negative ? `-${formatted}` : formatted;
 }
 

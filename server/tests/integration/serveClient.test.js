@@ -63,7 +63,13 @@ describe("SERVE_CLIENT static serving + SPA fallback", () => {
   });
 
   it("falls back to index.html for every supported SPA route (refresh works)", async () => {
-    for (const route of ["/login", "/register", "/budget", "/budget/2026-07/edit", "/insights"]) {
+    for (const route of [
+      "/login",
+      "/register",
+      "/budget",
+      "/budget/2026-07/edit",
+      "/insights",
+    ]) {
       const res = await fetch(`${baseUrl}${route}`);
       expect(res.status, route).toBe(200);
       expect(res.headers.get("content-type")).toMatch(/text\/html/);

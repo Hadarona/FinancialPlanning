@@ -42,15 +42,15 @@ Every failure — including 404s and 500s — uses one envelope:
 `fieldErrors` appears only on validation failures. Stack traces, SQL/driver
 text, and file paths never reach a client.
 
-| Code | Status | When |
-|---|---|---|
-| `VALIDATION_ERROR` | 400 | Invalid body/params/query, including unparseable JSON |
-| `UNAUTHENTICATED` | 401 | Missing/invalid/expired session |
-| `NOT_FOUND` | 404 | Unknown route, missing resource, or another user's resource |
-| `CONFLICT` | 409 | Duplicate email, duplicate budget month |
-| `PAYLOAD_TOO_LARGE` | 413 | Body over 32 kb |
-| `RATE_LIMITED` | 429 | Rate limit exceeded |
-| `INTERNAL` | 500 | Unexpected server error (safe generic message) |
+| Code                | Status | When                                                        |
+| ------------------- | ------ | ----------------------------------------------------------- |
+| `VALIDATION_ERROR`  | 400    | Invalid body/params/query, including unparseable JSON       |
+| `UNAUTHENTICATED`   | 401    | Missing/invalid/expired session                             |
+| `NOT_FOUND`         | 404    | Unknown route, missing resource, or another user's resource |
+| `CONFLICT`          | 409    | Duplicate email, duplicate budget month                     |
+| `PAYLOAD_TOO_LARGE` | 413    | Body over 32 kb                                             |
+| `RATE_LIMITED`      | 429    | Rate limit exceeded                                         |
+| `INTERNAL`          | 500    | Unexpected server error (safe generic message)              |
 
 ---
 

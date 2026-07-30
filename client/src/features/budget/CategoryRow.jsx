@@ -36,7 +36,10 @@ export function CategoryRow({ category }) {
 
   return (
     <li className="category-row">
-      <span className={`category-row-icon category-row-icon-${category.color}`} aria-hidden="true">
+      <span
+        className={`category-row-icon category-row-icon-${category.color}`}
+        aria-hidden="true"
+      >
         {Icon ? <Icon size={24} /> : null}
       </span>
       <div className="category-row-body">

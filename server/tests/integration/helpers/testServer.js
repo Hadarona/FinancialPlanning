@@ -107,7 +107,9 @@ export function createCookieJarFetch(baseUrl) {
 
   function applySetCookie(response) {
     const raw =
-      typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+      typeof response.headers.getSetCookie === "function"
+        ? response.headers.getSetCookie()
+        : [];
     for (const entry of raw) {
       const [pair] = entry.split(";");
       const eqIndex = pair.indexOf("=");

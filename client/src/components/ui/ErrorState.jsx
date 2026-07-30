@@ -11,7 +11,11 @@ export function ErrorState({ title, description, onRetry, retryLabel = "Try agai
   const offline = typeof navigator !== "undefined" && navigator.onLine === false;
   return (
     <div className="state-panel" role="alert">
-      <TriangleAlert className="state-panel-icon state-panel-icon-error" size={40} aria-hidden="true" />
+      <TriangleAlert
+        className="state-panel-icon state-panel-icon-error"
+        size={40}
+        aria-hidden="true"
+      />
       <h2 className="state-panel-title">{title}</h2>
       {description ? <p className="state-panel-description">{description}</p> : null}
       {offline ? <p className="state-panel-description">{copy.errors.network}</p> : null}

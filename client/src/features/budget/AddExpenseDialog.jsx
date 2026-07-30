@@ -89,7 +89,13 @@ export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }
     if (createMutation.isPending) {
       return;
     }
-    const { errors, amountMinor } = validateForm({ amount, categoryId, occurredOn, note, month });
+    const { errors, amountMinor } = validateForm({
+      amount,
+      categoryId,
+      occurredOn,
+      note,
+      month,
+    });
     setFieldErrors(errors);
     setFormError("");
     if (Object.keys(errors).length > 0) {
@@ -135,7 +141,9 @@ export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }
           <label htmlFor={categorySelectId} className="field-label">
             {copy.expense.categoryLabel}
           </label>
-          <div className={`field-control${fieldErrors.categoryId ? " field-control-error" : ""}`}>
+          <div
+            className={`field-control${fieldErrors.categoryId ? " field-control-error" : ""}`}
+          >
             {SelectedIcon ? (
               <SelectedIcon className="field-icon" aria-hidden="true" size={20} />
             ) : null}
@@ -176,7 +184,9 @@ export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }
           <label htmlFor={noteId} className="field-label">
             {copy.expense.noteLabel}
           </label>
-          <div className={`field-control expense-note-control${fieldErrors.note ? " field-control-error" : ""}`}>
+          <div
+            className={`field-control expense-note-control${fieldErrors.note ? " field-control-error" : ""}`}
+          >
             <textarea
               id={noteId}
               rows={2}
@@ -184,7 +194,9 @@ export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }
               value={note}
               onChange={(event) => setNote(event.target.value)}
               aria-invalid={fieldErrors.note ? "true" : undefined}
-              aria-describedby={fieldErrors.note ? `${noteErrorId} ${noteCounterId}` : noteCounterId}
+              aria-describedby={
+                fieldErrors.note ? `${noteErrorId} ${noteCounterId}` : noteCounterId
+              }
             />
           </div>
           <p id={noteCounterId} className="expense-note-counter">
@@ -207,7 +219,11 @@ export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }
         ) : null}
 
         <div className="expense-form-actions">
-          <Button variant="secondary" onClick={handleClose} disabled={createMutation.isPending}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={createMutation.isPending}
+          >
             {copy.expense.cancelLabel}
           </Button>
           <Button

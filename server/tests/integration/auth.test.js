@@ -133,7 +133,10 @@ describe("auth rate limiting", () => {
       for (let attempt = 0; attempt < 4; attempt += 1) {
         const res = await client.request("/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email: "rate-limited@example.com", password: "whatever123" }),
+          body: JSON.stringify({
+            email: "rate-limited@example.com",
+            password: "whatever123",
+          }),
         });
         lastStatus = res.status;
       }

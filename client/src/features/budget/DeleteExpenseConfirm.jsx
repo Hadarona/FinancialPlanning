@@ -12,7 +12,14 @@ import "./DeleteExpenseConfirm.css";
  * Explicit delete confirmation that names the exact transaction
  * (D-EXP-D4). Cancel is a strict no-op (D-EXP-F6).
  */
-export function DeleteExpenseConfirm({ open, month, transaction, categoryName, onClose, onDeleted }) {
+export function DeleteExpenseConfirm({
+  open,
+  month,
+  transaction,
+  categoryName,
+  onClose,
+  onDeleted,
+}) {
   const deleteMutation = useDeleteTransactionMutation(month);
   const [error, setError] = useState("");
 
@@ -50,7 +57,11 @@ export function DeleteExpenseConfirm({ open, month, transaction, categoryName, o
         </p>
       ) : null}
       <div className="delete-expense-actions">
-        <Button variant="secondary" onClick={handleClose} disabled={deleteMutation.isPending}>
+        <Button
+          variant="secondary"
+          onClick={handleClose}
+          disabled={deleteMutation.isPending}
+        >
           {copy.expense.cancelLabel}
         </Button>
         <Button

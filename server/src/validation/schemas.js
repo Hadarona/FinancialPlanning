@@ -82,10 +82,9 @@ export const patchBudgetSchema = z
       .optional(),
   })
   .strict()
-  .refine(
-    (body) => body.incomeMinor !== undefined || body.categories !== undefined,
-    { message: "Provide income or category plans to update." },
-  );
+  .refine((body) => body.incomeMinor !== undefined || body.categories !== undefined, {
+    message: "Provide income or category plans to update.",
+  });
 
 /** Expense creation body (D-EXP-B1/B2). Money is an integer number of minor
  * units; the date is a plain calendar string (decision #6) whose membership

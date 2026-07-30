@@ -22,7 +22,10 @@ describe("registerSchema", () => {
   });
 
   it("rejects an invalid email", () => {
-    const result = registerSchema.safeParse({ email: "not-an-email", password: "supersecret" });
+    const result = registerSchema.safeParse({
+      email: "not-an-email",
+      password: "supersecret",
+    });
     expect(result.success).toBe(false);
   });
 
@@ -72,7 +75,9 @@ describe("createTransactionSchema", () => {
 
   it("rejects non-integer, non-positive, and non-numeric amounts", () => {
     for (const amountMinor of [10.5, 0, -1, "100", null]) {
-      expect(createTransactionSchema.safeParse({ ...valid, amountMinor }).success).toBe(false);
+      expect(createTransactionSchema.safeParse({ ...valid, amountMinor }).success).toBe(
+        false,
+      );
     }
   });
 
@@ -83,12 +88,15 @@ describe("createTransactionSchema", () => {
     expect(
       createTransactionSchema.safeParse({ ...valid, occurredOn: "15/07/2026" }).success,
     ).toBe(false);
-    expect(createTransactionSchema.safeParse({ ...valid, isAdmin: true }).success).toBe(false);
+    expect(createTransactionSchema.safeParse({ ...valid, isAdmin: true }).success).toBe(
+      false,
+    );
   });
 
   it("rejects a malformed clientRequestId", () => {
     expect(
-      createTransactionSchema.safeParse({ ...valid, clientRequestId: "not-a-uuid" }).success,
+      createTransactionSchema.safeParse({ ...valid, clientRequestId: "not-a-uuid" })
+        .success,
     ).toBe(false);
   });
 });

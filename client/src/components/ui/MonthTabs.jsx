@@ -9,7 +9,13 @@ import "./MonthTabs.css";
  *
  * `options`: `[{ value, label, tone: "previous" | "current" }]`.
  */
-export function MonthTabs({ options, value, onChange, panelId, label = "Compare months" }) {
+export function MonthTabs({
+  options,
+  value,
+  onChange,
+  panelId,
+  label = "Compare months",
+}) {
   const tabRefs = useRef([]);
 
   function focusAndSelect(index) {

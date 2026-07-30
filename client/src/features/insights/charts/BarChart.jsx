@@ -31,10 +31,13 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
   // Compact alternative below ~56px per label: rotate the category labels
   // so full words stay legible at 320px (D-INS-D5).
   const rotateLabels = groupWidth < 56;
-  const height = MARGIN.top + PLOT_HEIGHT + MARGIN.bottom + (rotateLabels ? ROTATED_LABEL_EXTRA : 0);
+  const height =
+    MARGIN.top + PLOT_HEIGHT + MARGIN.bottom + (rotateLabels ? ROTATED_LABEL_EXTRA : 0);
 
   const allValues = categories.flatMap((category) =>
-    hasPrevious ? [category.currentMinor, category.previousMinor] : [category.currentMinor],
+    hasPrevious
+      ? [category.currentMinor, category.previousMinor]
+      : [category.currentMinor],
   );
   const scale = axisScale(Math.max(0, ...allValues));
 
@@ -44,7 +47,8 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
   function barGeometry(value, slotIndex, groupIndex) {
     const groupStart = MARGIN.left + groupIndex * groupWidth;
     const pairWidth = hasPrevious ? barWidth * 2 + pairGap : barWidth;
-    const x = groupStart + (groupWidth - pairWidth) / 2 + slotIndex * (barWidth + pairGap);
+    const x =
+      groupStart + (groupWidth - pairWidth) / 2 + slotIndex * (barWidth + pairGap);
     const barHeight = (value / scale.max) * PLOT_HEIGHT;
     const yTop = MARGIN.top + PLOT_HEIGHT - barHeight;
     return { x, yTop, barHeight };
@@ -80,7 +84,14 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
               patternTransform="rotate(45)"
             >
               <rect width="6" height="6" fill={SERIES_COLORS.previous} />
-              <line x1="0" y1="0" x2="0" y2="6" stroke="var(--color-yellow-700)" strokeWidth="1.5" />
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="6"
+                stroke="var(--color-yellow-700)"
+                strokeWidth="1.5"
+              />
             </pattern>
           </defs>
 
@@ -95,7 +106,12 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
                   y1={y}
                   y2={y}
                 />
-                <text className="chart-axis-label" x={MARGIN.left - 8} y={y + 4} textAnchor="end">
+                <text
+                  className="chart-axis-label"
+                  x={MARGIN.left - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                >
                   {compactAxisLabel(tick)}
                 </text>
               </g>
@@ -113,7 +129,12 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
               <g key={category.id}>
                 <path
                   className="chart-mark"
-                  d={barTopRoundedPath(current.x, current.yTop, barWidth, current.barHeight)}
+                  d={barTopRoundedPath(
+                    current.x,
+                    current.yTop,
+                    barWidth,
+                    current.barHeight,
+                  )}
                   fill={SERIES_COLORS.current}
                   tabIndex={0}
                   role="img"
@@ -127,7 +148,12 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
                 {previous ? (
                   <path
                     className="chart-mark"
-                    d={barTopRoundedPath(previous.x, previous.yTop, barWidth, previous.barHeight)}
+                    d={barTopRoundedPath(
+                      previous.x,
+                      previous.yTop,
+                      barWidth,
+                      previous.barHeight,
+                    )}
                     fill={`url(#${patternId})`}
                     tabIndex={0}
                     role="img"
@@ -160,7 +186,13 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
         items={[
           { label: monthLabel, color: SERIES_COLORS.current, marker: "square" },
           ...(hasPrevious
-            ? [{ label: previousMonthLabel, color: SERIES_COLORS.previous, marker: "square" }]
+            ? [
+                {
+                  label: previousMonthLabel,
+                  color: SERIES_COLORS.previous,
+                  marker: "square",
+                },
+              ]
             : []),
         ]}
       />

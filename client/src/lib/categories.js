@@ -3,7 +3,14 @@
 // plannedMinor (from the loaded budget) and incomeMinor are ever editable.
 
 export const DEFAULT_CATEGORIES = [
-  { id: "housing", name: "Housing", icon: "House", color: "blue", displayOrder: 1, plannedMinor: 400000 },
+  {
+    id: "housing",
+    name: "Housing",
+    icon: "House",
+    color: "blue",
+    displayOrder: 1,
+    plannedMinor: 400000,
+  },
   {
     id: "groceries",
     name: "Groceries",

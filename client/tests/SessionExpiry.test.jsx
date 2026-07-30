@@ -77,7 +77,10 @@ describe("NotFoundPage", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go back home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Go back home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 });
 
@@ -89,7 +92,11 @@ describe("ErrorState offline hint", () => {
 
   afterEach(() => {
     if (originalDescriptor) {
-      Object.defineProperty(Object.getPrototypeOf(navigator), "onLine", originalDescriptor);
+      Object.defineProperty(
+        Object.getPrototypeOf(navigator),
+        "onLine",
+        originalDescriptor,
+      );
     }
   });
 

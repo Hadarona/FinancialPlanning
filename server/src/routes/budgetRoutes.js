@@ -12,7 +12,12 @@ export function createBudgetRoutes({ budgetService, requireAuth }) {
   const controller = createBudgetController({ budgetService });
 
   router.post("/", requireAuth, validate(createBudgetSchema), controller.createBudget);
-  router.get("/:month", requireAuth, validateParams(monthParamsSchema), controller.getBudget);
+  router.get(
+    "/:month",
+    requireAuth,
+    validateParams(monthParamsSchema),
+    controller.getBudget,
+  );
   router.patch(
     "/:month",
     requireAuth,

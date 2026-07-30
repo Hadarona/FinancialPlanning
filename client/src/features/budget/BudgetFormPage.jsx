@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { TriangleAlert } from "lucide-react";
-import { Link, Navigate, useBlocker, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useBlocker,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { AppHeader } from "../../components/ui/AppHeader.jsx";
 import { Button } from "../../components/ui/Button.jsx";
 import { TextInput } from "../../components/ui/TextInput.jsx";
@@ -9,7 +16,11 @@ import { Skeleton } from "../../components/ui/Skeleton.jsx";
 import { EmptyState } from "../../components/ui/EmptyState.jsx";
 import { ErrorState } from "../../components/ui/ErrorState.jsx";
 import { useAuth } from "../../app/AuthProvider.jsx";
-import { useBudgetQuery, useCreateBudgetMutation, useUpdateBudgetMutation } from "../../api/hooks.js";
+import {
+  useBudgetQuery,
+  useCreateBudgetMutation,
+  useUpdateBudgetMutation,
+} from "../../api/hooks.js";
 import { ApiError } from "../../api/client.js";
 import { DEFAULT_CATEGORIES } from "../../lib/categories.js";
 import { categoryIcon } from "../../lib/icons.js";
@@ -24,7 +35,10 @@ function defaultFormValues() {
   return {
     income: minorToInputValue(1250000),
     plans: Object.fromEntries(
-      DEFAULT_CATEGORIES.map((category) => [category.id, minorToInputValue(category.plannedMinor)]),
+      DEFAULT_CATEGORIES.map((category) => [
+        category.id,
+        minorToInputValue(category.plannedMinor),
+      ]),
     ),
   };
 }
@@ -33,7 +47,10 @@ function budgetToFormValues(budget) {
   return {
     income: minorToInputValue(budget.incomeMinor),
     plans: Object.fromEntries(
-      budget.categories.map((category) => [category.id, minorToInputValue(category.plannedMinor)]),
+      budget.categories.map((category) => [
+        category.id,
+        minorToInputValue(category.plannedMinor),
+      ]),
     ),
   };
 }
@@ -61,7 +78,9 @@ export function BudgetFormPage({ mode }) {
   const [searchParams] = useSearchParams();
 
   const requestedMonth = mode === "edit" ? params.month : searchParams.get("month");
-  const month = MONTH_PATTERN.test(requestedMonth ?? "") ? requestedMonth : currentMonth();
+  const month = MONTH_PATTERN.test(requestedMonth ?? "")
+    ? requestedMonth
+    : currentMonth();
   const monthIsValid = mode !== "edit" || MONTH_PATTERN.test(requestedMonth ?? "");
 
   const budgetQuery = useBudgetQuery(mode === "edit" && monthIsValid ? month : null);
@@ -243,7 +262,9 @@ export function BudgetFormPage({ mode }) {
                     autoComplete="off"
                     value={values.plans[category.id]}
                     onChange={(event) => setPlan(category.id, event.target.value)}
-                    error={fieldErrors[`plan-${category.id}`] ?? fieldErrors[`categories`]}
+                    error={
+                      fieldErrors[`plan-${category.id}`] ?? fieldErrors[`categories`]
+                    }
                   />
                 </div>
               </li>
@@ -252,7 +273,8 @@ export function BudgetFormPage({ mode }) {
         </ul>
 
         <p className="plan-totals" aria-live="polite">
-          {copy.plan.plannedLabel} {formatMoney(plannedMinor)} · {copy.plan.availableLabel}{" "}
+          {copy.plan.plannedLabel} {formatMoney(plannedMinor)} ·{" "}
+          {copy.plan.availableLabel}{" "}
           <span className={availableMinor < 0 ? "plan-totals-negative" : undefined}>
             {formatMoney(availableMinor)}
           </span>

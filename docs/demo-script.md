@@ -27,16 +27,16 @@ populated with the design kit's reference numbers (current total spending
    Register with a throwaway email (e.g. `demo-day@example.com`) and an
    8+ character password. You land on the Budget screen with an empty state —
    "No budget for July yet".
-   - *Point out:* show/hide password toggle, visible labels, inline
+   - _Point out:_ show/hide password toggle, visible labels, inline
      validation (try a short password first, if time allows).
 2. **Create the budget.** Click "Create budget". Enter income `12,500` and
    keep the prefilled plans (they total `10,200`). Watch the live footer:
    "Planned 10,200 · Available 2,300" updates per keystroke.
-   - *Fallback:* mistype and the field errors keep your input; the
+   - _Fallback:_ mistype and the field errors keep your input; the
      unsaved-changes guard fires if you try to navigate away.
 3. **Add an expense.** On the Budget screen press "Add expense". Amount
    `42.50`, category Groceries, today's date, note "Team lunch". Save.
-   - *Point out:* the dialog closes, the Groceries row's actual/progress and
+   - _Point out:_ the dialog closes, the Groceries row's actual/progress and
      the monthly totals update instantly — no reload; the new entry tops the
      "Recent expenses" history.
 4. **Delete it (optional beat).** Press the delete button on the new entry —

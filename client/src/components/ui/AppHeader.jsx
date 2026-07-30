@@ -8,7 +8,13 @@ import "./AppHeader.css";
  * and the overflow menu. `menuItems` are page-specific entries
  * (`[{ label, onSelect?, disabled? }]`); Logout is always appended last.
  */
-export function AppHeader({ title, onLogout, menuItems = [], onBack, backLabel = "Back" }) {
+export function AppHeader({
+  title,
+  onLogout,
+  menuItems = [],
+  onBack,
+  backLabel = "Back",
+}) {
   return (
     <header className="app-header">
       {onBack ? (

@@ -58,7 +58,11 @@ a {
   outline-offset: 2px;
 }
 
-/* Screen-reader-only content (e.g. chart data tables). */
+/* Screen-reader-only content (e.g. chart data tables). Apply this class to a
+   block wrapper (div/span), never directly to a <table>: Chromium's automatic
+   table layout treats an explicit 1px width on a <table> as a minimum and
+   expands it to min-content width, which made hidden chart tables create real
+   horizontal scroll at a 320px viewport (DEV-SELFTEST-001). */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -69,6 +73,19 @@ a {
   clip-path: inset(50%);
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* Defense in depth for DEV-SELFTEST-001: force the fixed table-layout
+   algorithm on any table under the hidden utility so cell content can never
+   drive min-content sizing. Chromium still widens the table wrapper box to a
+   nowrap <caption>'s width, so this alone is not sufficient — the 1px
+   overflow-hidden block wrapper above is the load-bearing containment
+   (VisuallyHiddenTable.jsx puts the class on a <div>, never the <table>;
+   enforced by the InsightsPage regression test). */
+.visually-hidden table,
+table.visually-hidden {
+  table-layout: fixed;
+  width: 1px;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -91,7 +91,12 @@ describe("ExpensePanel", () => {
   });
 
   it("shows the empty-history state when there are no expenses", async () => {
-    apiClient.get.mockResolvedValueOnce({ transactions: [], total: 0, limit: 50, offset: 0 });
+    apiClient.get.mockResolvedValueOnce({
+      transactions: [],
+      total: 0,
+      limit: 50,
+      offset: 0,
+    });
 
     renderPanel();
 

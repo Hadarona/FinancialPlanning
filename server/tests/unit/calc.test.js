@@ -39,8 +39,14 @@ describe("daysInMonth / monthRange", () => {
   });
 
   it("returns string date bounds for month membership comparison", () => {
-    expect(monthRange("2026-07")).toEqual({ firstDay: "2026-07-01", lastDay: "2026-07-31" });
-    expect(monthRange("2026-02")).toEqual({ firstDay: "2026-02-01", lastDay: "2026-02-28" });
+    expect(monthRange("2026-07")).toEqual({
+      firstDay: "2026-07-01",
+      lastDay: "2026-07-31",
+    });
+    expect(monthRange("2026-02")).toEqual({
+      firstDay: "2026-02-01",
+      lastDay: "2026-02-28",
+    });
   });
 
   it("rejects a malformed month", () => {
@@ -57,11 +63,46 @@ function kitBudgetRow() {
     currencyCode: "USD",
     incomeMinor: 1250000,
     categories: [
-      { id: "housing", name: "Housing", icon: "House", color: "blue", displayOrder: 1, plannedMinor: 400000 },
-      { id: "groceries", name: "Groceries", icon: "ShoppingCart", color: "green", displayOrder: 2, plannedMinor: 150000 },
-      { id: "transport", name: "Transport", icon: "CarFront", color: "yellow", displayOrder: 3, plannedMinor: 80000 },
-      { id: "fun", name: "Fun", icon: "PartyPopper", color: "coral", displayOrder: 4, plannedMinor: 90000 },
-      { id: "savings", name: "Savings", icon: "PiggyBank", color: "blue", displayOrder: 5, plannedMinor: 300000 },
+      {
+        id: "housing",
+        name: "Housing",
+        icon: "House",
+        color: "blue",
+        displayOrder: 1,
+        plannedMinor: 400000,
+      },
+      {
+        id: "groceries",
+        name: "Groceries",
+        icon: "ShoppingCart",
+        color: "green",
+        displayOrder: 2,
+        plannedMinor: 150000,
+      },
+      {
+        id: "transport",
+        name: "Transport",
+        icon: "CarFront",
+        color: "yellow",
+        displayOrder: 3,
+        plannedMinor: 80000,
+      },
+      {
+        id: "fun",
+        name: "Fun",
+        icon: "PartyPopper",
+        color: "coral",
+        displayOrder: 4,
+        plannedMinor: 90000,
+      },
+      {
+        id: "savings",
+        name: "Savings",
+        icon: "PiggyBank",
+        color: "blue",
+        displayOrder: 5,
+        plannedMinor: 300000,
+      },
     ],
   };
 }

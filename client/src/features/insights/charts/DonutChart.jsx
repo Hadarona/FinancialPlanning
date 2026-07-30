@@ -90,7 +90,12 @@ export function DonutChart({ categories, totalMinor, monthLabel }) {
           <text className="donut-center-value" x={center} y={center} textAnchor="middle">
             {formatMoney(totalMinor)}
           </text>
-          <text className="donut-center-label" x={center} y={center + 20} textAnchor="middle">
+          <text
+            className="donut-center-label"
+            x={center}
+            y={center + 20}
+            textAnchor="middle"
+          >
             {monthLabel}
           </text>
         </svg>

@@ -17,7 +17,11 @@ export function createTransactionController({ transactionService }) {
 
     async remove(req, res, next) {
       try {
-        await transactionService.deleteTransaction(req.user.id, req.params.month, req.params.id);
+        await transactionService.deleteTransaction(
+          req.user.id,
+          req.params.month,
+          req.params.id,
+        );
         res.status(204).end();
       } catch (err) {
         next(err);

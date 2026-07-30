@@ -18,7 +18,10 @@ async function registerUser(baseUrl) {
   const client = createCookieJarFetch(baseUrl);
   const res = await client.request("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email: `contract-${randomUUID()}@example.com`, password: PASSWORD }),
+    body: JSON.stringify({
+      email: `contract-${randomUUID()}@example.com`,
+      password: PASSWORD,
+    }),
   });
   expect(res.status).toBe(201);
   return client;
@@ -124,9 +127,12 @@ describe("error contract (D-RESP-B1/B2): one envelope for every failure class", 
       body: JSON.stringify(kitBudgetBody("2026-08")),
     });
     expect(create.status).toBe(201);
-    const res = await client.request("/budgets/2026-08/transactions/definitely-not-a-uuid", {
-      method: "DELETE",
-    });
+    const res = await client.request(
+      "/budgets/2026-08/transactions/definitely-not-a-uuid",
+      {
+        method: "DELETE",
+      },
+    );
     await expectErrorEnvelope(res, { status: 404, code: "NOT_FOUND" });
   }, 30000);
 
@@ -151,38 +157,34 @@ describe("database failure path (D-RESP-B4)", () => {
     await ctx.close();
   });
 
-  it(
-    "a broken database yields a correlated 500 + error log, and the server keeps serving",
-    async () => {
-      const client = await registerUser(ctx.baseUrl);
+  it("a broken database yields a correlated 500 + error log, and the server keeps serving", async () => {
+    const client = await registerUser(ctx.baseUrl);
 
-      // Break the backing schema out from under the running server.
-      await dropSchema({ databaseUrl: ctx.config.databaseUrl, schema: ctx.schema });
+    // Break the backing schema out from under the running server.
+    await dropSchema({ databaseUrl: ctx.config.databaseUrl, schema: ctx.schema });
 
-      const res = await client.request("/budgets/2026-07");
-      expect(res.status).toBe(500);
-      const body = await res.json();
-      expect(body.error.code).toBe("INTERNAL");
-      expect(body.error.message).toBe("Something went wrong. Please try again.");
-      const { requestId } = body.error;
-      expect(JSON.stringify(body)).not.toMatch(/relation|schema|postgres/i);
+    const res = await client.request("/budgets/2026-07");
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error.code).toBe("INTERNAL");
+    expect(body.error.message).toBe("Something went wrong. Please try again.");
+    const { requestId } = body.error;
+    expect(JSON.stringify(body)).not.toMatch(/relation|schema|postgres/i);
 
-      // The process did not crash: DB-free endpoints still respond.
-      const health = await client.request("/health");
-      expect(health.status).toBe(200);
+    // The process did not crash: DB-free endpoints still respond.
+    const health = await client.request("/health");
+    expect(health.status).toBe(200);
 
-      // The failure is correlated in the external error log.
-      let logged = null;
-      for (let attempt = 0; attempt < 20 && !logged; attempt += 1) {
-        const entries = await ctx.readLogFile("error.log");
-        logged = entries.find((entry) => entry.requestId === requestId) ?? null;
-        if (!logged) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
+    // The failure is correlated in the external error log.
+    let logged = null;
+    for (let attempt = 0; attempt < 20 && !logged; attempt += 1) {
+      const entries = await ctx.readLogFile("error.log");
+      logged = entries.find((entry) => entry.requestId === requestId) ?? null;
+      if (!logged) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
-      expect(logged).not.toBeNull();
-      expect(logged.status).toBe(500);
-    },
-    60000,
-  );
+    }
+    expect(logged).not.toBeNull();
+    expect(logged.status).toBe(500);
+  }, 60000);
 });

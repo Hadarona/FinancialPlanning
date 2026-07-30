@@ -71,11 +71,19 @@ export function createLoggers(config) {
     ...(config.logRotateSize ? { size: config.logRotateSize } : {}),
     ...(config.logRotateKeep ? { keep: config.logRotateKeep } : {}),
   };
-  const requestLogger = createRollingLogger(config.logDir, "requests.log", "info", rotation);
+  const requestLogger = createRollingLogger(
+    config.logDir,
+    "requests.log",
+    "info",
+    rotation,
+  );
   const errorLogger = createRollingLogger(config.logDir, "error.log", "error", rotation);
 
   async function close() {
-    await Promise.allSettled([closeTransport(requestLogger), closeTransport(errorLogger)]);
+    await Promise.allSettled([
+      closeTransport(requestLogger),
+      closeTransport(errorLogger),
+    ]);
   }
 
   return { requestLogger, errorLogger, close };

@@ -11,10 +11,14 @@ function uniqueEmail(prefix) {
 
 async function registerUser(baseUrl) {
   const client = createCookieJarFetch(baseUrl);
-  const res = await client.request("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ email: uniqueEmail("budget"), password: PASSWORD }),
-  }, 30000);
+  const res = await client.request(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({ email: uniqueEmail("budget"), password: PASSWORD }),
+    },
+    30000,
+  );
   expect(res.status).toBe(201);
   const body = await res.json();
   return { client, userId: body.user.id };
@@ -32,7 +36,12 @@ describe("GET /budgets/:month", () => {
   let ctx;
   let pool;
 
-  async function insertBudget({ userId, month, incomeMinor = 1250000, categories = kitCategories() }) {
+  async function insertBudget({
+    userId,
+    month,
+    incomeMinor = 1250000,
+    categories = kitCategories(),
+  }) {
     const result = await pool.query(
       `INSERT INTO budget_periods (user_id, month, income_minor, categories)
        VALUES ($1, $2, $3, $4::jsonb)
@@ -42,7 +51,13 @@ describe("GET /budgets/:month", () => {
     return result.rows[0].id;
   }
 
-  async function insertTransaction({ userId, budgetPeriodId, categoryId, amountMinor, occurredOn }) {
+  async function insertTransaction({
+    userId,
+    budgetPeriodId,
+    categoryId,
+    amountMinor,
+    occurredOn,
+  }) {
     await pool.query(
       `INSERT INTO transactions (user_id, budget_period_id, category_id, amount_minor, occurred_on)
        VALUES ($1, $2, $3, $4, $5)`,

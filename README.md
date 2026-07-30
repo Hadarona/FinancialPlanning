@@ -104,13 +104,13 @@ Full DDL: `server/src/db/migrations/001_init.sql` (applied by
 - `users(id, email UNIQUE lowercase, password_hash, timestamps)` — bcrypt
   hashes; passwords never returned or logged.
 - `budget_periods(id, user_id FK, month 'YYYY-MM', currency_code,
-  income_minor, categories JSONB, timestamps)` — one per user per month
+income_minor, categories JSONB, timestamps)` — one per user per month
   (`UNIQUE (user_id, month)`). `categories` holds the five fixed categories
   (`housing`, `groceries`, `transport`, `fun`, `savings`) with their planned
   amounts; names/icons/colors/order are server constants.
 - `transactions(id, user_id FK, budget_period_id FK, category_id, type,
-  amount_minor > 0, occurred_on DATE, note ≤200, client_request_id,
-  timestamps)` — a partial unique index on
+amount_minor > 0, occurred_on DATE, note ≤200, client_request_id,
+timestamps)` — a partial unique index on
   `(budget_period_id, client_request_id)` makes retried submissions
   idempotent.
 
@@ -134,19 +134,19 @@ answer `404` with no existence leak; every response carries `X-Request-Id`.
 
 ## Environment variables
 
-| Var | Required | Default | Notes |
-|---|---|---|---|
-| `DATABASE_URL` | yes | — | Neon/Postgres connection string; never logged |
-| `JWT_SECRET` | yes | — | HS256 session-signing secret; never logged |
-| `PORT` | no | `4000` | Express listen port |
-| `NODE_ENV` | no | `development` | `development` \| `test` \| `production` |
-| `LOG_DIR` | no | `<repo>/logs` | gitignored; rotating request/error logs |
-| `CORS_ORIGIN` | no | `http://localhost:5173` | comma-separated allowlist |
-| `DB_SCHEMA` | no | `public` | tests use isolated `test_*` schemas |
-| `BCRYPT_ROUNDS` | no | `10` | password hashing cost |
-| `RATE_LIMIT_MAX` / `RATE_LIMIT_AUTH_MAX` | no | `300` / `10` per 15 min | general vs. strict auth limiter |
-| `ALLOW_DEMO_SEED` | no | unset | demo seed refuses unless `true` and not production |
-| `SERVE_CLIENT` | no | unset | when `true`, Express serves `client/dist` with SPA fallback |
+| Var                                      | Required | Default                 | Notes                                                       |
+| ---------------------------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL`                           | yes      | —                       | Neon/Postgres connection string; never logged               |
+| `JWT_SECRET`                             | yes      | —                       | HS256 session-signing secret; never logged                  |
+| `PORT`                                   | no       | `4000`                  | Express listen port                                         |
+| `NODE_ENV`                               | no       | `development`           | `development` \| `test` \| `production`                     |
+| `LOG_DIR`                                | no       | `<repo>/logs`           | gitignored; rotating request/error logs                     |
+| `CORS_ORIGIN`                            | no       | `http://localhost:5173` | comma-separated allowlist                                   |
+| `DB_SCHEMA`                              | no       | `public`                | tests use isolated `test_*` schemas                         |
+| `BCRYPT_ROUNDS`                          | no       | `10`                    | password hashing cost                                       |
+| `RATE_LIMIT_MAX` / `RATE_LIMIT_AUTH_MAX` | no       | `300` / `10` per 15 min | general vs. strict auth limiter                             |
+| `ALLOW_DEMO_SEED`                        | no       | unset                   | demo seed refuses unless `true` and not production          |
+| `SERVE_CLIENT`                           | no       | unset                   | when `true`, Express serves `client/dist` with SPA fallback |
 
 The server fails fast on missing/invalid required variables, printing only
 the offending variable **names**, never values.
@@ -155,18 +155,18 @@ the offending variable **names**, never values.
 
 Run from the repo root (npm workspaces: `client/`, `server/`):
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Runs server + client concurrently |
-| `npm run lint` | ESLint across both workspaces |
-| `npm run format:check` | Prettier check |
-| `npm test` | Server unit tests + client component tests |
-| `npm run test:integration` | Server real-HTTP integration tests (needs `DATABASE_URL`) |
-| `npm run coverage` | Coverage for both workspaces (≥70% thresholds enforced) |
-| `npm run build` | Production client build (Vite) |
-| `npm run migrate` | Runs pending SQL migrations against `DATABASE_URL` |
-| `npm run seed:demo` | Deterministic demo data (guarded; see env table) |
-| `npm run smoke` | 15-check end-to-end journey against a **running** server (`SMOKE_BASE_URL`, default `http://localhost:4000`) |
+| Script                     | Description                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`              | Runs server + client concurrently                                                                            |
+| `npm run lint`             | ESLint across both workspaces                                                                                |
+| `npm run format:check`     | Prettier check                                                                                               |
+| `npm test`                 | Server unit tests + client component tests                                                                   |
+| `npm run test:integration` | Server real-HTTP integration tests (needs `DATABASE_URL`)                                                    |
+| `npm run coverage`         | Coverage for both workspaces (≥70% thresholds enforced)                                                      |
+| `npm run build`            | Production client build (Vite)                                                                               |
+| `npm run migrate`          | Runs pending SQL migrations against `DATABASE_URL`                                                           |
+| `npm run seed:demo`        | Deterministic demo data (guarded; see env table)                                                             |
+| `npm run smoke`            | 15-check end-to-end journey against a **running** server (`SMOKE_BASE_URL`, default `http://localhost:4000`) |
 
 ## Testing and coverage
 
@@ -206,7 +206,7 @@ Run from the repo root (npm workspaces: `client/`, `server/`):
   session user at the repository layer.
 - Security review evidence: `server/tests/integration/security.test.js` and
   the Stage H checklist under `.workflow/sprints/delivery/iteration-01/
-  developer/evidence/security-checklist.md` (including `npm audit` accepted-
+developer/evidence/security-checklist.md` (including `npm audit` accepted-
   advisory rationale).
 
 ## Design source
@@ -233,27 +233,27 @@ recommend.
 
 ### Mandatory
 
-| # | Requirement | Status | Evidence |
-|---|---|---|---|
-| 1 | Developed on Linux/macOS, project directory, `README.md` with a description | Done | This repository (built on macOS); this README |
-| 2 | Git; `main` as main branch; feature branches; no system files uploaded | Done | Branch `feature/budgeting-app` → single PR to `main`; `.gitignore` excludes `.env`, `logs/`, `dist/`, `node_modules/`, OS files |
-| 3 | Unit tests | Done | `server/tests/unit/` (calc, schemas, auth service/middleware, log rotation), `client/tests/` — run `npm test` |
-| 4 | Third-party libraries to avoid reinventing the wheel; `ALL_LICENSES` file | Done | `package.json` ×3; `ALL_LICENSES.md` lists every direct dependency + license |
-| 5 | Package manager with dependency file; licenses in `ALL_LICENSES` | Done | npm workspaces; root/`server`/`client` `package.json`; `ALL_LICENSES.md` |
-| 6 | Agile: small tasks, user story per task, Kanban board, progress over time | Done | `docs/agile/board.md` (user stories + acceptance per card), `docs/agile/progress-log.md`, per-stage commits A–I |
-| 7 | ≥3 major changes code-reviewed; pull requests; comments addressed | Done (recorded substitution) | Three in-repo major review records `docs/agile/reviews/review-{1-auth,2-expenses,3-insights}.md` with findings and resolutions; one final PR per the repository's single-PR delivery rule |
-| 8 | Useful logs; errors logged; ≥1 log per server request; logs saved to external file | Done | `server/src/logging/` — rotating `logs/requests.log` + `logs/error.log` (pino/pino-roll), metadata-only with redaction; proven in `server/tests/integration/health.test.js`, `auth.test.js` |
-| 9 | Secure code, especially around user input | Done | zod validation on every input, parameterized queries only, helmet/CORS/rate limits/32 kb body limit, ownership filtering; `server/tests/integration/security.test.js` (injection corpus, ownership matrix, limits) |
+| #   | Requirement                                                                        | Status                       | Evidence                                                                                                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Developed on Linux/macOS, project directory, `README.md` with a description        | Done                         | This repository (built on macOS); this README                                                                                                                                                                      |
+| 2   | Git; `main` as main branch; feature branches; no system files uploaded             | Done                         | Branch `feature/budgeting-app` → single PR to `main`; `.gitignore` excludes `.env`, `logs/`, `dist/`, `node_modules/`, OS files                                                                                    |
+| 3   | Unit tests                                                                         | Done                         | `server/tests/unit/` (calc, schemas, auth service/middleware, log rotation), `client/tests/` — run `npm test`                                                                                                      |
+| 4   | Third-party libraries to avoid reinventing the wheel; `ALL_LICENSES` file          | Done                         | `package.json` ×3; `ALL_LICENSES.md` lists every direct dependency + license                                                                                                                                       |
+| 5   | Package manager with dependency file; licenses in `ALL_LICENSES`                   | Done                         | npm workspaces; root/`server`/`client` `package.json`; `ALL_LICENSES.md`                                                                                                                                           |
+| 6   | Agile: small tasks, user story per task, Kanban board, progress over time          | Done                         | `docs/agile/board.md` (user stories + acceptance per card), `docs/agile/progress-log.md`, per-stage commits A–I                                                                                                    |
+| 7   | ≥3 major changes code-reviewed; pull requests; comments addressed                  | Done (recorded substitution) | Three in-repo major review records `docs/agile/reviews/review-{1-auth,2-expenses,3-insights}.md` with findings and resolutions; one final PR per the repository's single-PR delivery rule                          |
+| 8   | Useful logs; errors logged; ≥1 log per server request; logs saved to external file | Done                         | `server/src/logging/` — rotating `logs/requests.log` + `logs/error.log` (pino/pino-roll), metadata-only with redaction; proven in `server/tests/integration/health.test.js`, `auth.test.js`                        |
+| 9   | Secure code, especially around user input                                          | Done                         | zod validation on every input, parameterized queries only, helmet/CORS/rate limits/32 kb body limit, ownership filtering; `server/tests/integration/security.test.js` (injection corpus, ownership matrix, limits) |
 
 ### Bonus
 
-| # | Requirement | Status | Evidence |
-|---|---|---|---|
-| B1 | ≥70% code coverage, measured by a tool | Done | `npm run coverage` — vitest + V8 provider; thresholds (70% lines/statements/functions, 60% branches) enforced in `server/vitest.config.js` and `client/vitest.config.js`; final numbers above |
-| B2 | API integration tests against a real server over HTTP | Done | `server/tests/integration/` — every suite boots a real listening server (`app.listen(0)`) and uses `fetch`; isolated per-run DB schemas |
-| B3 | `package-lock.json` committed | Done | Single root `package-lock.json` for both workspaces |
-| B4 | Basic authentication (username + password) | Done | Email + password register/login with bcrypt hashing and JWT-in-HTTP-only-cookie sessions (`server/src/services/authService.js`) |
-| B5 | Contribute to an open-source project | Not attempted | Explicit non-goal for this delivery (see developer plan §non-goals) |
+| #   | Requirement                                           | Status        | Evidence                                                                                                                                                                                      |
+| --- | ----------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | ≥70% code coverage, measured by a tool                | Done          | `npm run coverage` — vitest + V8 provider; thresholds (70% lines/statements/functions, 60% branches) enforced in `server/vitest.config.js` and `client/vitest.config.js`; final numbers above |
+| B2  | API integration tests against a real server over HTTP | Done          | `server/tests/integration/` — every suite boots a real listening server (`app.listen(0)`) and uses `fetch`; isolated per-run DB schemas                                                       |
+| B3  | `package-lock.json` committed                         | Done          | Single root `package-lock.json` for both workspaces                                                                                                                                           |
+| B4  | Basic authentication (username + password)            | Done          | Email + password register/login with bcrypt hashing and JWT-in-HTTP-only-cookie sessions (`server/src/services/authService.js`)                                                               |
+| B5  | Contribute to an open-source project                  | Not attempted | Explicit non-goal for this delivery (see developer plan §non-goals)                                                                                                                           |
 
 ## Known limitations (honest scope notes)
 

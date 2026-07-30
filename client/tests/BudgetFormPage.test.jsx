@@ -125,9 +125,7 @@ describe("BudgetFormPage", () => {
     expect(screen.getByLabelText("Income")).toHaveValue("9999");
 
     await user.click(screen.getByRole("button", { name: "Cancel" }));
-    await user.click(
-      await screen.findByRole("button", { name: "Discard changes" }),
-    );
+    await user.click(await screen.findByRole("button", { name: "Discard changes" }));
     expect(await screen.findByText("Budget destination")).toBeInTheDocument();
   });
 
@@ -165,11 +163,61 @@ describe("BudgetFormPage", () => {
             availableMinor: 280000,
             actualMinor: 0,
             categories: [
-              { id: "housing", name: "Housing", icon: "House", color: "blue", displayOrder: 1, plannedMinor: 400000, actualMinor: 0, progressPercent: 0, state: "normal" },
-              { id: "groceries", name: "Groceries", icon: "ShoppingCart", color: "green", displayOrder: 2, plannedMinor: 150000, actualMinor: 0, progressPercent: 0, state: "normal" },
-              { id: "transport", name: "Transport", icon: "CarFront", color: "yellow", displayOrder: 3, plannedMinor: 80000, actualMinor: 0, progressPercent: 0, state: "normal" },
-              { id: "fun", name: "Fun", icon: "PartyPopper", color: "coral", displayOrder: 4, plannedMinor: 90000, actualMinor: 0, progressPercent: 0, state: "normal" },
-              { id: "savings", name: "Savings", icon: "PiggyBank", color: "blue", displayOrder: 5, plannedMinor: 300000, actualMinor: 0, progressPercent: 0, state: "normal" },
+              {
+                id: "housing",
+                name: "Housing",
+                icon: "House",
+                color: "blue",
+                displayOrder: 1,
+                plannedMinor: 400000,
+                actualMinor: 0,
+                progressPercent: 0,
+                state: "normal",
+              },
+              {
+                id: "groceries",
+                name: "Groceries",
+                icon: "ShoppingCart",
+                color: "green",
+                displayOrder: 2,
+                plannedMinor: 150000,
+                actualMinor: 0,
+                progressPercent: 0,
+                state: "normal",
+              },
+              {
+                id: "transport",
+                name: "Transport",
+                icon: "CarFront",
+                color: "yellow",
+                displayOrder: 3,
+                plannedMinor: 80000,
+                actualMinor: 0,
+                progressPercent: 0,
+                state: "normal",
+              },
+              {
+                id: "fun",
+                name: "Fun",
+                icon: "PartyPopper",
+                color: "coral",
+                displayOrder: 4,
+                plannedMinor: 90000,
+                actualMinor: 0,
+                progressPercent: 0,
+                state: "normal",
+              },
+              {
+                id: "savings",
+                name: "Savings",
+                icon: "PiggyBank",
+                color: "blue",
+                displayOrder: 5,
+                plannedMinor: 300000,
+                actualMinor: 0,
+                progressPercent: 0,
+                state: "normal",
+              },
             ],
           },
         });
