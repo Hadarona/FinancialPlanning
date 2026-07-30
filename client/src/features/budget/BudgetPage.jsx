@@ -12,6 +12,7 @@ import { copy } from "../../lib/copy.js";
 import { currentMonth, monthLabel } from "../../lib/dates.js";
 import { SummaryMetrics } from "./SummaryMetrics.jsx";
 import { CategoryRow } from "./CategoryRow.jsx";
+import { MonthNav } from "./MonthNav.jsx";
 import { ExpensePanel } from "./ExpensePanel.jsx";
 import { AddExpenseDialog } from "./AddExpenseDialog.jsx";
 import { DeleteExpenseConfirm } from "./DeleteExpenseConfirm.jsx";
@@ -131,9 +132,14 @@ export function BudgetPage() {
 
   return (
     <div className="budget-page">
-      <AppHeader title={copy.budget.title} onLogout={handleLogout} />
+      <AppHeader
+        title={copy.budget.title}
+        onLogout={handleLogout}
+        editBudgetEnabled={budgetQuery.isSuccess}
+        onEditBudget={() => navigate(`/budget/${month}/edit`)}
+      />
       <main className="budget-main">
-        <p className="budget-month-label">{monthLabel(month)}</p>
+        <MonthNav month={month} onNavigate={(nextValue) => navigate(`/budget?month=${nextValue}`)} />
         {renderContent()}
         <p role="status" aria-live="polite" className="budget-status">
           {statusMessage}

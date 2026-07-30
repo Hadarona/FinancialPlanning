@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { BudgetPage } from "../src/features/budget/BudgetPage.jsx";
 import { renderProviders } from "./testUtils.jsx";
 import { apiClient, ApiError } from "../src/api/client.js";
-import { currentMonth, monthLabel } from "../src/lib/dates.js";
+import { currentMonth, monthLabel, previousMonth } from "../src/lib/dates.js";
 
 vi.mock("../src/api/client.js", async (importOriginal) => {
   const actual = await importOriginal();
@@ -127,6 +127,42 @@ describe("BudgetPage", () => {
       await screen.findByText(`No budget for ${monthLabel(currentMonth())} yet`),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
+  });
+
+  it("navigates months and shows a clear empty state for a month without a budget (D-PLN-F4)", async () => {
+    const prev = previousMonth(currentMonth());
+    apiClient.get.mockImplementation((path) => {
+      if (path === "/auth/me") {
+        return Promise.resolve(USER);
+      }
+      if (path.includes("/transactions")) {
+        return Promise.resolve({ transactions: [], total: 0, limit: 50, offset: 0 });
+      }
+      if (path === `/budgets/${currentMonth()}`) {
+        return Promise.resolve(budgetFixture());
+      }
+      if (path === `/budgets/${prev}`) {
+        return Promise.reject(
+          new ApiError({ code: "NOT_FOUND", status: 404, message: "No budget for this month." }),
+        );
+      }
+      return Promise.reject(new Error(`Unexpected GET ${path}`));
+    });
+    render(renderProviders(<BudgetPage />));
+    const user = userEvent.setup();
+
+    expect(await screen.findByText("12,500")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+
+    expect(
+      await screen.findByText(`No budget for ${monthLabel(prev)} yet`),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
+
+    // Navigating back restores the loaded month.
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(await screen.findByText("12,500")).toBeInTheDocument();
   });
 
   it("keeps the authenticated shell and offers retry on failure (D-BUD-F5)", async () => {

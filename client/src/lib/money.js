@@ -30,6 +30,23 @@ export function parseMoneyToMinor(input) {
 }
 
 /**
+ * Renders integer minor units as a plain editable input value ("4250" ->
+ * "42.50", "400000" -> "4000") — pure string arithmetic, no float division,
+ * round-tripping exactly through `parseMoneyToMinor`.
+ */
+export function minorToInputValue(minor) {
+  if (typeof minor !== "number" || !Number.isFinite(minor)) {
+    return "";
+  }
+  const negative = minor < 0;
+  const abs = Math.abs(Math.trunc(minor));
+  const whole = Math.floor(abs / 100);
+  const cents = abs % 100;
+  const formatted = cents === 0 ? String(whole) : `${whole}.${String(cents).padStart(2, "0")}`;
+  return negative ? `-${formatted}` : formatted;
+}
+
+/**
  * Renders integer minor units as "1,234" (en-US grouping, no currency
  * symbol per product decision #1). Cents are shown only when nonzero, e.g.
  * 420050 -> "4,200.50" but 420000 -> "4,200".

@@ -36,8 +36,30 @@ export function useBudgetQuery(month) {
   return useQuery({
     queryKey: ["budget", month],
     queryFn: () => apiClient.get(`/budgets/${month}`),
+    enabled: Boolean(month),
     retry: false,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useCreateBudgetMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiClient.post("/budgets", payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["budget", data.budget.month], data);
+    },
+  });
+}
+
+export function useUpdateBudgetMutation(month) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiClient.patch(`/budgets/${month}`, payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["budget", month], data);
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+    },
   });
 }
 

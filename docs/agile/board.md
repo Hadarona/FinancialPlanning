@@ -58,13 +58,19 @@ accompanying narrative.
   `client/tests/{AddExpenseDialog,DeleteExpenseConfirm}.test.jsx`,
   `docs/agile/reviews/review-2-expenses.md`.
 
-## Backlog (not yet started — later batches)
-
 ### Stage E — Plans + month navigation (Sprint 4)
 
 - **Story:** As a user, I can create/edit a month's income and category
   plans and navigate between months.
 - **Acceptance:** D-PLN-D1..D5, D-PLN-F1..F6, D-PLN-B1..B6, D-PLN-Q1..Q6.
+- **Evidence:** `server/src/services/budgetService.js` (create/update),
+  `server/src/validation/schemas.js` (budget schemas),
+  `server/tests/integration/plans.test.js`,
+  `client/src/features/budget/{BudgetFormPage,MonthNav}.jsx`,
+  `client/tests/BudgetFormPage.test.jsx`,
+  `client/tests/BudgetPage.test.jsx` (month-navigation empty state).
+
+## Backlog (not yet started — later batches)
 
 ### Stage F — Insights (Sprint 5)
 

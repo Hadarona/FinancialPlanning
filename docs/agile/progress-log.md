@@ -171,3 +171,37 @@ originally depended on the `onClose` prop identity, so every keystroke
 re-ran it and yanked focus back to the first field. See
 `docs/agile/reviews/review-2-expenses.md` finding #1.
 
+## Stage E — Plans + month navigation
+
+**API.** `POST /budgets` and `PATCH /budgets/:month`. The client only ever
+sends `{id, plannedMinor}` pairs — the stored categories are rebuilt from
+the server-side constants, so names/icons/colors/order cannot be altered and
+the fixed set can never shrink (decision #7, D-PLN-B5). Creation strictly
+requires exactly the five default ids, each once; duplicate months are
+decided by the DB unique constraint, so concurrent duplicate creates resolve
+as one 201 + one 409 (verified with two parallel HTTP requests). Patches
+merge income and/or a subset of plans and return the freshly recalculated
+read model. Over-allocation is accepted with a negative `availableMinor`
+(decision #2). Cross-user patching is a 404; creation is bound to the
+session user by construction (no user field in the body).
+
+**UI.** `BudgetFormPage` (routes `/budget/new?month=` and
+`/budget/:month/edit`): income + five single-column category rows (icon +
+labelled input, no dense grids at 320px), a live "Planned X · Available Y"
+footer recomputed per keystroke from string-parsed cents, an over-allocation
+warning (icon + text, saving still allowed), 409 recovery message linking to
+the existing month, and an unsaved-changes guard — `beforeunload` plus a
+router blocker with an explicit Keep editing / Discard changes dialog.
+Create prefills the kit defaults; edit prefills stored values and PATCHes
+all five plans. `MonthNav` (prev/next arrows + month-year label) drives
+`/budget?month=` navigation; a month without a budget shows "No budget for
+<Month> yet" with a Create action wired to the form. The header menu's "Edit
+budget" item is now enabled whenever a budget is loaded.
+
+**Test-harness note.** Component tests for the router blocker required a
+data router (`createMemoryRouter`); vitest's jsdom environment injects
+jsdom's `AbortController` while keeping Node's undici `Request`, whose brand
+check rejects cross-realm signals and crashed every data-router navigation.
+A test-setup-only `Request` shim drops the foreign signal (impossible in a
+real browser — single realm); no product code changed.
+
