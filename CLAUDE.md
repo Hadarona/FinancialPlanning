@@ -56,7 +56,7 @@ the following routing:
 | Phase | Model |
 | --- | --- |
 | Developer plan/fix plan | `fable` |
-| Developer build | `sonnet` |
+| Developer build | `fable` |
 | Developer self-test | `sonnet` |
 | QA plan | `fable` |
 | QA test build | `sonnet` |

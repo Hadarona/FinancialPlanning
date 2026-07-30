@@ -8,7 +8,7 @@ performs well-specified execution.
 | Role and phase | Model | Rationale |
 | --- | --- | --- |
 | Developer plan/fix plan | `fable` | Architecture, ambiguity, complete issue-to-task mapping |
-| Developer build | `sonnet` | Execute a detailed mechanical plan efficiently |
+| Developer build | `fable` | Per user decision (2026-07-30): builds run on the deep-reasoning model |
 | Developer self-test | `sonnet` | Run checks, inspect evidence, report defects |
 | QA plan | `fable` | Build complete risk and acceptance coverage |
 | QA test build | `sonnet` | Implement explicit tests and fixtures |
