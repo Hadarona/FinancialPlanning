@@ -195,3 +195,199 @@ the same journeys QA will independently verify).
 
 None. npm registry access and the Neon database (via the repo-root `.env`,
 never printed) were both reachable throughout.
+
+## Batch 2 (Stages C–E)
+
+Scope: Stage C (Budget read model + Budget screen + guarded demo seed),
+Stage D (Expenses add/delete), Stage E (Create/edit plans + month
+navigation), per the approved `developer/plan.md`. Branch:
+`feature/budgeting-app`. Commits: `0af6cf1` (Stage C), `d0c57b6` (Stage D),
+`7be4b57` (Stage E).
+
+### What was built
+
+**Stage C — Budget read model (commit `0af6cf1`)**
+
+- `server/src/services/calc.js`: `summarizeBudget` (planned = Σ plans,
+  available = income − planned incl. negative, per-category actual/progress
+  with `Math.round(actual/planned×100)`, states `normal`/`overspent`
+  (>100 preserved)/`unplanned` (zero-plan spending → `progressPercent`
+  null, never a division by zero)), `monthRange`/`daysInMonth` (pure string
+  arithmetic, leap-year aware), `largestRemainderShares` (integers summing
+  exactly to 100; all-zero → all-zero; verified against the kit's
+  47/18/10/11/14).
+- `server/src/repositories/budgetRepo.js` + `transactionRepo.js`
+  (`sumByCategory`), `services/budgetService.js`, `controllers/routes` for
+  `GET /api/v1/budgets/:month` behind `requireAuth` with strict `YYYY-MM`
+  param validation; `validateParams`/`validateQuery` middleware added.
+  bigint columns are `Number()`-converted at the repo boundary;
+  `occurred_on::text` bypasses pg date parsing (decision #6).
+- `server/src/seed/demoSeed.js`: refuses without `ALLOW_DEMO_SEED=true`,
+  refuses when `NODE_ENV==='production'`; deterministic fixed expense lists
+  (all days ≤28) reproducing kit totals — current 842,000 / previous
+  918,000 minor units; idempotent (deletes and recreates only
+  `demo@example.com`, in one transaction).
+- Budget screen: `features/budget/{BudgetPage,SummaryMetrics,CategoryRow}`,
+  shared `Card`/`ProgressBar`/`Skeleton`/`EmptyState`/`ErrorState`,
+  `lib/icons.js` (icon-map-restricted lookup). Four states: skeleton;
+  "No budget for <Month> yet" + Create action; error + Retry that keeps the
+  authenticated shell; data. SR sentence per category ("Housing: 2,520
+  spent of 4,000 planned, 63%"); overspent/unplanned flagged with
+  `TriangleAlert` + text, never color alone.
+
+**Stage D — Expenses (commit `d0c57b6`)**
+
+- API `GET/POST /budgets/:month/transactions`, `DELETE …/:id`: budget
+  resolved by `(session user, month)` first; category validated against the
+  budget's fixed set; date-in-month by pure string comparison (also rejects
+  impossible days); strict schemas (positive integer cents, note ≤200
+  trimmed, optional uuid `clientRequestId`); dedupe via the partial unique
+  index — retry returns the existing row with 200 (one row ever);
+  missing/unowned/malformed ids share one 404 body; deterministic list
+  ordering (`occurred_on DESC, created_at DESC, id DESC`) with limit 1–200
+  (default 50); notes never logged.
+- UI: shared `Dialog` (portal, `aria-modal`, focus in/trap/return, Escape;
+  bottom sheet <768px, centered 480px card ≥768px), `AddExpenseDialog`
+  (string-parsed cents, month-bounded date input, note counter, pending
+  Save blocks double submit, failed save keeps values + Retry reusing the
+  same `clientRequestId`), `ExpensePanel` history (delete buttons name the
+  exact transaction), `DeleteExpenseConfirm`. Success invalidates
+  budget/transactions/insights queries (no reload) and announces via a
+  `role="status"` region. `docs/agile/reviews/review-2-expenses.md` written.
+
+**Stage E — Plans + month navigation (commit `7be4b57`)**
+
+- API `POST /budgets` + `PATCH /budgets/:month`: client sends only
+  `{id, plannedMinor}` pairs; stored categories rebuilt from
+  `domain/categories.js` constants (metadata unforgeable, set never
+  shrinks); creation requires exactly the five ids once each; duplicate
+  month decided by the DB constraint (concurrent creates → one 201 + one
+  409); patch merges income/plans and returns the recalculated read model;
+  over-allocation accepted with negative `availableMinor`.
+- UI: `BudgetFormPage` (`/budget/new?month=`, `/budget/:month/edit`) with
+  kit-default/stored prefill, live "Planned X · Available Y" per keystroke,
+  over-allocation warning (icon + text; saving allowed), 409 recovery link,
+  `beforeunload` + router-blocker unsaved-changes dialog (Keep editing /
+  Discard changes); `MonthNav` prev/next (kit `ArrowLeft`, mirrored for
+  next) driving `/budget?month=`; header menu "Edit budget" enabled once a
+  budget is loaded.
+
+### Commands run and results (final state)
+
+| Command | Result |
+|---|---|
+| `npm run lint` | exit 0, no errors/warnings |
+| `npm test -w server` | 4 files, 44 tests passed (calc 18, schemas 13, auth service/middleware 13) |
+| `npm run test:integration -w server` | 5 files, 31 tests passed against real listening servers + isolated Neon `test_*` schemas (health 3, auth 7, budget 7, transactions 8, plans 6) |
+| `npm test -w client` | 9 files, 32 tests passed |
+| `npm run build` | exit 0 (vite production build) |
+| `npm run seed:demo` (no flag) | refused with exit 1 ("set ALLOW_DEMO_SEED=true") |
+| `ALLOW_DEMO_SEED=true npm run seed:demo` (twice) | exit 0 both runs, identical deterministic summary (months 2026-07/2026-06, totals 842000/918000) — idempotent |
+| `ALLOW_DEMO_SEED=true NODE_ENV=production node server/src/seed/demoSeed.js` | refused with exit 1 (production guard) |
+
+Checks were also run per-stage before each commit (each stage's suites were
+green before the next stage started).
+
+### Deviations from the plan (with reasons)
+
+1. **Dialog focus-effect bug found and fixed during Stage D (not in the
+   plan).** The shared `Dialog`'s focus-management effect initially
+   depended on the `onClose` prop; parents recreate that callback every
+   render, so each keystroke re-ran the effect and moved focus back to the
+   first field (caught by the D-EXP-F1 component test — note text spilled
+   into the amount input). Fixed by keeping the latest `onClose` in a ref
+   and depending only on `open`. Recorded in `review-2-expenses.md` #1.
+2. **jsdom-only `Request` shim added to `client/tests/setup.js` (Stage E,
+   not in the plan).** `useBlocker` requires a data router; under vitest's
+   jsdom environment, react-router's data-router navigations construct
+   undici `Request`s with jsdom `AbortSignal`s, which undici's brand check
+   rejects (TypeError) — impossible in a real browser (single realm). The
+   shim strips only the cross-realm signal, in tests only; no product code
+   changed and no test expectation was weakened.
+3. **Explicit 30 s timeouts on multi-round-trip integration tests
+   (Stages D/E).** Remote Neon latency makes 7-call journeys exceed
+   vitest's 5 s default. Timeout raise only; assertions unchanged.
+4. **Malformed DELETE `:id` returns 404, not 400.** The plan says the id is
+   "uuid-validated" while also requiring "unowned or missing → 404 same
+   body". Routing malformed ids onto the same 404 path (service-level UUID
+   check) keeps one indistinguishable code path and avoids a Postgres
+   22P02 cast error; an integration test asserts byte-identical bodies for
+   malformed vs nonexistent ids.
+5. **Kit icon extensions.** The icon map lacks delete/error glyphs; Lucide
+   `Trash2` (history delete) and `TriangleAlert` (warnings/overspent) are
+   used — same family, outline style. Flagged for design review, like the
+   Stage B register-copy extension.
+6. **Stage C committed the disabled Add-expense button placeholder** (per
+   the plan's own note) and a `/budget/new` placeholder route so the
+   Create-budget action never dead-ended between the C and E commits; both
+   were replaced by the real implementations inside this batch (D and E
+   commits). No dead state remains.
+7. **`validateQuery` middleware landed in Stage C's commit** though only
+   Stage D uses it — it was written together with `validateParams` in the
+   shared middleware file. No behavioral impact on Stage C.
+8. **Copy extensions beyond content.json** for expense/plan-form strings
+   (labels, statuses, warnings), voice-consistent with the kit, marked in
+   `lib/copy.js` comments for design review — same pattern batch 1
+   established for the register page.
+
+### Acceptance check status (developer-owned rows, this batch)
+
+- Stage C: D-BUD-D1..D5 (implementation), D-BUD-F1..F6, D-BUD-B1..B7 — pass
+  via unit/integration/component tests above. D-BUD-F2's kit numbers are
+  asserted both at the API level (integration fixture) and in the
+  component fixture test.
+- Stage D: D-EXP-D2..D5 (implementation; D-EXP-D1 visual conformance is
+  design-review-owned), D-EXP-F1..F6, D-EXP-B1..B6 — pass.
+- Stage E: D-PLN-D1..D5 (implementation), D-PLN-F1..F6, D-PLN-B1..B6 —
+  pass. D-PLN-F1 (fresh user without seed) is enabled end-to-end
+  (register → empty state → create form → budget); the scripted
+  full-browser walk remains for the developer self-test phase.
+- Browser-based viewport/screenshot verification (320/390/1024/1440) and
+  evidence capture are deferred to the developer self-test phase per the
+  skill's Test section; all layout is responsive CSS from the kit's specs.
+
+### What batch 3 (Stages F–G, Insights onward) must know
+
+- **Wiring pattern unchanged**: `createApp` builds
+  `budgetRepo`/`transactionRepo`/`budgetService`/`transactionService` and
+  threads them through `createApiRouter`. Stage F's `insightsService`
+  should follow identically (`createInsightsService({ budgetRepo,
+  transactionRepo })`, mounted as `/insights/:month` in
+  `routes/index.js`).
+- **Route mounting order matters**: `/budgets/:month/transactions` is
+  mounted BEFORE `/budgets` in `routes/index.js` so the nested router (with
+  `mergeParams: true`) wins; keep new routes above `/budgets` if they share
+  the prefix.
+- **calc.js already provides** `previousMonth`, `monthRange`,
+  `daysInMonth`, and `largestRemainderShares` — Stage F needs no new pure
+  helpers except the cash-flow sampling; the shares function is
+  kit-verified ([47,18,10,11,14]).
+- **transactionRepo** has `sumByCategory(userId, budgetPeriodId)`;
+  Stage F additionally needs a per-day aggregation (`GROUP BY occurred_on`)
+  — add it to the same factory. Remember `occurred_on::text` (never let pg
+  parse dates).
+- **Demo seed data** is live in the `public` schema: `demo@example.com` /
+  `DemoPass123!` with current+previous months matching the kit insights
+  numbers — usable for Stage F manual verification.
+- **Integration tests**: give any multi-round-trip test an explicit ≥30 s
+  timeout (Neon latency); keep using `startTestServer()` + dynamic imports;
+  seed budgets via direct pool inserts or the real `POST /budgets` (now
+  available).
+- **Client**: `useBudgetQuery(month)` accepts a falsy month (disabled
+  query). Query keys in use: `["budget", month]`, `["transactions",
+  month]`, `["insights"]`-prefixed keys are already invalidated by every
+  expense/plan mutation — name Stage F's query `["insights", month]` to
+  benefit. `MonthTabs` (Stage F) is still unwritten; `MonthNav` on the
+  Budget screen is a different component (arrows, not tabs).
+- **The Insights route placeholder** lives in `client/src/app/router.jsx`
+  (`InsightsPlaceholder`); replace it like Stage C replaced the budget one.
+- The jsdom `Request` shim in `client/tests/setup.js` is required for any
+  test that renders a data router (`createMemoryRouter`) — don't remove it.
+- `.workflow/state.json` and `.workflow/sprints/delivery/iteration-01/qa/`
+  were modified/created by another role during this batch; they were left
+  untouched and uncommitted by the developer.
+
+### Blockers
+
+None. Neon and the npm registry were reachable throughout; no schema or
+migration changes were needed beyond Stage A's `001_init.sql`.
