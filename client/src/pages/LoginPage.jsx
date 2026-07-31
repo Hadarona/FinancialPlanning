@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { TextInput } from "../components/ui/TextInput.jsx";
 import { PasswordInput } from "../components/ui/PasswordInput.jsx";
 import { Button } from "../components/ui/Button.jsx";
@@ -76,6 +77,7 @@ export function LoginPage() {
           <TextInput
             label={copy.login.emailLabel}
             type="email"
+            icon={Mail}
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}

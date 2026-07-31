@@ -17,6 +17,9 @@
 }
 
 .summary-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-primary);
@@ -26,8 +29,21 @@
   color: var(--color-blue-700);
 }
 
+/* Near-black label text for AA at 14px (yellow-700 was 4.17:1 — D-DES-015);
+   the kit's yellow=planned semantic moves to the decorative marker dot. */
 .summary-metric-label-planned {
-  color: var(--color-yellow-700);
+  color: var(--color-text-primary);
+}
+
+.summary-metric-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+
+.summary-metric-marker-yellow {
+  background: var(--color-yellow-500);
 }
 
 .summary-metric-value {

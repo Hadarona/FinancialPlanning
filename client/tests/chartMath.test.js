@@ -5,6 +5,7 @@ import {
   donutSegments,
   linePoints,
   barTopRoundedPath,
+  xLabelIndexes,
 } from "../src/features/insights/charts/chartMath.js";
 
 describe("axisScale", () => {
@@ -93,5 +94,28 @@ describe("barTopRoundedPath", () => {
     // Radius is clamped to the 2px height; the path closes on the baseline y=92.
     expect(path.startsWith("M10,92")).toBe(true);
     expect(path.endsWith("Z")).toBe(true);
+  });
+});
+
+// D-DES-010 — accessibility-checklist.md: "Maintain legible labels at the
+// smallest supported width". Three ~38px labels cannot fit a ~95px plot
+// (the 390px two-up column), so narrow plots keep only first + last.
+describe("xLabelIndexes", () => {
+  it("keeps first/middle/last labels when the plot is wide enough", () => {
+    expect(xLabelIndexes(7, 150)).toEqual([0, 3, 6]);
+    expect(xLabelIndexes(7, 560)).toEqual([0, 3, 6]);
+  });
+
+  it("drops to first and last only below the 150px threshold", () => {
+    expect(xLabelIndexes(7, 149)).toEqual([0, 6]);
+    expect(xLabelIndexes(7, 95)).toEqual([0, 6]);
+  });
+
+  it("never duplicates indexes for degenerate label counts", () => {
+    expect(xLabelIndexes(1, 560)).toEqual([0]);
+    expect(xLabelIndexes(1, 95)).toEqual([0]);
+    expect(xLabelIndexes(2, 560)).toEqual([0, 1]);
+    expect(xLabelIndexes(2, 95)).toEqual([0, 1]);
+    expect(xLabelIndexes(3, 560)).toEqual([0, 1, 2]);
   });
 });

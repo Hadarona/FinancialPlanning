@@ -1,0 +1,266 @@
+{
+  "generatedAt": "2026-07-31T01:06:27.041Z",
+  "base": "http://localhost:4050",
+  "issues": {
+    "D-DES-001-login": {
+      "hasIcon": true,
+      "width": "20",
+      "height": "20"
+    },
+    "D-DES-001-register": {
+      "hasIcon": true
+    },
+    "D-DES-002": {
+      "width": 440,
+      "padding": "40px",
+      "background": "rgb(255, 253, 249)",
+      "border": "1px solid rgb(229, 229, 226)",
+      "borderRadius": "16px",
+      "boxShadow": "rgba(17, 24, 39, 0.08) 0px 4px 16px 0px",
+      "centeredX": true
+    },
+    "D-DES-014-login-btn": {
+      "background": "rgb(71, 111, 185)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "D-DES-003": {
+      "width": 350,
+      "maxWidth": "350px",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "zoom-720": {
+      "maxWidth": "350px",
+      "background": "rgba(0, 0, 0, 0)",
+      "scrollWidth": 720
+    },
+    "D-DES-004-budget-390": {
+      "text": "Budget",
+      "fontSize": "28px",
+      "lineHeight": "36px",
+      "fontFamily": "\"DM Serif Display\", Georgia, serif",
+      "fontWeight": "400"
+    },
+    "D-DES-005-390": {
+      "labelDisplay": "flex",
+      "hasIcon": true,
+      "singleLine": true,
+      "iconLeftOfText": true,
+      "labelHeight": 24
+    },
+    "D-DES-015": {
+      "color": "rgb(17, 24, 39)",
+      "markerBackground": "rgb(226, 190, 98)",
+      "markerAriaHidden": "true",
+      "markerSize": "8x8"
+    },
+    "D-DES-014-budget-btn": {
+      "background": "rgb(71, 111, 185)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "D-DES-004-budget-1440": {
+      "fontSize": "28px",
+      "lineHeight": "36px"
+    },
+    "D-DES-013-resting": "rgba(0, 0, 0, 0)",
+    "D-DES-013-hover": "rgb(238, 243, 252)",
+    "D-DES-005-1440": {
+      "labelDisplay": "flex",
+      "singleLine": true
+    },
+    "D-DES-014-btn-hover": "rgb(54, 85, 143)",
+    "D-DES-004-edit": {
+      "text": "Edit budget",
+      "fontSize": "28px",
+      "lineHeight": "36px"
+    },
+    "donut-320": {
+      "renderedSvgWidth": 200,
+      "attrSize": 200,
+      "legendBesideRow": false,
+      "hasCenterText": false,
+      "ringOuter": 88,
+      "ringInner": 40,
+      "innerOverOuter": 45.5
+    },
+    "line-320": {
+      "xLabels": [
+        "Jul 1",
+        "Jul 16",
+        "Jul 31"
+      ],
+      "markerCount": 14,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "donut-390": {
+      "renderedSvgWidth": 133,
+      "attrSize": 133,
+      "legendBesideRow": false,
+      "hasCenterText": false,
+      "ringOuter": 58.52,
+      "ringInner": 26.6,
+      "innerOverOuter": 45.5
+    },
+    "line-390": {
+      "xLabels": [
+        "Jul 1",
+        "Jul 31"
+      ],
+      "markerCount": 14,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "D-DES-006": [
+      {
+        "text": "July",
+        "left": 21,
+        "selected": "true",
+        "background": "rgb(71, 111, 185)"
+      },
+      {
+        "text": "June",
+        "left": 195,
+        "selected": "false",
+        "background": "rgba(0, 0, 0, 0)"
+      }
+    ],
+    "D-DES-012": {
+      "firstRow": [
+        "Jul 1",
+        "600",
+        "800"
+      ],
+      "lastRow": [
+        "Jul 31",
+        "8,420",
+        "9,180"
+      ],
+      "rowCount": 7
+    },
+    "line-390-june": {
+      "xLabels": [
+        "Jun 1",
+        "Jun 30"
+      ],
+      "markerCount": 7,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "D-DES-012-june": {
+      "firstRow": [
+        "Jun 1",
+        "800"
+      ],
+      "lastRow": [
+        "Jun 30",
+        "9,180"
+      ]
+    },
+    "donut-768": {
+      "renderedSvgWidth": 200,
+      "attrSize": 200,
+      "legendBesideRow": false,
+      "hasCenterText": false,
+      "ringOuter": 88,
+      "ringInner": 40,
+      "innerOverOuter": 45.5
+    },
+    "line-768": {
+      "xLabels": [
+        "Jul 1",
+        "Jul 16",
+        "Jul 31"
+      ],
+      "markerCount": 14,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "donut-1024": {
+      "renderedSvgWidth": 200,
+      "attrSize": 200,
+      "legendBesideRow": false,
+      "hasCenterText": false,
+      "ringOuter": 88,
+      "ringInner": 40,
+      "innerOverOuter": 45.5
+    },
+    "line-1024": {
+      "xLabels": [
+        "Jul 1",
+        "Jul 16",
+        "Jul 31"
+      ],
+      "markerCount": 14,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "donut-1440": {
+      "renderedSvgWidth": 200,
+      "attrSize": 200,
+      "legendBesideRow": false,
+      "hasCenterText": false,
+      "ringOuter": 88,
+      "ringInner": 40,
+      "innerOverOuter": 45.5
+    },
+    "line-1440": {
+      "xLabels": [
+        "Jul 1",
+        "Jul 16",
+        "Jul 31"
+      ],
+      "markerCount": 14,
+      "markerRestOpacity": "0",
+      "markersFocusable": true
+    },
+    "D-DES-014-tab": {
+      "background": "rgb(71, 111, 185)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "D-DES-011-hover": {
+      "anyMarkerVisible": true,
+      "tooltipVisible": true
+    },
+    "D-DES-011-focus": {
+      "method": "real Tab keypresses until a chart mark held focus, then 400ms settle (opacity transition is 160ms)",
+      "activeIsMark": true,
+      "activeOpacity": "1",
+      "focusOutline": "2px solid",
+      "tooltipVisible": true,
+      "tooltipText": "Jul 1 \u2014 June: 800 USD",
+      "note": "the first capture read opacity/tooltip mid-transition via programmatic focus; re-verified with keyboard Tab"
+    },
+    "reduced-motion": {
+      "rowTransition": "1e-06s",
+      "markTransition": "1e-06s"
+    },
+    "donut-1440-geometry": {
+      "donutLayoutContentWidth": 291,
+      "cardRectWidth": 341.34,
+      "cardPadding": "24px",
+      "mainMaxWidth": "1200px",
+      "besideWidth": 87,
+      "note": "besideWidth 87 < 128 so the legend stacks below and the donut renders at 200px - the container-driven rule's correct outcome; the plan's ~336px content estimate did not subtract the card's 24px padding and the 1200px main max-width"
+    }
+  },
+  "scroll320": {
+    "login": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false
+    },
+    "budget": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false
+    },
+    "insights": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false
+    },
+    "pass": true
+  },
+  "consoleLog": [],
+  "consoleLogAll": 7
+}

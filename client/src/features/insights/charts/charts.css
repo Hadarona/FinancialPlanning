@@ -47,6 +47,24 @@
   outline-offset: 2px;
 }
 
+/* Line point markers appear on hover/focus only (figma-build-spec.md §6,
+   D-DES-011). Opacity keeps hit-testing and keyboard focusability — the
+   tabindex=0 tooltip targets stay in the DOM. */
+.chart-mark-hover {
+  opacity: 0;
+}
+
+.chart-mark-hover:hover,
+.chart-mark-hover:focus-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chart-mark-hover {
+    transition: opacity 160ms ease;
+  }
+}
+
 .chart-tooltip {
   position: absolute;
   z-index: 2;
@@ -115,7 +133,9 @@
   margin-left: var(--space-1);
 }
 
-/* Donut layout: legend right >=768px, below otherwise (kit rule). */
+/* Donut layout: container-driven (D-DES-007). The component measures its
+   card column and adds .donut-layout-row only when donut + legend fit side
+   by side; otherwise the legend stacks below. */
 .donut-layout {
   display: flex;
   flex-direction: column;
@@ -123,27 +143,19 @@
   gap: var(--space-4);
 }
 
-@media (min-width: 768px) {
-  .donut-layout {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-6);
-  }
-
-  .donut-layout .chart-legend {
-    min-width: 180px;
-  }
+.donut-layout-row {
+  flex-direction: row;
+  justify-content: center;
+  gap: var(--space-6);
 }
 
-.donut-center-value {
-  font-family: var(--font-display);
-  font-size: 24px;
-  fill: var(--color-text-primary);
+.donut-layout-row .chart-legend {
+  min-width: 180px;
 }
 
-.donut-center-label {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  fill: var(--color-text-secondary);
+/* The donut renders at its computed 128-200px attribute size — defeat the
+   `.chart-figure svg { width: 100% }` stretch and never flex-shrink it. */
+.donut-layout svg {
+  width: auto;
+  flex: none;
 }

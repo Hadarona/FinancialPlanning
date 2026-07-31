@@ -55,4 +55,12 @@ describe("RegisterPage", () => {
       await screen.findByText("An account with that email already exists."),
     ).toBeInTheDocument();
   });
+
+  // D-DES-001 — icon-map.md maps Email -> Mail; both approved login
+  // compositions show a leading icon inside the email field.
+  it("renders a leading icon inside the email field", () => {
+    render(renderProviders(<RegisterPage />));
+    const emailControl = screen.getByLabelText("Email").closest(".field-control");
+    expect(emailControl.querySelector("svg")).not.toBeNull();
+  });
 });

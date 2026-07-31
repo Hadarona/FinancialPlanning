@@ -6,13 +6,29 @@
   padding: var(--space-6) var(--page-padding-mobile);
 }
 
+/* Mobile (320-767): plain form capped at 350px (D-DES-003,
+   responsive-layout.md "Login Mobile"). */
 .auth-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 350px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
+}
+
+/* Desktop (>=768): centered visible surface card, 440px wide with 40px
+   padding (D-DES-002, responsive-layout.md "Login Desktop"; same surface
+   recipe as Card.css). */
+@media (min-width: 768px) {
+  .auth-card {
+    max-width: 440px;
+    padding: var(--space-10);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
 }
 
 .auth-logo {

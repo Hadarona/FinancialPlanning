@@ -15,7 +15,10 @@
   border-radius: var(--radius-sm);
 }
 
+/* Heading/Page ramp: DM Serif Display 400 at 28/36 (figma-build-spec.md §3,
+   D-DES-004). Family/weight inherited from the global h1 rule. */
 .app-header-title {
   flex: 1;
-  font-size: 20px;
+  font-size: 28px;
+  line-height: 36px;
 }

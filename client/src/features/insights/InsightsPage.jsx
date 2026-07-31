@@ -84,13 +84,15 @@ export function InsightsPage() {
     navigate("/login", { replace: true });
   }
 
+  // Current month first (renders left), previous right — kit tab order
+  // "July, June" (component-inventory.md Tabs/Month, D-DES-006).
   const tabOptions = [
+    { value: baseMonth, label: monthLabel(baseMonth), tone: "current" },
     {
       value: previousMonth(baseMonth),
       label: monthLabel(previousMonth(baseMonth)),
       tone: "previous",
     },
-    { value: baseMonth, label: monthLabel(baseMonth), tone: "current" },
   ];
 
   function renderContent() {

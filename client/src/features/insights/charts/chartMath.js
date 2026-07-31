@@ -81,6 +81,21 @@ export function linePoints(values, { max, width, height }) {
   }));
 }
 
+/**
+ * Which x-axis label indexes fit a plot without colliding (D-DES-010,
+ * accessibility-checklist.md smallest-width legibility): first/middle/last
+ * when `plotWidth` >= 150px, first + last only below that (a narrow two-up
+ * mobile column), always deduplicated for degenerate label counts.
+ */
+export function xLabelIndexes(labelCount, plotWidth) {
+  if (labelCount <= 0) {
+    return [];
+  }
+  const last = labelCount - 1;
+  const candidates = plotWidth >= 150 ? [0, Math.floor(last / 2), last] : [0, last];
+  return [...new Set(candidates)];
+}
+
 /** SVG path for a vertical bar with only its top corners rounded (rounded
  * data-end anchored to the baseline). Radius is clamped to the bar size. */
 export function barTopRoundedPath(x, yTop, width, height, radius = 4) {

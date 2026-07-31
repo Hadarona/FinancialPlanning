@@ -9,6 +9,25 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* Desktop hover state (component-inventory.md Budget/Category row,
+   D-DES-013). Hover-capable fine pointers only, so touch is unaffected;
+   decorative — no information is conveyed by hover alone. */
+@media (hover: hover) and (pointer: fine) {
+  .category-row {
+    border-radius: var(--radius-md);
+  }
+
+  .category-row:hover {
+    background: var(--color-blue-50);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .category-row {
+    transition: background-color 180ms ease;
+  }
+}
+
 .category-row-icon {
   display: inline-flex;
   align-items: center;

@@ -67,4 +67,12 @@ describe("LoginPage", () => {
     expect(apiClient.post).toHaveBeenCalledTimes(1);
     resolveLogin();
   });
+
+  // D-DES-001 — icon-map.md maps Email -> Mail; both approved login
+  // compositions show a leading icon inside the email field.
+  it("renders a leading icon inside the email field", () => {
+    render(renderProviders(<LoginPage />));
+    const emailControl = screen.getByLabelText("Email").closest(".field-control");
+    expect(emailControl.querySelector("svg")).not.toBeNull();
+  });
 });

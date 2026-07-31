@@ -6,7 +6,10 @@
 // The dataset follows the authoritative kit numbers (source-of-truth §3 /
 // plan risk #1): income 12,500 with plans 4,000/1,500/800/900/3,000 for both
 // months; per-category actuals equal the kit insights data — current month
-// totals 8,420, previous month totals 9,180.
+// totals 8,420, previous month totals 9,180 — AND the expense distribution
+// reproduces the kit's cash-flow cumulative series (content.json cashFlow)
+// exactly at the seven sample dates (days 1/6/11/16/21/26/last): current
+// 600→8,420, previous 800→9,180 (D-DES-012).
 
 import bcrypt from "bcryptjs";
 import { createPool } from "../db/pool.js";
@@ -19,44 +22,50 @@ export const DEMO_PASSWORD = "DemoPass123!";
 const DEMO_INCOME_MINOR = 1250000;
 
 // Fixed per-category expense lists (minor units). Days are all <= 28 so every
-// calendar month is valid. Current-month category totals: housing 395,700 /
-// groceries 151,600 / transport 84,200 / fun 92,600 / savings 117,900
-// (sum 842,000). Previous month: 430,000 / 170,000 / 90,000 / 100,000 /
-// 128,000 (sum 918,000).
-const CURRENT_MONTH_EXPENSES = [
-  { categoryId: "housing", day: 1, amountMinor: 350000, note: "Rent" },
-  { categoryId: "housing", day: 14, amountMinor: 30700, note: "Utilities" },
-  { categoryId: "housing", day: 26, amountMinor: 15000, note: "Repairs" },
-  { categoryId: "groceries", day: 3, amountMinor: 38200, note: "Supermarket" },
-  { categoryId: "groceries", day: 8, amountMinor: 41900, note: "Supermarket" },
-  { categoryId: "groceries", day: 17, amountMinor: 35600, note: "Market" },
-  { categoryId: "groceries", day: 26, amountMinor: 35900, note: "Supermarket" },
-  { categoryId: "transport", day: 5, amountMinor: 24200, note: "Fuel" },
+// calendar month is valid (in a 28-day month the final sample window covers
+// days 27-28 and still matches the kit's last value). Current-month category
+// totals: housing 395,700 / groceries 151,600 / transport 84,200 /
+// fun 92,600 / savings 117,900 (sum 842,000). Previous month: 430,000 /
+// 170,000 / 90,000 / 100,000 / 128,000 (sum 918,000). The per-day
+// distribution makes the sampled cumulative sums equal content.json's
+// cashFlow series exactly (D-DES-012); demoSeedData.test.js locks both
+// guarantees. Exported for that data test only.
+export const CURRENT_MONTH_EXPENSES = [
+  { categoryId: "savings", day: 1, amountMinor: 60000, note: "Transfer to savings" },
+  { categoryId: "housing", day: 2, amountMinor: 82000, note: "Rent installment" },
+  { categoryId: "groceries", day: 4, amountMinor: 38000, note: "Supermarket" },
+  { categoryId: "groceries", day: 8, amountMinor: 40000, note: "Supermarket" },
+  { categoryId: "housing", day: 9, amountMinor: 90000, note: "Rent installment" },
+  { categoryId: "housing", day: 13, amountMinor: 100000, note: "Rent installment" },
   { categoryId: "transport", day: 14, amountMinor: 30000, note: "Transit pass" },
-  { categoryId: "transport", day: 23, amountMinor: 30000, note: "Car service" },
-  { categoryId: "fun", day: 8, amountMinor: 32600, note: "Concert" },
-  { categoryId: "fun", day: 20, amountMinor: 35000, note: "Dinner out" },
-  { categoryId: "fun", day: 28, amountMinor: 25000, note: "Streaming" },
-  { categoryId: "savings", day: 1, amountMinor: 60000, note: "Transfer" },
-  { categoryId: "savings", day: 17, amountMinor: 57900, note: "Transfer" },
+  { categoryId: "groceries", day: 15, amountMinor: 20000, note: "Market" },
+  { categoryId: "savings", day: 17, amountMinor: 57900, note: "Transfer to savings" },
+  { categoryId: "housing", day: 18, amountMinor: 72100, note: "Utilities" },
+  { categoryId: "fun", day: 22, amountMinor: 50000, note: "Concert" },
+  { categoryId: "housing", day: 23, amountMinor: 51600, note: "Repairs" },
+  { categoryId: "transport", day: 25, amountMinor: 38400, note: "Fuel" },
+  { categoryId: "groceries", day: 27, amountMinor: 53600, note: "Supermarket" },
+  { categoryId: "fun", day: 27, amountMinor: 42600, note: "Dinner out" },
+  { categoryId: "transport", day: 28, amountMinor: 15800, note: "Fuel" },
 ];
 
-const PREVIOUS_MONTH_EXPENSES = [
-  { categoryId: "housing", day: 1, amountMinor: 350000, note: "Rent" },
-  { categoryId: "housing", day: 14, amountMinor: 50000, note: "Utilities" },
-  { categoryId: "housing", day: 26, amountMinor: 30000, note: "Repairs" },
-  { categoryId: "groceries", day: 3, amountMinor: 42500, note: "Supermarket" },
+export const PREVIOUS_MONTH_EXPENSES = [
+  { categoryId: "savings", day: 1, amountMinor: 80000, note: "Transfer to savings" },
+  { categoryId: "housing", day: 2, amountMinor: 90000, note: "Rent installment" },
+  { categoryId: "groceries", day: 4, amountMinor: 40000, note: "Supermarket" },
   { categoryId: "groceries", day: 8, amountMinor: 45000, note: "Supermarket" },
-  { categoryId: "groceries", day: 17, amountMinor: 40000, note: "Market" },
-  { categoryId: "groceries", day: 26, amountMinor: 42500, note: "Supermarket" },
-  { categoryId: "transport", day: 5, amountMinor: 27000, note: "Fuel" },
+  { categoryId: "housing", day: 9, amountMinor: 95000, note: "Rent installment" },
+  { categoryId: "housing", day: 13, amountMinor: 117000, note: "Rent installment" },
   { categoryId: "transport", day: 14, amountMinor: 33000, note: "Transit pass" },
-  { categoryId: "transport", day: 23, amountMinor: 30000, note: "Car service" },
-  { categoryId: "fun", day: 8, amountMinor: 35000, note: "Concert" },
-  { categoryId: "fun", day: 20, amountMinor: 40000, note: "Dinner out" },
-  { categoryId: "fun", day: 28, amountMinor: 25000, note: "Streaming" },
-  { categoryId: "savings", day: 1, amountMinor: 65000, note: "Transfer" },
-  { categoryId: "savings", day: 17, amountMinor: 63000, note: "Transfer" },
+  { categoryId: "savings", day: 17, amountMinor: 48000, note: "Transfer to savings" },
+  { categoryId: "housing", day: 18, amountMinor: 80000, note: "Utilities" },
+  { categoryId: "groceries", day: 20, amountMinor: 22000, note: "Market" },
+  { categoryId: "fun", day: 22, amountMinor: 60000, note: "Concert" },
+  { categoryId: "housing", day: 23, amountMinor: 48000, note: "Repairs" },
+  { categoryId: "transport", day: 25, amountMinor: 32000, note: "Fuel" },
+  { categoryId: "groceries", day: 27, amountMinor: 63000, note: "Supermarket" },
+  { categoryId: "fun", day: 27, amountMinor: 40000, note: "Dinner out" },
+  { categoryId: "transport", day: 28, amountMinor: 25000, note: "Fuel" },
 ];
 
 function currentCalendarMonth() {

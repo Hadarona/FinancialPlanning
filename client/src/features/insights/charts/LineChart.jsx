@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { formatMoney } from "../../../lib/money.js";
-import { axisScale, compactAxisLabel, linePoints } from "./chartMath.js";
+import { axisScale, compactAxisLabel, linePoints, xLabelIndexes } from "./chartMath.js";
 import { SERIES_COLORS } from "./chartColors.js";
 import { ChartTooltip, tooltipHandlers } from "./ChartTooltip.jsx";
 import { Legend } from "./Legend.jsx";
@@ -57,8 +57,9 @@ export function LineChart({
       .join(" ");
   }
 
-  // First / middle / last x labels keep the axis readable at 320px.
-  const labelIndexes = [0, Math.floor((labels.length - 1) / 2), labels.length - 1];
+  // Width-aware x labels never collide (D-DES-010): first/middle/last on
+  // wide plots, first + last only in a narrow two-up column.
+  const labelIndexes = xLabelIndexes(labels.length, plotWidth);
 
   const currentEnd = currentSeries[currentSeries.length - 1] ?? 0;
   const previousEnd = hasPrevious
@@ -74,7 +75,7 @@ export function LineChart({
       return (
         <circle
           key={`${seriesLabel}-${labels[index]}`}
-          className="chart-mark"
+          className="chart-mark chart-mark-hover"
           cx={MARGIN.left + point.x}
           cy={MARGIN.top + point.y}
           r={4.5}

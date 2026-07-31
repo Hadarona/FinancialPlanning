@@ -26,6 +26,10 @@ export function SummaryMetrics({ incomeMinor, plannedMinor, availableMinor }) {
         </div>
         <div className="summary-metric">
           <dt className="summary-metric-label summary-metric-label-planned">
+            <span
+              className="summary-metric-marker summary-metric-marker-yellow"
+              aria-hidden="true"
+            />
             {copy.budget.plannedLabel}
           </dt>
           <dd className="summary-metric-value">{formatMoney(plannedMinor)}</dd>
