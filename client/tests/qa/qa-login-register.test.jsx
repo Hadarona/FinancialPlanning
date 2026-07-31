@@ -123,6 +123,23 @@ describe("qa-login-register", () => {
     await waitFor(() =>
       expect(mock.callsMatching("POST", "/auth/login")).toHaveLength(1),
     );
+
+    // Repair (QA-CC-04 coverage flake): the assertion above only proves the
+    // POST was *sent* once — the mock records the call before its 60ms
+    // `delayMs` elapses. If the test ended here, that delayed promise would
+    // still be pending when this test's `afterEach(cleanup)` (and, under
+    // `vitest --coverage`'s different task-queue timing, the environment
+    // teardown) ran; LoginPage's `finally { setSubmitting(false) }` would
+    // then fire against a torn-down jsdom `window` and surface as a
+    // process-level Vitest "Unhandled Rejection" (~25-30% of coverage runs).
+    // Waiting for the post-login budget fetch means the mocked login promise
+    // has resolved and `handleSubmit`'s try/finally has already run to
+    // completion — including navigation and `setSubmitting(false)` — while
+    // the environment is still alive, so nothing is left pending at teardown.
+    await waitFor(() => {
+      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+    });
+    expect(mock.callsMatching("POST", "/auth/login")).toHaveLength(1);
   });
 
   it("QA-CC-05: the Show/Hide toggle switches the input type and keeps focus on itself", async () => {
@@ -193,7 +210,7 @@ describe("qa-login-register", () => {
   });
 
   it("QA-CC-08: the submit button shows a pending/disabled state while the login is in flight", async () => {
-    installFetchMock([
+    const mock = installFetchMock([
       { method: "GET", path: "/auth/me", status: 401, json: anonymousMeResponse() },
       {
         method: "POST",
@@ -215,5 +232,17 @@ describe("qa-login-register", () => {
 
     await waitFor(() => expect(submit).toBeDisabled());
     expect(submit).toHaveAttribute("aria-busy", "true");
+
+    // Repair (same coverage-flake class as QA-CC-04): this mocked login also
+    // carries a `delayMs`. Ending the test right after observing the pending
+    // state would leave that delayed promise unresolved at teardown;
+    // LoginPage's `finally { setSubmitting(false) }` would then fire once it
+    // settles against a torn-down environment, surfacing as the same
+    // intermittent Vitest "Unhandled Rejection" under coverage
+    // instrumentation. Waiting for the post-login budget fetch guarantees
+    // the promise has resolved and handleSubmit has fully completed first.
+    await waitFor(() => {
+      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+    });
   });
 });

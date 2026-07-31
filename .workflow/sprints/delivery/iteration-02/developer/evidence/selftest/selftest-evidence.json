@@ -1,0 +1,101 @@
+{
+  "generatedAt": "2026-07-31T01:41:53.409Z",
+  "base": "http://localhost:4050",
+  "results": {
+    "addExpenseOneLine390": {
+      "buttonHeight": 48,
+      "svgTop": 727,
+      "labelTop": 727,
+      "sameLine": true
+    },
+    "plannedLabelColor390": {
+      "color": "rgb(17, 24, 39)",
+      "hasYellowMarker": true,
+      "markerBg": "rgb(226, 190, 98)"
+    },
+    "budgetTitleFont390": {
+      "fontSize": "28px",
+      "lineHeight": "36px",
+      "fontFamily": "\"DM Serif Display\", Georgia, serif"
+    },
+    "insightsTabOrder390": [
+      "July",
+      "June"
+    ],
+    "donutCenterNodeCount": 0,
+    "lineMarkers390": {
+      "markCount": 14,
+      "restOpacity": "0",
+      "hoverOpacity": "1"
+    },
+    "xLabels390": [
+      "Housing",
+      "Groceries",
+      "Transport",
+      "Fun",
+      "Savings",
+      "Jul 1",
+      "Jul 31"
+    ],
+    "pageErrors390": [],
+    "loginEmailIcon390": {
+      "svgCount": 1
+    },
+    "authCardWidth390": 350,
+    "scrollWidth320": {
+      "login": {
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "pass": true
+      },
+      "budget": {
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "pass": true
+      },
+      "insights": {
+        "scrollWidth": 320,
+        "clientWidth": 320,
+        "pass": true
+      }
+    },
+    "authCard1440": {
+      "width": 440,
+      "padding": "40px",
+      "borderRadius": "16px",
+      "boxShadow": "rgba(17, 24, 39, 0.08) 0px 4px 16px 0px",
+      "background": "rgb(255, 253, 249)"
+    },
+    "budgetTitleFont1440": {
+      "fontSize": "28px",
+      "lineHeight": "36px",
+      "fontFamily": "\"DM Serif Display\", Georgia, serif"
+    },
+    "categoryRowHover1440": {
+      "restBg": "rgba(0, 0, 0, 0)",
+      "hoverBg": "rgb(238, 243, 252)",
+      "changed": true
+    },
+    "primaryButtonBg1440": "rgb(71, 111, 185)",
+    "donutLayout1440": {
+      "svgWidth": 200,
+      "svgHeight": 200,
+      "layoutClass": "chart-plot donut-layout",
+      "legendBeside": false
+    },
+    "donutRingGeometry1440": {
+      "r": 64,
+      "strokeWidth": 48,
+      "outer": 88,
+      "inner": 40,
+      "innerOverOuter": 0.45454545454545453
+    },
+    "donutCenterNodeCount1440": 0,
+    "lineMarkers1440": {
+      "restOpacity1440": "0",
+      "hoverOpacity1440": "1",
+      "focusOpacity1440": "1"
+    },
+    "selectedTabBg1440": "rgb(71, 111, 185)"
+  }
+}
