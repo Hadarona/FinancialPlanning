@@ -1,0 +1,19 @@
+ ✓ tests/DeleteExpenseConfirm.test.jsx (4 tests) 129ms
+ ✓ tests/ExpensePanel.test.jsx (4 tests) 147ms
+ ✓ tests/MonthMultiSelect.test.jsx (9 tests) 336ms
+ ✓ tests/RegisterPage.test.jsx (3 tests) 319ms
+ ✓ tests/EditCategoryPlanDialog.test.jsx (6 tests) 350ms
+ ✓ tests/LoginPage.test.jsx (4 tests) 361ms
+ ✓ tests/EditIncomeDialog.test.jsx (7 tests) 597ms
+ ✓ tests/InsightsPage.test.jsx (8 tests) 651ms
+ ✓ tests/AddExpenseDialog.test.jsx (7 tests) 916ms
+ ✓ tests/BudgetPage.test.jsx (11 tests) 846ms
+ ✓ tests/chartMath.test.js (15 tests) 15ms
+ ✓ tests/Button.test.jsx (3 tests) 125ms
+ ✓ tests/PasswordInput.test.jsx (1 test) 118ms
+ ✓ tests/apiClient.test.js (10 tests) 9ms
+ ✓ tests/TextButton.test.jsx (2 tests) 72ms
+ ✓ tests/SessionExpiry.test.jsx (4 tests) 81ms
+ ✓ tests/Menu.test.jsx (1 test) 81ms
+ Test Files  17 passed (17)
+      Tests  99 passed (99)

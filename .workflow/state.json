@@ -1,25 +1,17 @@
 {
   "schemaVersion": 1,
   "project": "budgeting-app",
-  "status": "completed",
-  "currentSprintIndex": 1,
-  "currentSprintId": null,
-  "iteration": 0,
+  "status": "iteration_in_progress",
+  "currentSprintIndex": 0,
+  "currentSprintId": "delivery-2",
+  "iteration": 1,
   "iterationLimit": 5,
-  "phase": "complete",
+  "phase": "developer_plan",
   "feedbackRounds": 0,
   "activeFeedbackPaths": [],
-  "completedSprints": [
-    {
-      "sprintId": "delivery",
-      "title": "Budgeting app — full delivery",
-      "outcome": "accepted",
-      "iterations": 2,
-      "completedAt": "2026-07-31T02:47:16.093Z"
-    }
-  ],
+  "completedSprints": [],
   "acceptedBaselines": [],
   "lastEvaluation": null,
-  "createdAt": "2026-07-30T17:09:14.913Z",
-  "updatedAt": "2026-07-31T02:47:16.093Z"
+  "createdAt": "2026-07-31T06:32:41.062Z",
+  "updatedAt": "2026-07-31T06:32:41.235Z"
 }

@@ -52,3 +52,12 @@ conflict. Delivered via delivery-2 on the same branch/PR.
 Integer minor units; planned vs actual distinct; authenticated ownership on
 every private read/mutation; logging redaction; accessibility and responsive
 rules; existing quality gates (developer, QA, design) and evidence contract.
+
+## Delivery note (2026-07-31)
+
+Per explicit user decision at the delivery-2 checkpoint, the independent QA
+and design-review gates were waived for this change request. The developer
+gate is green (self-test: 31/31 acceptance checks, developer-scoped suites,
+coverage, build, smoke, and browser verification all passing). QA-owned test
+suites under server/tests/qa and client/tests/qa still assert the pre-CR-001
+contract and are expected to fail until updated in a future cycle.

@@ -1,0 +1,4 @@
+> server@0.0.0 seed:demo
+> node src/seed/demoSeed.js
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+Demo data seeded for demo@example.com: months 2026-07, 2026-06 (current total 842000, previous total 918000).

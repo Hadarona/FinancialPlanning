@@ -1,0 +1,4 @@
+> server@0.0.0 migrate
+> node src/db/migrate.js
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+No pending migrations for schema "public".

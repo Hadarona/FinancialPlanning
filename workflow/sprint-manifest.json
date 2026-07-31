@@ -3,9 +3,9 @@
   "roadmap": "docs/product/Budgeting_App_Development_Roadmap.md",
   "sprints": [
     {
-      "id": "delivery",
+      "id": "delivery-2",
       "order": 0,
-      "title": "Budgeting app — full delivery",
+      "title": "Change request 001 — recurring budget, new categories, insights multi-select",
       "roadmapHeading": "# Budgeting App — Product and Development Roadmap"
     }
   ]
