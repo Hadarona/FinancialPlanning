@@ -49,22 +49,9 @@ function requireUniqueIds(categories, ctx) {
   }
 }
 
-/** Budget creation body (D-PLN-B1/B4): exactly the five default categories,
- * each exactly once. Over-allocation (planned > income) is allowed
- * (decision #2). */
-export const createBudgetSchema = z
-  .object({
-    month: monthSchema,
-    incomeMinor: z
-      .number({ invalid_type_error: "Enter your income." })
-      .int("Income must be whole cents.")
-      .min(0, "Income cannot be negative."),
-    categories: z
-      .array(plannedCategorySchema)
-      .length(5, "Provide a plan for each of the five categories.")
-      .superRefine(requireUniqueIds),
-  })
-  .strict();
+/** `POST /budget` takes NO body (CR-001: the default budget is built from
+ * server constants). Absent bodies pass; any supplied key is rejected. */
+export const emptyBodySchema = z.object({}).strict().optional();
 
 /** Budget update body: income and/or a subset of category plans. */
 export const patchBudgetSchema = z
@@ -77,7 +64,7 @@ export const patchBudgetSchema = z
     categories: z
       .array(plannedCategorySchema)
       .min(1, "Provide at least one category plan.")
-      .max(5, "There are only five categories.")
+      .max(7, "There are only seven categories.")
       .superRefine(requireUniqueIds)
       .optional(),
   })
@@ -85,6 +72,33 @@ export const patchBudgetSchema = z
   .refine((body) => body.incomeMinor !== undefined || body.categories !== undefined, {
     message: "Provide income or category plans to update.",
   });
+
+function requireUniqueMonths(months, ctx) {
+  if (new Set(months).size !== months.length) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Each month may appear only once.",
+    });
+  }
+}
+
+/** `GET /insights` query (CR3-3): `months` is required — 1–3 unique
+ * comma-separated `YYYY-MM` values. 0, 4+, duplicates, or malformed values
+ * answer 400 VALIDATION_ERROR. */
+export const insightsQuerySchema = z
+  .object({
+    months: z
+      .string({ required_error: "Select at least one month." })
+      .transform((value) => value.split(","))
+      .pipe(
+        z
+          .array(monthSchema)
+          .min(1, "Select at least one month.")
+          .max(3, "Select at most three months.")
+          .superRefine(requireUniqueMonths),
+      ),
+  })
+  .strict();
 
 /** Expense creation body (D-EXP-B1/B2). Money is an integer number of minor
  * units; the date is a plain calendar string (decision #6) whose membership

@@ -10,18 +10,24 @@ const SESSION_TTL = "24h";
 // timing between "unknown email" and "wrong password" (D-AUTH-B3).
 const DUMMY_HASH = bcrypt.hashSync("no-account-with-this-email", 10);
 
-export function createAuthService({ userRepo, config }) {
+export function createAuthService({ userRepo, budgetService, config }) {
   async function register({ email, password }) {
     const passwordHash = await bcrypt.hash(password, config.bcryptRounds);
+    let user;
     try {
-      const user = await userRepo.createUser({ email, passwordHash });
-      return { id: user.id, email: user.email };
+      user = await userRepo.createUser({ email, passwordHash });
     } catch (err) {
       if (err?.code === POSTGRES_UNIQUE_VIOLATION) {
         throw new AppError("CONFLICT", "An account with that email already exists.");
       }
       throw err;
     }
+    // CR1-9: every account gets the default budget at registration. A
+    // failure here propagates (registration must not half-succeed
+    // silently); the defensive POST /budget path recovers the rare
+    // mid-failure anomaly (plan risk 6).
+    await budgetService.createDefaultBudget(user.id);
+    return { id: user.id, email: user.email };
   }
 
   async function login({ email, password }) {

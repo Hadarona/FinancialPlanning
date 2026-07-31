@@ -1,71 +1,62 @@
 import { AppError } from "../errors.js";
-import { DEFAULT_CATEGORIES } from "../domain/categories.js";
-import { summarizeBudget } from "./calc.js";
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_MINOR } from "../domain/categories.js";
+import { budgetPlanModel, monthReadModel, monthRange } from "./calc.js";
 
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 
 /**
- * Budget read/write service. All methods take the authenticated user id as
+ * Budget read/write service (CR-001: exactly ONE budget per user, applied
+ * identically to every month). All methods take the authenticated user id as
  * their first argument — controllers must only ever pass `req.user.id`, so
  * another user's budget is indistinguishable from a missing one (404, never
  * a data leak).
  */
 export function createBudgetService({ budgetRepo, transactionRepo }) {
-  async function readModelFor(budgetRow) {
-    const actuals = await transactionRepo.sumByCategory(budgetRow.userId, budgetRow.id);
-    return { budget: summarizeBudget(budgetRow, actuals) };
+  async function requireBudget(userId) {
+    const budgetRow = await budgetRepo.findByUser(userId);
+    if (!budgetRow) {
+      // Defensive: unreachable after migration 002's backfill plus
+      // registration auto-provisioning (CR1-9), but kept as the honest
+      // answer for a data anomaly — the client renders a recovery path.
+      throw new AppError("NOT_FOUND", "No budget yet.");
+    }
+    return budgetRow;
   }
 
-  async function getBudgetReadModel(userId, month) {
-    const budgetRow = await budgetRepo.findByUserAndMonth(userId, month);
-    if (!budgetRow) {
-      throw new AppError("NOT_FOUND", "No budget for this month.");
-    }
-    return readModelFor(budgetRow);
+  /** `GET /budget`: the single budget's plans (no actuals, no month). */
+  async function getBudget(userId) {
+    const budgetRow = await requireBudget(userId);
+    return { budget: budgetPlanModel(budgetRow) };
   }
 
   /**
-   * Creates a budget for the authenticated user. The stored categories are
-   * rebuilt from the server-side constants — the client only ever supplies
-   * `{id, plannedMinor}` pairs, so names/icons/colors/order cannot be
-   * altered (decision #7). A duplicate month is decided by the DB unique
-   * constraint, which stays correct under concurrency (D-PLN-B2).
+   * `POST /budget` and registration (CR1-9): creates the default budget
+   * from the server-side constants — the client supplies nothing. A
+   * concurrent duplicate is decided by the DB unique(user_id) constraint.
    */
-  async function createBudget(userId, { month, incomeMinor, categories }) {
-    const plannedById = new Map(
-      categories.map((category) => [category.id, category.plannedMinor]),
-    );
-    const storedCategories = DEFAULT_CATEGORIES.map((category) => ({
-      ...category,
-      plannedMinor: plannedById.get(category.id),
-    }));
-
+  async function createDefaultBudget(userId) {
     try {
       const budgetRow = await budgetRepo.createBudget({
         userId,
-        month,
-        incomeMinor,
-        categories: storedCategories,
+        incomeMinor: DEFAULT_INCOME_MINOR,
+        categories: DEFAULT_CATEGORIES,
       });
-      return readModelFor(budgetRow);
+      return { budget: budgetPlanModel(budgetRow) };
     } catch (err) {
       if (err?.code === POSTGRES_UNIQUE_VIOLATION) {
-        throw new AppError("CONFLICT", "You already have a budget for this month.");
+        throw new AppError("CONFLICT", "You already have a budget.");
       }
       throw err;
     }
   }
 
   /**
-   * Updates income and/or planned amounts of an owned budget. The fixed
-   * category set can never shrink (D-PLN-B5/F6): patches merge planned
-   * amounts into the existing five categories, never remove or add one.
+   * `PATCH /budget`: updates income and/or planned amounts. The fixed
+   * category set can never shrink: patches merge planned amounts into the
+   * existing seven categories, never remove or add one (decision #7).
    */
-  async function updateBudget(userId, month, patch) {
-    const existing = await budgetRepo.findByUserAndMonth(userId, month);
-    if (!existing) {
-      throw new AppError("NOT_FOUND", "No budget for this month.");
-    }
+  async function patchBudget(userId, patch) {
+    const existing = await requireBudget(userId);
 
     const plannedById = new Map(
       (patch.categories ?? []).map((category) => [category.id, category.plannedMinor]),
@@ -77,12 +68,18 @@ export function createBudgetService({ budgetRepo, transactionRepo }) {
 
     const budgetRow = await budgetRepo.updateBudget({
       userId,
-      month,
       incomeMinor: patch.incomeMinor ?? existing.incomeMinor,
       categories: mergedCategories,
     });
-    return readModelFor(budgetRow);
+    return { budget: budgetPlanModel(budgetRow) };
   }
 
-  return { getBudgetReadModel, readModelFor, createBudget, updateBudget };
+  /** `GET /months/:month`: the single budget's plans + THAT month's actuals. */
+  async function getMonthReadModel(userId, month) {
+    const budgetRow = await requireBudget(userId);
+    const actuals = await transactionRepo.sumByCategory(userId, monthRange(month));
+    return { budget: monthReadModel(budgetRow, month, actuals) };
+  }
+
+  return { getBudget, createDefaultBudget, patchBudget, getMonthReadModel };
 }

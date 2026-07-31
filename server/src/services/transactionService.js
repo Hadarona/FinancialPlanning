@@ -7,23 +7,25 @@ import { monthRange } from "./calc.js";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Expense service. Every method resolves the budget by
- * `(authenticated user id, month)` FIRST — another user's budget/transaction
- * is indistinguishable from a missing one (404, never a data leak).
+ * Expense service. Every method resolves the authenticated user's single
+ * budget FIRST (CR-001) — another user's data is indistinguishable from a
+ * missing one (404, never a data leak). Expenses stay per-month: month
+ * membership is a pure date-range comparison on occurred_on (decision #6).
  */
 export function createTransactionService({ budgetRepo, transactionRepo }) {
-  async function resolveBudget(userId, month) {
-    const budget = await budgetRepo.findByUserAndMonth(userId, month);
+  async function resolveBudget(userId) {
+    const budget = await budgetRepo.findByUser(userId);
     if (!budget) {
-      throw new AppError("NOT_FOUND", "No budget for this month.");
+      // Defensive "expenses but no budget" anomaly path (see budgetService).
+      throw new AppError("NOT_FOUND", "No budget yet.");
     }
     return budget;
   }
 
   async function createTransaction(userId, month, payload) {
-    const budget = await resolveBudget(userId, month);
+    const budget = await resolveBudget(userId);
 
-    // Category must exist inside THIS budget's fixed category set.
+    // Category must exist inside the fixed category set (now seven).
     const category = budget.categories.find((entry) => entry.id === payload.categoryId);
     if (!category) {
       throw new AppError("VALIDATION_ERROR", "Please check the highlighted fields.", {
@@ -43,7 +45,6 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
 
     return transactionRepo.insert({
       userId,
-      budgetPeriodId: budget.id,
       categoryId: payload.categoryId,
       amountMinor: payload.amountMinor,
       occurredOn: payload.occurredOn,
@@ -53,12 +54,14 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
   }
 
   async function deleteTransaction(userId, month, transactionId) {
-    const budget = await resolveBudget(userId, month);
+    await resolveBudget(userId);
+    const { firstDay, lastDay } = monthRange(month);
     const deleted = UUID_PATTERN.test(transactionId)
       ? await transactionRepo.deleteByIdAndUser({
           userId,
-          budgetPeriodId: budget.id,
           transactionId,
+          firstDay,
+          lastDay,
         })
       : false;
     if (!deleted) {
@@ -67,10 +70,11 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
   }
 
   async function listTransactions(userId, month, { limit, offset }) {
-    const budget = await resolveBudget(userId, month);
+    await resolveBudget(userId);
+    const { firstDay, lastDay } = monthRange(month);
     const [transactions, total] = await Promise.all([
-      transactionRepo.listByBudget({ userId, budgetPeriodId: budget.id, limit, offset }),
-      transactionRepo.countByBudget({ userId, budgetPeriodId: budget.id }),
+      transactionRepo.listByRange({ userId, firstDay, lastDay, limit, offset }),
+      transactionRepo.countByRange({ userId, firstDay, lastDay }),
     ]);
     return { transactions, total, limit, offset };
   }

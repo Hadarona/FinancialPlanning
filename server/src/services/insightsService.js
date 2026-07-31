@@ -1,7 +1,7 @@
 import { AppError } from "../errors.js";
 import {
-  previousMonth,
   monthName,
+  monthRange,
   shortDateLabel,
   cashFlowSampleDates,
   cumulativeAtDates,
@@ -9,28 +9,31 @@ import {
 } from "./calc.js";
 
 /**
- * Month-comparison aggregates for the Insights screen (Stage F). One coherent
- * response (D-INS-F1): totals, per-category comparison with donut shares, and
- * the two cumulative cash-flow series. Ownership follows the same rule as
- * every other service: methods take the authenticated user id first and every
- * repo query filters by it (D-INS-B6).
+ * Multi-month insights aggregates (CR-001 item 3): the caller selects 1–3
+ * calendar months (validated upstream); the fixed current+previous model is
+ * superseded. One coherent response: per-month totals + cash-flow series,
+ * per-category totals aligned index-for-index with `months`, and combined
+ * donut shares across the selection. Ownership follows the same rule as
+ * every other service: methods take the authenticated user id first and
+ * every repo query filters by it.
  */
 export function createInsightsService({ budgetRepo, transactionRepo }) {
-  /** Aggregates one owned budget period. Two independent SQL aggregations
+  /** Aggregates one owned calendar month. Two independent SQL aggregations
    * (per category, per day) cross-check each other in `assertCoherent`. */
-  async function aggregateMonth(userId, budgetRow) {
+  async function aggregateMonth(userId, month) {
+    const range = monthRange(month);
     const [byCategory, byDay] = await Promise.all([
-      transactionRepo.sumByCategory(userId, budgetRow.id),
-      transactionRepo.sumByDay(userId, budgetRow.id),
+      transactionRepo.sumByCategory(userId, range),
+      transactionRepo.sumByDay(userId, range),
     ]);
-    const sampleDates = cashFlowSampleDates(budgetRow.month);
+    const sampleDates = cashFlowSampleDates(month);
     const cumulative = cumulativeAtDates(sampleDates, byDay);
-    return { byCategory, cumulative, sampleDates };
+    return { month, byCategory, cumulative, sampleDates };
   }
 
-  /** D-INS-B1/B2: the per-category sum and the last cumulative point come
-   * from independent aggregations; a mismatch means corrupted aggregation
-   * and must never be served as insight data. */
+  /** The per-category sum and the last cumulative point come from
+   * independent aggregations; a mismatch means corrupted aggregation and
+   * must never be served as insight data (CR3-5). */
   function assertCoherent(month, byCategory, cumulative) {
     const categoryTotal = Object.values(byCategory).reduce(
       (sum, value) => sum + value,
@@ -49,67 +52,64 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
     return categoryTotal;
   }
 
-  async function getInsights(userId, month) {
-    const budgetRow = await budgetRepo.findByUserAndMonth(userId, month);
+  /**
+   * @param months validated array of 1–3 unique "YYYY-MM" strings.
+   * Response months are normalized newest-first (CR3-3). A selected month
+   * with no expenses returns zeros, never an error (CR3-7).
+   */
+  async function getInsights(userId, months) {
+    const budgetRow = await budgetRepo.findByUser(userId);
     if (!budgetRow) {
-      throw new AppError("NOT_FOUND", "No budget for this month.");
+      throw new AppError("NOT_FOUND", "No budget yet.");
     }
 
-    const prevMonth = previousMonth(month);
-    // The previous-month lookup is independent of the current-month
-    // aggregation — run them in parallel (matters on remote-DB latency).
-    const [current, prevBudgetRow] = await Promise.all([
-      aggregateMonth(userId, budgetRow),
-      budgetRepo.findByUserAndMonth(userId, prevMonth),
-    ]);
-    const hasPrevious = prevBudgetRow !== null;
-    const previous = hasPrevious ? await aggregateMonth(userId, prevBudgetRow) : null;
-
-    const currentTotalMinor = assertCoherent(
-      month,
-      current.byCategory,
-      current.cumulative,
+    // Newest first; pure string sort is correct for zero-padded YYYY-MM.
+    const orderedMonths = [...months].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+    const aggregates = await Promise.all(
+      orderedMonths.map((month) => aggregateMonth(userId, month)),
     );
-    const previousTotalMinor = hasPrevious
-      ? assertCoherent(prevMonth, previous.byCategory, previous.cumulative)
-      : null;
+
+    const totals = aggregates.map((aggregate) =>
+      assertCoherent(aggregate.month, aggregate.byCategory, aggregate.cumulative),
+    );
 
     const orderedCategories = [...budgetRow.categories].sort(
       (a, b) => a.displayOrder - b.displayOrder,
     );
-    const currentActuals = orderedCategories.map(
-      (category) => current.byCategory[category.id] ?? 0,
+    // Combined spending per category across the selection drives the donut
+    // (largest-remainder shares of the combined totals, decision #10).
+    const combinedByCategory = orderedCategories.map((category) =>
+      aggregates.reduce(
+        (sum, aggregate) => sum + (aggregate.byCategory[category.id] ?? 0),
+        0,
+      ),
     );
-    // Documented rounding rule (decision #10): largest-remainder shares of
-    // actual spending, integers summing to exactly 100 (all-zero -> all 0).
-    const shares = largestRemainderShares(currentActuals);
+    const shares = largestRemainderShares(combinedByCategory);
 
     const categories = orderedCategories.map((category, index) => ({
       id: category.id,
       label: category.name,
       color: category.color,
-      currentMinor: currentActuals[index],
-      previousMinor: hasPrevious ? (previous.byCategory[category.id] ?? 0) : null,
+      // Aligned index-for-index with `insights.months`.
+      totalsMinor: aggregates.map((aggregate) => aggregate.byCategory[category.id] ?? 0),
+      combinedMinor: combinedByCategory[index],
       sharePercent: shares[index],
     }));
 
     return {
       insights: {
-        month,
-        monthLabel: monthName(month),
-        previousMonth: prevMonth,
-        previousMonthLabel: monthName(prevMonth),
-        hasPrevious,
-        currentTotalMinor,
-        previousTotalMinor,
+        months: aggregates.map((aggregate, index) => ({
+          month: aggregate.month,
+          label: monthName(aggregate.month),
+          yearLabel: `${monthName(aggregate.month)} ${aggregate.month.slice(0, 4)}`,
+          totalMinor: totals[index],
+          cashFlow: {
+            labels: aggregate.sampleDates.map(shortDateLabel),
+            cumulativeMinor: aggregate.cumulative,
+          },
+        })),
         categories,
-        cashFlow: {
-          labels: current.sampleDates.map(shortDateLabel),
-          currentCumulativeMinor: current.cumulative,
-          // Sampled at the previous month's own days 1/6/11/16/21/26/last;
-          // both series plot against the same seven x positions.
-          previousCumulativeMinor: hasPrevious ? previous.cumulative : [],
-        },
+        combinedTotalMinor: totals.reduce((sum, value) => sum + value, 0),
       },
     };
   }

@@ -151,10 +151,12 @@ function categoryProgress(plannedMinor, actualMinor) {
 
 /**
  * Builds the budget read model (the inner `budget` object of the
- * `GET /budgets/:month` response) from a stored budget row and a map of
- * per-category actual spending.
+ * `GET /budget` and `GET /months/:month` responses) from the stored single
+ * budget row and a map of per-category actual spending. CR-001: the budget
+ * itself has no month — callers wanting a month read model use
+ * `monthReadModel` below.
  *
- * @param budgetRow  { id, month, currencyCode, incomeMinor, categories:
+ * @param budgetRow  { id, currencyCode, incomeMinor, categories:
  *                     [{ id, name, icon, color, displayOrder, plannedMinor }] }
  * @param actualsByCategory  { [categoryId]: integer minor units }
  */
@@ -188,12 +190,51 @@ export function summarizeBudget(budgetRow, actualsByCategory = {}) {
 
   return {
     id: budgetRow.id,
-    month: budgetRow.month,
     currencyCode: budgetRow.currencyCode,
     incomeMinor: budgetRow.incomeMinor,
     plannedMinor,
     availableMinor: budgetRow.incomeMinor - plannedMinor,
     actualMinor,
+    categories,
+  };
+}
+
+/**
+ * Month read model (`GET /months/:month`): the single budget's plans plus
+ * the requested month's actuals. Identical plans for every month; only the
+ * actuals (and derived progress) differ (CR-001 item 1).
+ */
+export function monthReadModel(budgetRow, month, actualsByCategory = {}) {
+  assertMonth(month);
+  return { month, ...summarizeBudget(budgetRow, actualsByCategory) };
+}
+
+/**
+ * Plans-only budget model (`GET /budget`): the single budget with computed
+ * `plannedMinor`/`availableMinor` and NO actuals — actuals belong to a
+ * month read model, never to the month-independent budget (CR1-2).
+ */
+export function budgetPlanModel(budgetRow) {
+  const categories = [...budgetRow.categories]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map(({ id, name, icon, color, displayOrder, plannedMinor }) => ({
+      id,
+      name,
+      icon,
+      color,
+      displayOrder,
+      plannedMinor,
+    }));
+  const plannedMinor = categories.reduce(
+    (sum, category) => sum + category.plannedMinor,
+    0,
+  );
+  return {
+    id: budgetRow.id,
+    currencyCode: budgetRow.currencyCode,
+    incomeMinor: budgetRow.incomeMinor,
+    plannedMinor,
+    availableMinor: budgetRow.incomeMinor - plannedMinor,
     categories,
   };
 }
