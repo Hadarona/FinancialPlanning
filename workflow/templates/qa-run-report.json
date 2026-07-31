@@ -1,0 +1,30 @@
+{
+  "_template": true,
+  "schemaVersion": 1,
+  "sprintId": "delivery-2",
+  "iteration": 1,
+  "role": "qa",
+  "status": "blocked",
+  "commands": [],
+  "plannedTests": [
+    {
+      "id": "",
+      "title": "",
+      "layer": "unit",
+      "status": "not_run",
+      "stepsVerified": false,
+      "productIssueId": null,
+      "evidence": ""
+    }
+  ],
+  "coverage": {
+    "frontend": null,
+    "backend": null,
+    "threshold": 70,
+    "thresholdMet": null,
+    "evidence": ""
+  },
+  "testIssues": [],
+  "productIssues": [],
+  "notes": []
+}

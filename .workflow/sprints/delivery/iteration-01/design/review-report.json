@@ -1,0 +1,906 @@
+{
+  "schemaVersion": 1,
+  "sprintId": "delivery",
+  "iteration": 1,
+  "role": "design",
+  "status": "issues",
+  "notApplicableReason": "",
+  "reviewedViews": [
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-320.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 600,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-600.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-768.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 1024,
+        "height": 800
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1024.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1440.png"
+    },
+    {
+      "screen": "Login",
+      "state": "default-200pct-zoom-equivalent",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-zoom200-720.png"
+    },
+    {
+      "screen": "Login",
+      "state": "focus-email",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1440-focus-email.png"
+    },
+    {
+      "screen": "Login",
+      "state": "focus-submit",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1440-focus-submit.png"
+    },
+    {
+      "screen": "Login",
+      "state": "invalid-credentials-error",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390-invalid-credentials.png"
+    },
+    {
+      "screen": "Login",
+      "state": "client-validation-empty-email",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390-validation-empty.png"
+    },
+    {
+      "screen": "Login",
+      "state": "password-visible",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390-password-visible.png"
+    },
+    {
+      "screen": "Login",
+      "state": "submit-loading",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390-loading.png"
+    },
+    {
+      "screen": "Login",
+      "state": "session-expired-notice",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390-session-expired.png"
+    },
+    {
+      "screen": "Register",
+      "state": "default",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/register-390.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-320.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-768.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 1024,
+        "height": 800
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1024.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "data-200pct-zoom-equivalent",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-zoom200-720.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "menu-open",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-menu-open.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "add-expense-dialog-bottom-sheet",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-add-expense.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "add-expense-dialog-centered",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440-add-expense.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "add-expense-validation-errors",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-add-expense-validation.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "delete-expense-confirm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-delete-confirm.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "empty-month-no-budget",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-empty-month.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "fresh-user-no-budget",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-no-budget-current.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "zero-progress-no-expenses",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-zero-progress.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "loading-skeleton",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-skeleton.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "load-error-retry",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-error.png"
+    },
+    {
+      "screen": "Budget",
+      "state": "category-row-hover",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440-row-hover.png"
+    },
+    {
+      "screen": "Budget form",
+      "state": "create",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-390-create.png"
+    },
+    {
+      "screen": "Budget form",
+      "state": "edit",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-390-edit.png"
+    },
+    {
+      "screen": "Budget form",
+      "state": "edit",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-1440-edit.png"
+    },
+    {
+      "screen": "Budget form",
+      "state": "over-allocation-warning",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-390-overallocation.png"
+    },
+    {
+      "screen": "Budget form",
+      "state": "unsaved-changes-dialog",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-390-unsaved-dialog.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-320.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-768.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 1024,
+        "height": 800
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1024.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "data-200pct-zoom-equivalent",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-zoom200-720.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "june-selected-no-earlier-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-june.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "june-selected-no-earlier-comparison",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440-june.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "tooltip-on-keyboard-focus",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440-tooltip-focus.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "reduced-motion",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-reduced-motion.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "fresh-user-no-budget",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-no-budget.png"
+    },
+    {
+      "screen": "Insights",
+      "state": "no-spending-no-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-no-comparison.png"
+    }
+  ],
+  "issues": [
+    {
+      "id": "D-DES-001",
+      "severity": "low",
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "icon",
+      "expected": "The email input shows the leading Lucide Mail icon at 20px (icon map: Email -> Mail; Input/Text anatomy includes a leading icon; both approved Login compositions show it; the password input correctly shows its LockKeyhole icon).",
+      "actual": "The email input renders with no leading icon at every viewport. DOM check confirms no svg inside the email field wrapper (style-audit.json desktop.loginUnauthenticated.emailHasLeadingIcon=false); LoginPage.jsx/RegisterPage.jsx do not pass an icon to TextInput although the component supports it.",
+      "reproduction": "Open /login (or /register) at any viewport and compare the Email field with docs/design/approved/mobile-login.jpg.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1440.png; .workflow/sprints/delivery/iteration-01/design/evidence/style-audit.json",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/icon-map.md",
+        "docs/design/figma-kit/docs/component-inventory.md",
+        "docs/design/approved/mobile-login.jpg",
+        "docs/design/approved/desktop-login.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-002",
+      "severity": "medium",
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "category": "layout",
+      "expected": "Desktop login centers a single visible login card: width 440px, card padding 40px, on the page background (responsive-layout.md, Login/Desktop) - the approved desktop composition shows a distinct surface card with rounded corners around logo, heading, and form.",
+      "actual": "No card is rendered: .auth-card is transparent (background rgba(0,0,0,0), padding 0, no shadow/border) with max-width 400px, so the form sits directly on the page background at 400px instead of a 440px card with 40px padding.",
+      "reproduction": "Open /login at 1440x900; inspect .auth-card computed styles (see style-audit.json desktop.loginUnauthenticated.authCard).",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-1440.png; .workflow/sprints/delivery/iteration-01/design/evidence/style-audit.json",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/responsive-layout.md",
+        "docs/design/approved/desktop-login.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-003",
+      "severity": "low",
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 600,
+        "height": 844
+      },
+      "category": "layout",
+      "expected": "Mobile (320-767px) login form width is capped at 350px (responsive-layout.md, Login/Mobile: 'Maximum form width: 350px').",
+      "actual": "The form is capped at 400px, so between roughly 440px and 767px viewports it renders wider than the 350px mobile maximum (measured 400px at a 600px viewport).",
+      "reproduction": "Open /login at a 600px-wide viewport and measure the form width (400px).",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-600.png; .workflow/sprints/delivery/iteration-01/design/evidence/capture-summary.json",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/responsive-layout.md"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-004",
+      "severity": "low",
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "typography",
+      "expected": "Page titles use the kit's Heading/Page text style: DM Serif Display 400, 28/36 (figma-build-spec text styles); approved compositions show the large serif page title on Budget and Insights.",
+      "actual": "Authenticated page titles (Budget, Spending insights, Edit budget) render at 20px/30px DM Serif Display - a size that is not in the kit type ramp for page headings (20px belongs to Inter Heading/Section). Login's 'Welcome back' correctly uses 32px Display/Medium.",
+      "reproduction": "Open /budget or /insights; inspect the h1 computed font-size (20px; style-audit.json mobile.budget.title / desktop equivalents).",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png; .workflow/sprints/delivery/iteration-01/design/evidence/style-audit.json",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/figma-build-spec.md",
+        "docs/design/approved/mobile-budget.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-005",
+      "severity": "low",
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "component",
+      "expected": "Button/Primary anatomy places the optional leading icon inline before the label; the approved Budget compositions show '+ Add expense' on a single line.",
+      "actual": "The Add-expense button renders the Plus icon stacked above the label (two visual lines) at every viewport (320-1440).",
+      "reproduction": "Open /budget with data at any viewport and look at the Add expense button.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/component-inventory.md",
+        "docs/design/approved/mobile-budget.jpg",
+        "docs/design/approved/desktop-budget.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-006",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "content-order",
+      "expected": "Month tabs are ordered July (current, left) then June (previous, right): Tabs/Month options are listed 'July, June' in the component inventory and both approved Insights compositions show July on the left.",
+      "actual": "Tabs render June on the left and July on the right (chronological order), reversing the approved order at every viewport.",
+      "reproduction": "Open /insights and compare the tab order with docs/design/approved/mobile-insights.jpg.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/component-inventory.md",
+        "docs/design/approved/mobile-insights.jpg",
+        "docs/design/approved/desktop-insights.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-007",
+      "severity": "medium",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 1024,
+        "height": 800
+      },
+      "category": "chart-responsive",
+      "expected": "The donut keeps a minimum usable plot size next to its legend (component code intends a 128-200px donut; kit constraint: 'Charts: scale while preserving labels and a minimum usable plot area'; approved compositions show a prominent donut).",
+      "actual": "In the legend-beside-donut layout the SVG is flex-shrunk far below its 128px minimum: ~95px at 1440, ~90px at 768, and ~25px at 1024, where the chart (and its center text) is unreadable. Mobile stacked/two-up layouts (320/390) are unaffected.",
+      "reproduction": "Open /insights at 1024x800 (worst), 768x1024, or 1440x900 and observe the donut size in the 'Spending by category' share card.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1024.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-768.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/responsive-layout.md",
+        "docs/design/approved/desktop-insights.jpg",
+        "client/src/features/insights/charts/DonutChart.jsx"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-008",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "category": "chart",
+      "expected": "Donut inner radius is approximately 45% of the outer radius (figma-build-spec, Chart construction), i.e. a thick ring as shown in the approved compositions.",
+      "actual": "The ring is drawn with stroke width 0.13 x size centered at r=0.37 x size, giving an inner radius of ~70% of the outer radius - roughly half the specified ring thickness at every size.",
+      "reproduction": "Open /insights at 320px (largest rendering) and compare ring thickness with the approved compositions; see DonutChart.jsx radius/strokeWidth constants.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-320.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/figma-build-spec.md",
+        "docs/design/approved/mobile-insights.jpg",
+        "client/src/features/insights/charts/DonutChart.jsx"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-009",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "composition",
+      "expected": "The donut center is empty; totals appear in the hero and values in the legend (figma-build-spec: segment labels appear in a separate legend; both approved compositions show an empty donut center).",
+      "actual": "A center total ('8,420' + month) is rendered inside the donut - an addition not present in any source; it duplicates the hero total and becomes illegible when the donut shrinks (D-DES-007).",
+      "reproduction": "Open /insights at any viewport and look at the donut center.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-320.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/figma-build-spec.md",
+        "docs/design/approved/mobile-insights.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-010",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "chart-legibility",
+      "expected": "Cash-flow x-axis labels remain legible and non-overlapping at the smallest supported widths (kit accessibility checklist: 'Maintain legible labels at the smallest supported width').",
+      "actual": "In the 390px two-up layout the three x-axis labels collide: 'Jul 16Jul 31' render with no separation, and on the June view 'Jun 1Jun 16un 30' overlap/clip. The stacked 320px layout is fine.",
+      "reproduction": "Open /insights at 390x844 and inspect the Cash flow trend x-axis; switch to June for the worst case.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-june.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/accessibility-checklist.md"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-011",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "category": "chart",
+      "expected": "Line-chart circular point markers appear on hover only (figma-build-spec, cash-flow line chart); approved compositions show clean lines without persistent markers.",
+      "actual": "Markers are always visible on both series at all seven sample points, at every viewport. (Keyboard-focusable tooltip targets can remain while visually hidden until hover/focus.)",
+      "reproduction": "Open /insights and observe the Cash flow trend without hovering.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/figma-build-spec.md",
+        "docs/design/approved/desktop-insights.jpg"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-012",
+      "severity": "low",
+      "screen": "Insights",
+      "state": "july-selected-with-comparison",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "category": "content-demo-data",
+      "expected": "With the deterministic demo seed, the cash-flow chart reproduces the kit's reference series (content.json cashFlow: July 600->8,420 and June 800->9,180 rising from a low start), matching the approved chart shape used for comparison.",
+      "actual": "The seed reproduces the kit's monthly and per-category totals but front-loads day 1 (rent 3,500 + savings 600), so the cumulative curve starts at ~4,100 on Jul 1 instead of 600 and the rendered shape differs materially from the kit series and approved composition. Rendering and math are correct for the data; only the seeded distribution deviates. The roadmap fixes totals only, so honoring the content.json intermediate points conflicts with no higher-priority source.",
+      "reproduction": "Seed with ALLOW_DEMO_SEED=true npm run seed:demo, sign in as demo@example.com, open /insights, and compare the Jul 1 value (~4.1K) with content.json cashFlow.july[0]=600.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/data/content.json",
+        "docs/design/approved/desktop-insights.jpg",
+        "server/src/seed/demoSeed.js"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-013",
+      "severity": "low",
+      "screen": "Budget",
+      "state": "category-row-hover",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "category": "interaction-state",
+      "expected": "Budget category rows have a desktop hover state (component inventory, Budget / Category row properties: 'Hover state for desktop').",
+      "actual": "No hover treatment exists: hovering a row produces no visual change (screenshot identical to the resting state) and no .category-row:hover rule is defined.",
+      "reproduction": "Open /budget at 1440x900 and hover a category row; compare budget-1440-row-hover.png with budget-1440.png.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440-row-hover.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-1440.png",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/component-inventory.md"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-014",
+      "severity": "medium",
+      "screen": "Login",
+      "state": "default",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "accessibility-contrast",
+      "expected": "Normal-size text meets WCAG AA 4.5:1; the kit's accessibility checklist explicitly requires 'White text on blue buttons must be checked against the implementation blue', and the roadmap gates on the contrast checklist passing.",
+      "actual": "White 16px/600 labels on blue-500 (#5B86D6) measure 3.60:1 - below AA for normal text - on all primary buttons (Sign in, Add expense, Create budget, Save expense/budget, Try again) and the selected July tab. This is a kit-internal conflict (color-scheme mandates blue-500 primary actions) that the developer documented and left for design adjudication; an in-ramp remedy exists (blue-600 #476FB9 = 4.95:1, already the hover fill).",
+      "reproduction": "Open any screen with a primary button and compute the contrast of white on #5B86D6 (3.60:1); see the developer contrast audit.",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/login-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png; .workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png; .workflow/sprints/delivery/iteration-01/developer/evidence/contrast.md",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/accessibility-checklist.md",
+        "docs/design/figma-kit/docs/color-scheme.md",
+        "docs/product/Budgeting_App_Development_Roadmap.md"
+      ],
+      "changeType": "new"
+    },
+    {
+      "id": "D-DES-015",
+      "severity": "low",
+      "screen": "Budget",
+      "state": "data-with-overspent-rows",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "category": "accessibility-contrast",
+      "expected": "The 14px 'Planned' summary label meets WCAG AA 4.5:1 for normal text (kit accessibility checklist; roadmap contrast gate).",
+      "actual": "The label uses yellow-700 (#927427) on the background (#FAF8F4) at 4.17:1 - a near miss. Yellow-700 is already the darkest yellow token (kit semantic: yellow = planned), so no in-palette value passes at 14px; passing options include a larger/bolder label (>=18.66px bold qualifies for the 3:1 large-text bar) or a neutral text color with a yellow marker. Kit-internal conflict documented by the developer and left for design adjudication.",
+      "reproduction": "Open /budget and compute the contrast of the Planned label (#927427 on #FAF8F4 = 4.17:1).",
+      "evidence": ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png; .workflow/sprints/delivery/iteration-01/developer/evidence/contrast.md",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/accessibility-checklist.md",
+        "docs/design/figma-kit/docs/color-scheme.md",
+        "docs/product/Budgeting_App_Development_Roadmap.md"
+      ],
+      "changeType": "new"
+    }
+  ],
+  "intentionalDifferences": [
+    {
+      "id": "D-DES-INT-001",
+      "screen": "Budget",
+      "description": "Category progress values (99/101/105/103/39 with three 'over plan' rows) differ from the kit's progressPercent values (63/34/26/28/56) shown in the approved compositions.",
+      "rationale": "The kit percentages are mathematically inconsistent with the kit's own July actuals: roadmap (higher priority) fixes planned=10,200, July actual=8,420 per the content.json category values, and defines progress = actual/planned (3,957/4,000=99%, 1,516/1,500=101%, 842/800=105%, 926/900=103%, 1,179/3,000=39%). Both datasets cannot be honored at once; the roadmap wins per docs/workflow/source-of-truth.md. Overspent rows use the roadmap-required icon+text treatment, never color alone.",
+      "sourceRefs": [
+        "docs/workflow/source-of-truth.md",
+        "docs/product/Budgeting_App_Development_Roadmap.md",
+        "docs/design/figma-kit/data/content.json"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-002",
+      "screen": "Insights",
+      "description": "Donut Savings segment uses kit token blue-700 instead of the category's blue-500 (which Housing also uses).",
+      "rationale": "The kit maps both Housing and Savings to 'blue'; identical fills meet where the ring wraps and would be indistinguishable, defeating the kit's own rule against relying on a single undifferentiated encoding. blue-700 stays in the kit blue ramp, adjacent-segment separation was validated by the developer, and legend + hidden data table carry identity regardless. The approved screenshot's teal Savings legend dot is itself a screenshot inconsistency (kit maps Savings to blue).",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/color-scheme.md",
+        "docs/design/figma-kit/docs/figma-build-spec.md"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-320.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-003",
+      "screen": "Insights",
+      "description": "Desktop grid places the bar chart at 8 columns beside the 4-column donut with the cash-flow chart full-width below, instead of the approved desktop composition's full-width bar chart.",
+      "rationale": "The structured responsive-layout spec (bar 8 / donut 4 / line 12) conflicts with the approved desktop composition; within the kit, docs/ outrank reference imagery, and approved screenshots rank below structured kit values per source-of-truth. Mobile matches the approved composition.",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/responsive-layout.md",
+        "docs/workflow/source-of-truth.md",
+        "docs/design/approved/desktop-insights.jpg"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-004",
+      "screen": "Budget",
+      "description": "Lucide Trash2 (expense delete) and TriangleAlert (overspent/warning) are used although the kit icon map does not list delete/warning glyphs.",
+      "rationale": "The icon map has no entry for these required purposes (roadmap requires delete affordances and non-color overspending signals). Both icons are Lucide outline glyphs, satisfying the map's family/outline rules; this is a gap-filling extension, not a substitution of a mapped icon.",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/icon-map.md",
+        "docs/product/Budgeting_App_Development_Roadmap.md"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-005",
+      "screen": "all",
+      "description": "Copy beyond content.json: register page strings, expense/plan-form labels and statuses, state/error/empty strings, 'View insights'/'Back to budget' navigation entries, chart titles for states the kit does not cover, and tooltip wording.",
+      "rationale": "content.json covers only Login/Budget/Insights happy-path strings; the roadmap requires these screens and states to exist. Extensions are voice-consistent, marked in client/src/lib/copy.js, and flagged by the developer for design reconciliation. No kit-supplied string was altered.",
+      "sourceRefs": [
+        "docs/design/figma-kit/data/content.json",
+        "client/src/lib/copy.js"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/register-390.png",
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390-add-expense.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-006",
+      "screen": "Insights",
+      "description": "The unselected month tab is neutral (white surface) rather than the approved composition's simultaneous blue+yellow filled pair.",
+      "rationale": "The component inventory defines colors for the selected states only ('Selected July uses blue. Selected June uses yellow with near-black text'); filling both tabs at once would make the selection state indistinguishable. Structured kit values win over the screenshot inconsistency. Selected states match the kit exactly.",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/component-inventory.md",
+        "docs/workflow/source-of-truth.md"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png",
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390-june.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-007",
+      "screen": "Budget",
+      "description": "Roadmap-required UI beyond the approved compositions: month navigation row, Recent expenses history with per-item delete, create/edit budget form, and the various loading/empty/error/session states.",
+      "rationale": "The roadmap (higher priority than the compositions) mandates month navigation, expense history/delete, plan editing, and full state coverage; the kit provides no compositions for them. They are built from kit tokens and components and sit below/around the approved composition without altering it.",
+      "sourceRefs": [
+        "docs/product/Budgeting_App_Development_Roadmap.md"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png",
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-form-390-edit.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-008",
+      "screen": "Budget",
+      "description": "The mobile Budget header shows the logo instead of the back arrow visible in the approved mobile composition; Insights keeps the back arrow.",
+      "rationale": "Budget is the app's root screen (nothing to go back to); the kit's Budget screen composition lists only page heading + more menu, so the mockup's back arrow is a screenshot inconsistency. Insights, which has a parent screen, retains the approved back arrow.",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/component-inventory.md",
+        "docs/design/approved/mobile-budget.jpg"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png",
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-009",
+      "screen": "all",
+      "description": "Contrast-driven token consumption swaps within the kit ramp: coral-700 error text/danger buttons/warning banners, blue-700 Income label, green-600 Available value, 19px/700 comparison amount in yellow-700; June bars carry a diagonal pattern and visible text summaries accompany each chart.",
+      "rationale": "Required by the kit's own accessibility checklist (AA contrast; never color alone; a text summary per chart) which outranks the reference imagery; tokens.css remains byte-identical to the kit and only which token a component consumes changed. Documented in the developer contrast audit.",
+      "sourceRefs": [
+        "docs/design/figma-kit/docs/accessibility-checklist.md",
+        ".workflow/sprints/delivery/iteration-01/developer/evidence/contrast.md"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/budget-390.png",
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-390.png"
+      ]
+    },
+    {
+      "id": "D-DES-INT-010",
+      "screen": "Insights",
+      "description": "Cash-flow y-axis tops at 10K (not the approved composition's 15K) and only three of seven sample dates are labeled.",
+      "rationale": "content.json's series max is 9,180, so a 15K axis is inconsistent with the kit's own data; structured content wins. The 3-label axis matches the approved composition's own labeling density (Jul 1 / mid / Jul 31).",
+      "sourceRefs": [
+        "docs/design/figma-kit/data/content.json",
+        "docs/design/approved/desktop-insights.jpg"
+      ],
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-01/design/evidence/screenshots/insights-1440.png"
+      ]
+    }
+  ],
+  "notes": [
+    "Scope: full delivery review (Login, Budget, Insights + register and budget-form subviews) at 390x844 and 1440x900 references plus 320/768/1024 reflow, 200% zoom equivalence (720px viewport), keyboard focus, and reduced motion. Reviewed against the running production-style build (SERVE_CLIENT) with the guarded deterministic demo seed.",
+    "Passes worth recording: no horizontal scroll at 320px on any screen (scrollWidth=320 on Login/Budget/Insights, capture-summary.json); reduced-motion leaves zero animated elements (reduced-motion-audit.json); browser console clean of JS errors/warnings on every captured page (console-log.json - only expected 401/404/aborted-request network entries); focus rings visible; dialogs (bottom sheet <768 / centered card >=768) match the kit; 44x44 targets confirmed on icon buttons; skeleton/empty/error/validation/loading/overspent/zero-progress/no-comparison/session-expired states all present and coherent; tooltips show category, month, value, and units on keyboard focus; June-selected tab uses yellow with near-black text per the kit.",
+    "Functional behavior (calculations, routing, persistence, API correctness) is QA-owned and was not gated here; no functional blocker impeded visual review.",
+    "Budget desktop content: the spec's 'maximum width 960px' is implemented as a 960px container including the 64px page paddings (832px card). The spec wording is ambiguous; the rendered result is consistent and matches neither reading exactly worse than the other, so it is recorded as a note, not an issue.",
+    "June-view chart coloring (selected June renders its own series in blue as the current-view month, dashed) is outside kit scope - the kit designs only the July view; recorded for awareness, not judged.",
+    "Capture used temporary env overrides RATE_LIMIT_MAX/RATE_LIMIT_AUTH_MAX because the default general limiter throttles automated capture; product code and defaults unchanged (see capture-summary.json captureNotes).",
+    "The developer-flagged items were adjudicated as follows: kit progressPercent inconsistency -> intentional (D-DES-INT-001); donut Savings blue-700 -> intentional (D-DES-INT-002); desktop insights grid per spec -> intentional (D-DES-INT-003); Trash2/TriangleAlert icons -> intentional (D-DES-INT-004); the two kit-inherited contrast misses -> defects D-DES-014 / D-DES-015 because the kit's own accessibility checklist and the roadmap's contrast gate outrank the color assignment, and in-ramp remedies exist."
+  ]
+}

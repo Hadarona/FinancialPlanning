@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "sprintId": "delivery",
+  "iteration": 2,
+  "role": "developer",
+  "phase": "test",
+  "status": "pass",
+  "commands": [
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "eslint . -> no errors/warnings, re-run independently this session from the repo root"
+    },
+    {
+      "command": "npm run format:check",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "prettier --check . -> 'All matched files use Prettier code style!' (re-run independently this session)"
+    },
+    {
+      "command": "npm test -w server",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "6 files, 60 tests passed, incl. the new server/tests/unit/demoSeedData.test.js (7 tests: per-category/grand totals, cumulative sample-day math for a 31-day and a 28-day month, integer invariants) added for D-DES-012"
+    },
+    {
+      "command": "npm run test:integration -w server",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "10 files, 60 tests passed against a real listening server + isolated Neon test_* schemas (--no-file-parallelism); includes transactions/security/auth/budget/plans/health/shutdown/serveClient suites, all green"
+    },
+    {
+      "command": "npm test -w client",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "24 files, 165 tests passed (148 pre-existing QA tests untouched and green, plus developer-owned additive tests: LoginPage/RegisterPage Mail-icon assertions, chartMath.test.js xLabelIndexes cases)"
+    },
+    {
+      "command": "npm run coverage",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "Re-verified clean after QA's cycle-01 repair to client/tests/qa/qa-login-register.test.jsx (QA-CC-04 and QA-CC-08: additive await-sequencing only, no assertion changes — confirmed via git diff, read-only, this file was not touched by developer). Independently re-ran npm run coverage 3 consecutive times from the repo root this session: run 1 exit 0, run 2 exit 0, run 3 exit 0, each showing 'Test Files 24 passed (24)' / 'Tests 236 passed (236)' (server) and 'Test Files 24 passed (24)' / 'Tests 165 passed (165)' (client) with zero 'Unhandled Rejection' lines; raw tails in evidence/selftest/coverage-recheck/run-{1,2,3}-tail.log. Originally flaky in this same self-test session (see resolvedIssues[DEV-SELFTEST-IT2-001] for the original finding and root-cause analysis); now resolved and closed."
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "vite production build, no warnings; InsightsPage still emitted as a separate lazy chunk (dist/assets/InsightsPage-*.js, 14.09kB / gzip 5.09kB)"
+    },
+    {
+      "command": "ALLOW_DEMO_SEED=true npm run seed:demo",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "\"Demo data seeded for demo@example.com: months 2026-07, 2026-06 (current total 842000, previous total 918000).\" — matches D-DES-012's target totals exactly"
+    },
+    {
+      "command": "npm run smoke (SMOKE_BASE_URL=http://localhost:4050 against a really-running server: node server/src/index.js, PORT=4050 SERVE_CLIENT=true)",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "15/15 checks: health, register, create budget, add expense, budget delta, insights coherence, donut shares sum to 100, delete + rollback, logout, /auth/me 401 after logout. Server stopped afterward (port 4050 confirmed free)."
+    },
+    {
+      "command": "npm run workflow:validate",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "{\"ok\":true,\"errors\":[],\"warnings\":[]} — re-run independently this session; .workflow/state.json not modified by this phase"
+    },
+    {
+      "command": "diff client/src/styles/tokens.css docs/design/figma-kit/tokens/design-tokens.css",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": "Empty diff — byte-identical (D-FND-D1 / D-DES-014/015 constraint that only token *consumption* changed, never token values)"
+    },
+    {
+      "command": "Playwright (chromium, scratchpad install) spot-check: real UI login (one session, storageState reused across contexts to avoid re-tripping the auth rate limiter), 390x844 and 1440x900 captures of Login/Budget/Insights, plus a 320x844 scrollWidth pass on all three pages",
+      "exitCode": 0,
+      "result": "pass",
+      "evidence": ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/selftest-evidence.json (per-issue computed measurements) and .../selftest/screenshots/*.png (13 images). Zero pageerrors captured. Server (port 4050) restarted once with RATE_LIMIT_AUTH_MAX=1000 for this capture pass only, after the default limiter correctly returned 429 during earlier diagnostic runs (positive confirmation the rate limiter works); product defaults were not changed. DATABASE_URL/JWT_SECRET never printed or logged."
+    }
+  ],
+  "acceptanceChecks": [
+    {
+      "id": "D-DES-001",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (loginEmailIcon390.svgCount=1) and evidence/selftest/screenshots/login-390.png — leading Mail svg (lucide-mail, 20x20) inside the email field's .field-control, confirmed via real DOM inspection on the running build",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-002",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (authCard1440: width 440, padding '40px', borderRadius '16px', boxShadow present, background rgb(255,253,249)) and evidence/selftest/screenshots/login-1440.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-003",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (authCardWidth390=350) and evidence/selftest/screenshots/login-390.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-004",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (budgetTitleFont390 and budgetTitleFont1440 both fontSize '28px', lineHeight '36px', fontFamily 'DM Serif Display') and evidence/selftest/screenshots/budget-390.png, budget-1440.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-005",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (addExpenseOneLine390.sameLine=true, icon and label share the same top offset) and evidence/selftest/screenshots/budget-390.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-006",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (insightsTabOrder390=[\"July\",\"June\"]) and evidence/selftest/screenshots/insights-390.png, insights-1440.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-007",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (donutLayout1440: svgWidth/svgHeight 200 >= the 128px floor; legendBeside=false, legend stacks below since the real 1440 card column is narrower than the plan's estimate, per build-report.md deviation #1 — the donut is never below 128px, matching the acceptance criterion's exact wording) and evidence/selftest/screenshots/insights-1440.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-008",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (donutRingGeometry1440 measured from a live .chart-mark segment circle: r=64, strokeWidth=48, outer=88, inner=40, innerOverOuter=0.4545 ~= 45% per figma-build-spec.md §6)",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-009",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (donutCenterNodeCount=0 at 390, donutCenterNodeCount1440=0 at 1440 — no .donut-center-value/.donut-center-label nodes in the live DOM) and evidence/selftest/screenshots/insights-390.png, insights-1440.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-010",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (xLabels390 includes only \"Jul 1\"/\"Jul 31\" for the line chart's x-axis in the narrow 390 two-up column, i.e. first+last, not first/middle/last) and evidence/selftest/screenshots/insights-390.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-011",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (lineMarkers390 and lineMarkers1440: restOpacity=\"0\", hoverOpacity=\"1\", focusOpacity1440=\"1\") and evidence/selftest/screenshots/insights-1440-marker-hover.png, insights-1440-marker-focus.png. Note: the very first sample point (Jul 1/Jun 1) has near-coincident series values (600 vs 800) so the two circles sit only ~4px apart in pixel space and the topmost (current-month) circle intercepts pointer events there on mouse hover; this is an inherent overlapping-marker characteristic of any two-series line chart at close values, unrelated to the opacity/hover-reveal mechanism itself, and does not affect keyboard Tab access (confirmed reaching every point, including the coincident ones, via focus). Not a regression from D-DES-011 and not blocking.",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-012",
+      "status": "passed",
+      "evidence": "server/tests/unit/demoSeedData.test.js (7/7 passing, locks per-category/grand totals and the 7-sample-day cumulative series against content.json for both a 31-day and a 28-day synthetic month); ALLOW_DEMO_SEED=true npm run seed:demo output this session (current total 842000, previous total 918000); npm run smoke insights-coherence + donut-shares-sum-to-100 checks, both passing against the freshly reseeded server",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-013",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (categoryRowHover1440: restBg 'rgba(0,0,0,0)' -> hoverBg 'rgb(238,243,252)' i.e. blue-50, changed=true) and evidence/selftest/screenshots/budget-1440-row-hover.png",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-014",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (primaryButtonBg1440='rgb(71,111,185)' = #476FB9 = blue-600, selectedTabBg1440 same value) — white text on blue-600 measures 4.95:1 per the plan's contrast computation; diff of tokens.css vs the kit file is empty, confirming only token *consumption* changed",
+      "reason": ""
+    },
+    {
+      "id": "D-DES-015",
+      "status": "passed",
+      "evidence": "evidence/selftest/selftest-evidence.json (plannedLabelColor390: color 'rgb(17,24,39)' = text-primary near-black, hasYellowMarker=true, markerBg 'rgb(226,190,98)' = yellow-500) and evidence/selftest/screenshots/budget-390.png",
+      "reason": ""
+    },
+    {
+      "id": "ROADMAP-REGISTRY-CARRYFORWARD",
+      "status": "passed",
+      "evidence": ".workflow/sprints/delivery/iteration-01/developer/test-report.json (181 acceptance checks, status pass) carried forward unchanged: this fix build changes visual/UI/CSS behavior and the demo seed's expense distribution only (D-DES-001..015) — no API, schema, routing, calculation, or copy-contract change, confirmed by build-report.md's per-issue diff summary and this session's full independent re-run of every suite (server unit/integration, client incl. the 148 pre-existing QA tests, coverage, build, smoke) showing no behavioral regression against the iteration-1 registry",
+      "reason": "Developer-verified this session; QA and design own the final sign-off for their respective iteration-1 IDs, unaffected by this UI-only fix build."
+    },
+    {
+      "id": "REGR-LINT",
+      "status": "passed",
+      "evidence": "npm run lint exit 0 (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-FORMAT-CHECK",
+      "status": "passed",
+      "evidence": "npm run format:check exit 0 (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-SERVER-UNIT",
+      "status": "passed",
+      "evidence": "npm test -w server exit 0, 60/60 (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-SERVER-INTEGRATION",
+      "status": "passed",
+      "evidence": "npm run test:integration -w server exit 0, 60/60 real-HTTP tests against isolated Neon schemas (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-CLIENT-TESTS",
+      "status": "passed",
+      "evidence": "npm test -w client exit 0, 165/165 incl. all 148 QA tests untouched and green (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-COVERAGE",
+      "status": "passed",
+      "evidence": "npm run coverage: 3/3 consecutive independent re-runs this session exit 0 (236 server + 165 client tests each, zero unhandled rejections), after QA cycle-01's repair to qa-login-register.test.jsx (QA-CC-04/QA-CC-08 await-sequencing fix, evidence under .workflow/sprints/delivery/iteration-02/qa/cycle-01/). See commands[] entry and resolvedIssues[DEV-SELFTEST-IT2-001].",
+      "reason": ""
+    },
+    {
+      "id": "REGR-BUILD",
+      "status": "passed",
+      "evidence": "npm run build exit 0, InsightsPage still a separate lazy chunk (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-SMOKE",
+      "status": "passed",
+      "evidence": "npm run smoke exit 0, 15/15 against a really-running SERVE_CLIENT server on port 4050 (this session); server stopped afterward",
+      "reason": ""
+    },
+    {
+      "id": "REGR-WORKFLOW-VALIDATE",
+      "status": "passed",
+      "evidence": "npm run workflow:validate exit 0, {\"ok\":true,\"errors\":[],\"warnings\":[]} (this session)",
+      "reason": ""
+    },
+    {
+      "id": "REGR-320-NO-HORIZONTAL-SCROLL",
+      "status": "passed",
+      "evidence": "evidence/selftest/insights-320-recheck.json and evidence/selftest/selftest-evidence.json (scrollWidth320): Login, Budget, and Insights each measure document.documentElement.scrollWidth === clientWidth === 320 at a 320px viewport, real UI login journey, seeded demo data",
+      "reason": ""
+    },
+    {
+      "id": "REGR-TOKENS-BYTE-IDENTITY",
+      "status": "passed",
+      "evidence": "diff client/src/styles/tokens.css docs/design/figma-kit/tokens/design-tokens.css -> empty (D-FND-D1), re-verified independently this session after all D-DES-014/015 token-consumption changes",
+      "reason": ""
+    }
+  ],
+  "changedFiles": [
+    {
+      "area": "developer/evidence (self-test artifacts only; no product code changed)",
+      "files": [
+        ".workflow/sprints/delivery/iteration-02/developer/test-report.json (this report)",
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/selftest-evidence.json",
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/insights-320-recheck.json",
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/coverage-flake.md (updated with the resolution)",
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/coverage-recheck/run-{1,2,3}-tail.log (3 independent post-repair npm run coverage re-runs, all exit 0)",
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/screenshots/{login,budget,insights}-{320,390,1440}.png, budget-1440-row-hover.png, insights-1440-marker-hover.png, insights-1440-marker-focus.png"
+      ]
+    }
+  ],
+  "openIssues": [],
+  "resolvedIssues": [
+    {
+      "id": "DEV-SELFTEST-IT2-001",
+      "severity": "medium",
+      "title": "npm run coverage intermittently exits 1 on a stray post-teardown React setState in a QA test, under v8 coverage instrumentation only",
+      "affectedAcceptanceIds": [
+        "REGR-COVERAGE"
+      ],
+      "expected": "npm run coverage should exit 0 deterministically, per this self-test assignment's check suite and the developer-loop skill's Test step.",
+      "actual": "npm run coverage (root chain: server then client) exited 1 on 1 of 3 runs this session with a Vitest 'Unhandled Rejection: ReferenceError: window is not defined' at LoginPage.jsx:62 (the handleSubmit finally block's setSubmitting(false)), caught after the jsdom test environment for client/tests/qa/qa-login-register.test.jsx had already torn down. All 236 server + 165 client tests still reported as passed in every run, including the failing one; only the trailing unhandled-rejection line flipped the process exit code. Isolated npm run coverage -w client reruns: 3 of 4 exited 0, 1 of 4 exited 1 with the identical stack (confirmed identical via grep across the two failing logs). Plain npm test -w client (no coverage) never reproduced it in 1 run this session.",
+      "reproduction": "From the repo root or client/, run `npm run coverage` (or `npm run coverage -w client`) 3-5 times in a row; before the repair, roughly 1 in 3-4 runs exited 1 with the exact stack trace in evidence/selftest/coverage-flake.md.",
+      "evidence": [
+        ".workflow/sprints/delivery/iteration-02/developer/evidence/selftest/coverage-flake.md"
+      ],
+      "suggestedFix": "Guard the post-await setSubmitting/setFieldErrors/setFormError calls in LoginPage.jsx's handleSubmit (and the equivalent in RegisterPage.jsx) with an unmounted-ref or AbortController check so a late-resolving mock cannot call setState after unmount; or have QA's test await the mocked response settling before the test ends. Not fixed by developer in this test-only phase (no product code changes permitted; also a QA-owned test file). Confirmed pre-existing and unrelated to any of the 15 D-DES fixes: git diff de83b87 ec7323f -- client/src/pages/LoginPage.jsx shows only the additive D-DES-001 Mail-icon import/prop; handleSubmit (including the exact reported line) is byte-identical to iteration 1.",
+      "owningArea": "tooling/build (test-infrastructure timing; the touched product line itself is unchanged from iteration 1)",
+      "resolution": "Resolved by QA in cycle-01 (.workflow/sprints/delivery/iteration-02/qa/cycle-01/), NOT by developer. QA added additive await-sequencing (no assertion changes) to client/tests/qa/qa-login-register.test.jsx in two places: QA-CC-04 ('a slow login submits exactly once on a rapid double click') and a second identical race in QA-CC-08 ('the submit button shows a pending/disabled state while the login is in flight') — both now wait for the post-login budget fetch (or an equivalent settle point) before the test ends, so the mocked login promise (and LoginPage.jsx's handleSubmit finally block) has fully resolved while the jsdom environment is still alive, leaving nothing pending at teardown. Developer independently verified this session: (1) read-only inspection of the git diff for qa-login-register.test.jsx confirmed the change is exactly the additive waitFor sequencing described, no assertion changes; (2) QA's own cycle-01 evidence shows 6/6 consecutive npm run coverage runs exit 0 (.workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-1.log through -6.log); (3) developer independently re-ran npm run coverage 3 more consecutive times from the repo root afterward — all 3 exit 0 (236 server + 165 client tests each, zero unhandled rejections). Developer did not modify qa/ or any product file to effect this resolution.",
+      "resolutionEvidence": [
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-1.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-2.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-3.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-4.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-5.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/coverage-run-6.log",
+        ".workflow/sprints/delivery/iteration-02/qa/cycle-01/evidence/qa-cc-04-08-verbose.log"
+      ]
+    }
+  ],
+  "notes": [
+    "This is the developer SELF-TEST phase for delivery iteration 2 (the D-DES-001..015 fix build, commit ec7323f). No product code was modified in this phase; all writes are under developer/evidence/selftest/ plus this report, per this assignment's explicit restriction.",
+    "All required check-suite commands were independently re-run from the repo root this session rather than trusted from build-report.md: npm run lint, npm run format:check, npm test -w server, npm run test:integration -w server, npm test -w client, npm run coverage, npm run build, npm run smoke (against a really-running server), npm run workflow:validate. All matched build-report.md's prior results, including npm run coverage after QA's cycle-01 repair (see resolvedIssues[DEV-SELFTEST-IT2-001]).",
+    "Guarded reseed: ALLOW_DEMO_SEED=true npm run seed:demo was re-run this session (current total 842000, previous total 918000, matching content.json exactly), then the server was started fresh (node server/src/index.js, PORT=4050, SERVE_CLIENT=true, NODE_ENV=development) for the smoke test and the Playwright spot-check.",
+    "Playwright (chromium, the scratchpad install already present in this session's sandbox from earlier workflow phases) drove one real UI login and reused its storageState across authenticated browser contexts at 390x844, 1440x900, and 320x844, to avoid re-tripping the server's own auth rate limiter with repeated automated logins (several early diagnostic script iterations did trip it -> 429, confirming D-AUTH rate limiting works correctly); the server was then restarted once with RATE_LIMIT_AUTH_MAX=1000 for the remainder of the capture pass only, product defaults unchanged. All 15 D-DES fixes and the 320px no-horizontal-scroll invariant were independently confirmed via live DOM/computed-style measurement against the running build, matching build-report.md's per-issue claims (see acceptanceChecks above and evidence/selftest/selftest-evidence.json).",
+    "One benign observation (not an open issue): the line chart's very first sample point for each series (Jul 1 / Jun 1) sits only ~4px apart in pixel space because both months' cumulative totals start low and close together (600 vs 800); the topmost (current-month) circle intercepts mouse hover there, though keyboard Tab focus still reaches every point independently of paint order. This is an inherent characteristic of any two-series line chart at close values, unrelated to and not introduced by the D-DES-011 opacity/hover-reveal fix; documented under D-DES-011's acceptanceCheck entry rather than as a separate issue.",
+    "tokens.css re-verified byte-identical to docs/design/figma-kit/tokens/design-tokens.css after all D-DES-014/015 token-consumption changes (diff empty), confirming D-FND-D1 held throughout the fix build.",
+    "The one genuine, reproducible finding from this phase (DEV-SELFTEST-IT2-001, npm run coverage flakiness) was NOT fixed by developer, per this assignment's explicit test-only / no-product-code-changes restriction; it was recorded precisely (root cause, exact file/line, reproduction, confirmed pre-existing via git diff, unrelated to any D-DES fix) and QA subsequently repaired it in cycle-01 (client/tests/qa/qa-login-register.test.jsx, QA-CC-04 and QA-CC-08, additive await-sequencing only, no assertion changes — read-only-verified by developer via git diff). Developer independently re-ran npm run coverage 3 consecutive times after the repair: all 3 exit 0 (236 server + 165 client tests each run, zero unhandled rejections). The issue is now moved to resolvedIssues.",
+    "Follow-up re-verification session (after QA's repair): 3 independent consecutive npm run coverage runs from the repo root all exited 0 (server 236/236, client 165/165, no Unhandled Rejection lines in any run). All servers/background processes started during both this session and the follow-up were stopped before finishing (confirmed via ps aux showing no matching node/vitest processes and no listener on port 4050). No product code, qa/, design/, .workflow/state.json, or tools/ were modified by developer at any point. DATABASE_URL and JWT_SECRET were never printed or logged.",
+    "Final status is 'pass': every one of the 15 D-DES-001..015 fixes, every command in the suite (including npm run coverage after QA's repair), and both the 320px and tokens-byte-identity invariants passed cleanly and independently; openIssues is empty and the one finding from this phase is fully resolved and documented in resolvedIssues."
+  ]
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "caption": "Spending by category: July and June",
+    "rect": {
+      "left": 36,
+      "right": 317.875,
+      "width": 281.875
+    },
+    "computedWidth": "281.875px",
+    "display": "table"
+  },
+  {
+    "caption": "Share of July spending by category",
+    "rect": {
+      "left": 36,
+      "right": 305.15625,
+      "width": 269.15625
+    },
+    "computedWidth": "269.156px",
+    "display": "table"
+  },
+  {
+    "caption": "Cumulative spending by date: July and June",
+    "rect": {
+      "left": 36,
+      "right": 370.984375,
+      "width": 334.984375
+    },
+    "computedWidth": "334.984px",
+    "display": "table"
+  }
+]

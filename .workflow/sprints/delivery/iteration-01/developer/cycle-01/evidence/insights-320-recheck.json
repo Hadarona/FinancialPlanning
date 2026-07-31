@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-07-30T23:06:06.929Z",
+  "base": "http://localhost:4050",
+  "viewport": 320,
+  "login": {
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "hasHorizontalScroll": false
+  },
+  "budget": {
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "hasHorizontalScroll": false
+  },
+  "insights": {
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "hasHorizontalScroll": false
+  },
+  "insightsHiddenTables": [
+    {
+      "hiddenElement": "span",
+      "caption": null,
+      "wrapperRect": {
+        "left": 106.765625,
+        "right": 107.765625,
+        "width": 1
+      },
+      "tableComputedWidth": null,
+      "tableRectRight": null
+    },
+    {
+      "hiddenElement": "div",
+      "caption": "Spending by category: July and June",
+      "wrapperRect": {
+        "left": 36,
+        "right": 37,
+        "width": 1
+      },
+      "tableComputedWidth": "281.875px",
+      "tableRectRight": 317.875
+    },
+    {
+      "hiddenElement": "div",
+      "caption": "Share of July spending by category",
+      "wrapperRect": {
+        "left": 36,
+        "right": 37,
+        "width": 1
+      },
+      "tableComputedWidth": "269.156px",
+      "tableRectRight": 305.15625
+    },
+    {
+      "hiddenElement": "div",
+      "caption": "Cumulative spending by date: July and June",
+      "wrapperRect": {
+        "left": 36,
+        "right": 37,
+        "width": 1
+      },
+      "tableComputedWidth": "334.984px",
+      "tableRectRight": 370.984375
+    }
+  ],
+  "pageErrors": [],
+  "pass": true
+}

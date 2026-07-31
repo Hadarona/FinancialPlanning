@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "sprintId": "delivery-2",
+  "sprintTitle": "Change request 001 — recurring budget, new categories, insights multi-select",
+  "sprintOrder": 0,
+  "roadmapHeading": "# Budgeting App — Product and Development Roadmap",
+  "iteration": 1,
+  "iterationLimit": 5,
+  "startedAt": "2026-07-31T06:32:41.238Z",
+  "sources": {
+    "requirements": "docs/product/Project_requirements_English.md",
+    "roadmap": "docs/product/Budgeting_App_Development_Roadmap.md",
+    "designKit": "docs/design/figma-kit",
+    "approvedScreens": "docs/design/approved-screens.md",
+    "sourceRules": "docs/workflow/source-of-truth.md"
+  },
+  "feedback": [],
+  "templates": {
+    "developer": "workflow/templates/developer-test-report.json",
+    "qa": "workflow/templates/qa-run-report.json",
+    "design": "workflow/templates/design-review-report.json"
+  }
+}

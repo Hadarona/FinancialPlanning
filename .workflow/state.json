@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "project": "budgeting-app",
+  "status": "iteration_in_progress",
+  "currentSprintIndex": 0,
+  "currentSprintId": "delivery-2",
+  "iteration": 1,
+  "iterationLimit": 5,
+  "phase": "developer_plan",
+  "feedbackRounds": 0,
+  "activeFeedbackPaths": [],
+  "completedSprints": [],
+  "acceptedBaselines": [],
+  "lastEvaluation": null,
+  "createdAt": "2026-07-31T06:32:41.062Z",
+  "updatedAt": "2026-07-31T06:32:41.235Z"
+}

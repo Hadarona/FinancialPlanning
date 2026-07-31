@@ -1,0 +1,28 @@
+{
+  "_template": true,
+  "schemaVersion": 1,
+  "sprintId": "delivery-2",
+  "iteration": 1,
+  "role": "developer",
+  "phase": "test",
+  "status": "fail",
+  "changedFiles": [],
+  "commands": [
+    {
+      "command": "",
+      "exitCode": null,
+      "result": "not_run",
+      "evidence": ""
+    }
+  ],
+  "acceptanceChecks": [
+    {
+      "id": "",
+      "status": "not_run",
+      "evidence": "",
+      "reason": ""
+    }
+  ],
+  "openIssues": [],
+  "notes": []
+}

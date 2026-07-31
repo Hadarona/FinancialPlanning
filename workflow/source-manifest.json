@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "docs/product/Project_requirements_English.md",
+      "sha256": "1c05339a948bbef81073c1409954a8ea9a9ae571c703d1865ba9bf6524395d29"
+    },
+    {
+      "path": "docs/product/Budgeting_App_Development_Roadmap.md",
+      "sha256": "20f38a892a541520ca1722a3653dbf49b476725ec4f6f3f9fbc5c810ec06faf0"
+    },
+    {
+      "path": "docs/design/approved/desktop-budget.jpg",
+      "sha256": "4b2b6807a11d8128a9b99f37d7b8777e91e7a44074b76f08b92721bc1767265b"
+    },
+    {
+      "path": "docs/design/approved/desktop-insights.jpg",
+      "sha256": "1d8b3d88aed89412763f9349a0578068de0077e580cb279337edb97b734b1d5a"
+    },
+    {
+      "path": "docs/design/approved/desktop-login.jpg",
+      "sha256": "0326c6dc2e6901ce9d89dc623fec635326696069fc66f96ea837d683dbf8bd87"
+    },
+    {
+      "path": "docs/design/approved/mobile-budget.jpg",
+      "sha256": "e1a96dffbc30c26cd6523e20574c6f0610a8a1242dd348814435886bf85eeb82"
+    },
+    {
+      "path": "docs/design/approved/mobile-insights.jpg",
+      "sha256": "fd0630a697e0e3825f32b0aa3e12b3cd55cb606528472da214ae5dd4c9ddc012"
+    },
+    {
+      "path": "docs/design/approved/mobile-login.jpg",
+      "sha256": "c0b07f3b1ed6d40c82f41f66c390668453d67d7b1bb0bc7bd4666a286b21efa8"
+    },
+    {
+      "path": "docs/design/figma-kit/README.md",
+      "sha256": "b9342ce9cd70e9ed049111cc126d6f46cf6c610ed04421b0341cb5729b26f816"
+    },
+    {
+      "path": "docs/design/figma-kit/manifest.json",
+      "sha256": "a0c89a64b27b7f7a5e2a7738f631d3c8c1b4293d02486a9e247bea2de44c6e4c"
+    },
+    {
+      "path": "docs/design/figma-kit/assets/logo.svg",
+      "sha256": "467f518d418bc8830cfce3cb282f0ec58765f14ade7796e57ad5fbbec26ccc2f"
+    },
+    {
+      "path": "docs/design/figma-kit/data/content.json",
+      "sha256": "d61e98ff6c809607fc541a007639b77f59daa827aa3dbaf66df4e28adb56d880"
+    },
+    {
+      "path": "docs/design/figma-kit/tokens/design-tokens.json",
+      "sha256": "b404672ded3e275fb5ec719b92457ae713df928fc2191746677fa3ce127cc1c4"
+    },
+    {
+      "path": "docs/design/figma-kit/tokens/design-tokens.css",
+      "sha256": "a5b3dd5d32a362b1081d2f429f6ac39a6c520a055eeb6efe9e49b3bc18afd6a0"
+    },
+    {
+      "path": "docs/design/figma-kit/tokens/tokens-studio.json",
+      "sha256": "9c9d7d9681b273f4da01832974c71ea5b549c640e38bcf589d1784eeb255e490"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/accessibility-checklist.md",
+      "sha256": "21041691206a94453c5e1a8fc76b8fb5f9f4ed031b6da4f08331a571aafc05ce"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/color-scheme.md",
+      "sha256": "d3d96bfb8f5f4c29a4d5c86fd8dfca67b47d3cf17cd1783f697b879f09b16f69"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/component-inventory.md",
+      "sha256": "4a5df6b7646c0f15adf4f1cd2ae9b67b4f15093c356ac56403f4ccf74894c320"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/figma-build-spec.md",
+      "sha256": "29e7594ca9ea210b4291c5c598cc880ec761aec5cf25a6b965fdf1d1b07786d4"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/figma-creation-prompt.md",
+      "sha256": "03b56214dffc31082bcf166b933082e0faec64d1107982ff4d323efc38f87d8f"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/icon-map.md",
+      "sha256": "9fee2da8923b6e348b653938fa05d683c8ad15799592bf0f2ff92e4d7adae96f"
+    },
+    {
+      "path": "docs/design/figma-kit/docs/responsive-layout.md",
+      "sha256": "1f22cbb577a1b52602fea8cfdcf6a302b1258fe4dd45981411b82011da1175af"
+    },
+    {
+      "path": "docs/design/figma-kit/references/README.md",
+      "sha256": "9fd6886387ce0b3be3bb5775b096c990ac7387fa3b34630ee389407817998ed5"
+    },
+    {
+      "path": "docs/design/figma-kit/references/desktop-board.png",
+      "sha256": "3c315118bd739a6a46676e0e05cddeee5e9f2849d4e91c0aa30417daaf90546c"
+    },
+    {
+      "path": "docs/design/figma-kit/references/desktop-budget.png",
+      "sha256": "edd0d8d8fd67a28048118996aa356e3ebdda076623b66b236aee50b7b3e7fabf"
+    },
+    {
+      "path": "docs/design/figma-kit/references/desktop-insights.png",
+      "sha256": "54ade77c5cf069cf28b335c8e5bdb855479263a06a7ec3d5ddf3af741ffbd002"
+    },
+    {
+      "path": "docs/design/figma-kit/references/desktop-login.png",
+      "sha256": "df02c47e4fa77fc8484d8093e0a63011ff1476ce701fc025c05faafc814dd027"
+    },
+    {
+      "path": "docs/design/figma-kit/references/mobile-board.png",
+      "sha256": "c5e2f05a89da5fd05c88b0d4d8f315b44c2183d249e7dccd69c6869f84291f19"
+    },
+    {
+      "path": "docs/design/figma-kit/references/mobile-budget.png",
+      "sha256": "4f7bdd429fa09cd87a1691c1114fb3eded256a0fd727da2faab980b147d37a59"
+    },
+    {
+      "path": "docs/design/figma-kit/references/mobile-insights.png",
+      "sha256": "f7a44265487e02d1967b0f24ee72dd24b67c670c52f03b1109e8e0200dd99505"
+    },
+    {
+      "path": "docs/design/figma-kit/references/mobile-login.png",
+      "sha256": "6b2cee402ec85b200b94818bbd2397615cb3ba278e5843a0ed15bcf46d54adc2"
+    }
+  ]
+}

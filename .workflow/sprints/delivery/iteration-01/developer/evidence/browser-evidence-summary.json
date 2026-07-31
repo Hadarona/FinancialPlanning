@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-07-30T22:37:54.479Z",
+  "base": "http://localhost:4050",
+  "results": {
+    "loginToBudget390": {
+      "ok": true,
+      "url": "http://localhost:4050/budget"
+    },
+    "navToInsightsViaMenu390": {
+      "ok": true
+    },
+    "sessionRestore390": {
+      "ok": true,
+      "url": "http://localhost:4050/budget"
+    },
+    "logoutUrl": "http://localhost:4050/login",
+    "horizontalScrollAt320_budget": false,
+    "horizontalScrollAt320_insights": true,
+    "horizontalScrollAtZoom200": false
+  },
+  "consoleMessages": [
+    {
+      "label": "mobile-390",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:4050/login"
+    },
+    {
+      "label": "desktop-1440",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:4050/login"
+    },
+    {
+      "label": "reflow-320",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:4050/login"
+    },
+    {
+      "label": "zoom200-720x450",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:4050/login"
+    },
+    {
+      "label": "reduced-motion-390",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:4050/login"
+    }
+  ]
+}

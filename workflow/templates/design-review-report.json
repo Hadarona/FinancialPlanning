@@ -1,0 +1,23 @@
+{
+  "_template": true,
+  "schemaVersion": 1,
+  "sprintId": "delivery-2",
+  "iteration": 1,
+  "role": "design",
+  "status": "blocked",
+  "notApplicableReason": "",
+  "reviewedViews": [
+    {
+      "screen": "",
+      "state": "default",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "evidence": ""
+    }
+  ],
+  "issues": [],
+  "intentionalDifferences": [],
+  "notes": []
+}
