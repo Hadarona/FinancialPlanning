@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BudgetPage } from "../src/features/budget/BudgetPage.jsx";
 import { renderProviders } from "./testUtils.jsx";
@@ -364,5 +364,22 @@ describe("BudgetPage", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("12,500")).toBeInTheDocument();
+  });
+
+  it("opens the add-expense dialog prefilled from a category icon, empty from the Add button", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
+    render(renderProviders(<BudgetPage />));
+    const user = userEvent.setup();
+
+    // Category icon → dialog with that category already selected.
+    await user.click(await screen.findByRole("button", { name: "Add Transport expense" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add expense" });
+    expect(within(dialog).getByRole("combobox")).toHaveValue("transport");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    // Plain Add-expense button → no prefill (placeholder value).
+    await user.click(screen.getByRole("button", { name: "Add expense" }));
+    const dialogAgain = await screen.findByRole("dialog", { name: "Add expense" });
+    expect(within(dialogAgain).getByRole("combobox")).toHaveValue("");
   });
 });

@@ -45,6 +45,7 @@ export function BudgetPage() {
   const monthQuery = useMonthQuery(month);
   const createBudgetMutation = useCreateBudgetMutation();
   const [addOpen, setAddOpen] = useState(false);
+  const [addPrefillCategoryId, setAddPrefillCategoryId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editIncomeOpen, setEditIncomeOpen] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
@@ -113,10 +114,20 @@ export function BudgetPage() {
               key={category.id}
               category={category}
               onEdit={(selected) => setEditCategory(selected)}
+              onAddExpense={(selected) => {
+                setAddPrefillCategoryId(selected.id);
+                setAddOpen(true);
+              }}
             />
           ))}
         </ul>
-        <Button className="budget-add-expense" onClick={() => setAddOpen(true)}>
+        <Button
+          className="budget-add-expense"
+          onClick={() => {
+            setAddPrefillCategoryId("");
+            setAddOpen(true);
+          }}
+        >
           <Plus size={24} aria-hidden="true" />
           {copy.budget.addExpenseLabel}
         </Button>
@@ -129,6 +140,7 @@ export function BudgetPage() {
           open={addOpen}
           month={month}
           categories={budget.categories}
+          initialCategoryId={addPrefillCategoryId}
           onClose={() => setAddOpen(false)}
           onSuccess={() => {
             setAddOpen(false);

@@ -1,19 +1,27 @@
-/* CR1-6: the row is a full-width click-to-edit button. Button chrome is
-   reset so the approved row composition is unchanged; hover and
-   :focus-visible make the interactive treatment visible (D-DES-013). */
+/* CR1-6: the row body is a click-to-edit button and the icon circle is a
+   sibling add-expense button. Button chrome is reset so the approved row
+   composition is unchanged; hover and :focus-visible make the interactive
+   treatments visible (D-DES-013). */
 .category-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+
+.category-row-edit {
   appearance: none;
   border: none;
   background: transparent;
   font: inherit;
   color: inherit;
   text-align: left;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
+  padding: var(--space-2) 0;
   border-radius: var(--radius-md);
 }
 
@@ -21,7 +29,8 @@
   border-top: 1px solid var(--color-border);
 }
 
-.category-row:focus-visible {
+.category-row-edit:focus-visible,
+.category-row-icon:focus-visible {
   outline: 2px solid var(--color-blue-500);
   outline-offset: -2px;
 }
@@ -30,18 +39,28 @@
    D-DES-013). Hover-capable fine pointers only, so touch is unaffected;
    decorative — no information is conveyed by hover alone. */
 @media (hover: hover) and (pointer: fine) {
-  .category-row:hover {
+  .category-row-edit:hover {
     background: var(--color-blue-50);
+  }
+  .category-row-icon:hover {
+    filter: brightness(0.95);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .category-row {
-    transition: background-color 180ms ease;
+  .category-row-edit,
+  .category-row-icon {
+    transition:
+      background-color 180ms ease,
+      filter 180ms ease;
   }
 }
 
 .category-row-icon {
+  appearance: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -49,6 +68,7 @@
   height: 48px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  padding: 0;
 }
 
 .category-row-icon-blue {

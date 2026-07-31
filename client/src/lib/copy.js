@@ -43,6 +43,7 @@ export const copy = {
     plannedAmountLabel: "Planned amount",
     editIncomeAria: (amount) => `Edit income, current value ${amount}`,
     editPlanAria: "edit planned amount",
+    addExpenseForAria: (name) => `Add ${name} expense`,
     saveLabel: "Save",
     cancelLabel: "Cancel",
     invalidAmountError: "Enter a valid amount.",

@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Dialog } from "../../components/ui/Dialog.jsx";
 import { Button } from "../../components/ui/Button.jsx";
@@ -49,9 +49,24 @@ function validateForm({ amount, categoryId, occurredOn, note, month }) {
  * — or a double-click racing the pending state — can never create a
  * duplicate (decision #8).
  */
-export function AddExpenseDialog({ open, month, categories, onClose, onSuccess }) {
+export function AddExpenseDialog({
+  open,
+  month,
+  categories,
+  onClose,
+  onSuccess,
+  initialCategoryId = "",
+}) {
   const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState(initialCategoryId);
+
+  // Category icons prefill their category (empty for the plain Add button);
+  // sync on every open so a stale value from the previous launch never leaks.
+  useEffect(() => {
+    if (open) {
+      setCategoryId(initialCategoryId);
+    }
+  }, [open, initialCategoryId]);
   const [occurredOn, setOccurredOn] = useState(() => defaultDateFor(month));
   const [note, setNote] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
