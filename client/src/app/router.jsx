@@ -4,7 +4,6 @@ import { LoginPage } from "../pages/LoginPage.jsx";
 import { RegisterPage } from "../pages/RegisterPage.jsx";
 import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 import { BudgetPage } from "../features/budget/BudgetPage.jsx";
-import { BudgetFormPage } from "../features/budget/BudgetFormPage.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { ProtectedRoute } from "./ProtectedRoute.jsx";
 import { PublicOnlyRoute } from "./PublicOnlyRoute.jsx";
@@ -46,9 +45,9 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: "/", element: <Navigate to="/budget" replace /> },
+      // CR1-8: the create/edit form flow is superseded by in-place popups;
+      // /budget/new and /budget/:month/edit fall through to the "*" route.
       { path: "/budget", element: <BudgetPage /> },
-      { path: "/budget/new", element: <BudgetFormPage mode="create" /> },
-      { path: "/budget/:month/edit", element: <BudgetFormPage mode="edit" /> },
       {
         path: "/insights",
         element: (

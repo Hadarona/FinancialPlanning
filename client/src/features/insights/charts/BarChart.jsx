@@ -1,7 +1,11 @@
 import { useId, useRef, useState } from "react";
 import { formatMoney } from "../../../lib/money.js";
 import { axisScale, compactAxisLabel, barTopRoundedPath } from "./chartMath.js";
-import { SERIES_COLORS } from "./chartColors.js";
+import {
+  SERIES_COLORS,
+  SERIES_PATTERN_STROKES,
+  SERIES_BAR_PATTERNS,
+} from "./chartColors.js";
 import { ChartTooltip, tooltipHandlers } from "./ChartTooltip.jsx";
 import { Legend } from "./Legend.jsx";
 import { VisuallyHiddenTable } from "./VisuallyHiddenTable.jsx";
@@ -10,60 +14,83 @@ import "./charts.css";
 
 const MARGIN = { top: 12, right: 8, bottom: 28, left: 48 };
 const PLOT_HEIGHT = 200;
-const ROTATED_LABEL_EXTRA = 24;
+// Rotated labels descend below the axis by sin(35°) × label width; the
+// longest category ("Subscriptions") needs ~48px beyond the base margin.
+const ROTATED_LABEL_EXTRA = 40;
+const BAR_GAP = 2; // surface gap between the bars of a group
+const MIN_BAR_WIDTH = 6;
+const MAX_BAR_WIDTH = 24;
 
 /**
- * Grouped monthly-comparison bar chart (Chart / Bar / Monthly comparison).
- * Current month = solid blue; previous month = yellow with a diagonal-line
- * pattern so the series differ beyond color (D-INS-D1/D2). Every bar is
- * keyboard-focusable with a tooltip and an aria-label; a hidden table
- * mirrors the data (D-INS-D3/F4).
+ * Grouped month-comparison bar chart (CR3-4): one group per category, one
+ * bar per selected month (1–3, newest first). Series pair a kit color with
+ * a fill pattern (plain / diagonal / dotted) so they never differ by color
+ * alone. Every bar is keyboard-focusable with a tooltip and an aria-label;
+ * a hidden table mirrors the data.
+ *
+ * `months`: `[{ month, label, yearLabel }]` (newest first).
+ * `categories`: `[{ id, label, totalsMinor: number[] }]` aligned with months.
  */
-export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevious }) {
+export function BarChart({ months, categories }) {
   const figureRef = useRef(null);
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
-  const patternId = useId();
+  const patternBaseId = useId();
   const width = useMeasuredWidth(containerRef);
 
+  const seriesCount = months.length;
   const plotWidth = Math.max(120, width - MARGIN.left - MARGIN.right);
   const groupWidth = plotWidth / categories.length;
   // Compact alternative below ~56px per label: rotate the category labels
-  // so full words stay legible at 320px (D-INS-D5).
+  // so full words stay legible at small widths (D-INS-D5).
   const rotateLabels = groupWidth < 56;
   const height =
     MARGIN.top + PLOT_HEIGHT + MARGIN.bottom + (rotateLabels ? ROTATED_LABEL_EXTRA : 0);
 
-  const allValues = categories.flatMap((category) =>
-    hasPrevious
-      ? [category.currentMinor, category.previousMinor]
-      : [category.currentMinor],
-  );
+  const allValues = categories.flatMap((category) => category.totalsMinor);
   const scale = axisScale(Math.max(0, ...allValues));
 
-  const barWidth = Math.min(24, Math.max(10, groupWidth / 4));
-  const pairGap = 2; // surface gap between the two bars of a pair
+  // Bars are computed from the measured width: never below 6px; the group
+  // keeps a little side padding when space allows.
+  const barWidth = Math.min(
+    MAX_BAR_WIDTH,
+    Math.max(
+      MIN_BAR_WIDTH,
+      (groupWidth * 0.72 - (seriesCount - 1) * BAR_GAP) / seriesCount,
+    ),
+  );
+  const groupContentWidth = seriesCount * barWidth + (seriesCount - 1) * BAR_GAP;
 
   function barGeometry(value, slotIndex, groupIndex) {
     const groupStart = MARGIN.left + groupIndex * groupWidth;
-    const pairWidth = hasPrevious ? barWidth * 2 + pairGap : barWidth;
     const x =
-      groupStart + (groupWidth - pairWidth) / 2 + slotIndex * (barWidth + pairGap);
+      groupStart +
+      (groupWidth - groupContentWidth) / 2 +
+      slotIndex * (barWidth + BAR_GAP);
     const barHeight = (value / scale.max) * PLOT_HEIGHT;
     const yTop = MARGIN.top + PLOT_HEIGHT - barHeight;
     return { x, yTop, barHeight };
   }
 
-  const caption = hasPrevious
-    ? `Spending by category, ${monthLabel} versus ${previousMonthLabel}: ${categories
-        .map(
-          (category) =>
-            `${category.label} ${formatMoney(category.currentMinor)} vs ${formatMoney(category.previousMinor)}`,
-        )
-        .join("; ")}.`
-    : `Spending by category in ${monthLabel}: ${categories
-        .map((category) => `${category.label} ${formatMoney(category.currentMinor)}`)
-        .join("; ")}. No ${previousMonthLabel} data to compare.`;
+  function seriesFill(slotIndex) {
+    const pattern = SERIES_BAR_PATTERNS[slotIndex];
+    if (pattern === "plain") {
+      return SERIES_COLORS[slotIndex];
+    }
+    return `url(#${patternBaseId}-${pattern})`;
+  }
+
+  const monthsPhrase = months.map((entry) => entry.yearLabel).join(", ");
+  const caption = `Spending by category across ${monthsPhrase}: ${categories
+    .map(
+      (category) =>
+        `${category.label} ${category.totalsMinor
+          .map((value) => formatMoney(value))
+          .join(" vs ")}`,
+    )
+    .join("; ")}.`;
+
+  const legendMarkers = ["square", "square-diagonal", "square-dotted"];
 
   return (
     <figure className="chart-figure" ref={figureRef}>
@@ -77,21 +104,30 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
         >
           <defs>
             <pattern
-              id={patternId}
+              id={`${patternBaseId}-diagonal`}
               patternUnits="userSpaceOnUse"
               width="6"
               height="6"
               patternTransform="rotate(45)"
             >
-              <rect width="6" height="6" fill={SERIES_COLORS.previous} />
+              <rect width="6" height="6" fill={SERIES_COLORS[1]} />
               <line
                 x1="0"
                 y1="0"
                 x2="0"
                 y2="6"
-                stroke="var(--color-yellow-700)"
+                stroke={SERIES_PATTERN_STROKES[1]}
                 strokeWidth="1.5"
               />
+            </pattern>
+            <pattern
+              id={`${patternBaseId}-dotted`}
+              patternUnits="userSpaceOnUse"
+              width="6"
+              height="6"
+            >
+              <rect width="6" height="6" fill={SERIES_COLORS[2]} />
+              <circle cx="3" cy="3" r="1.2" fill={SERIES_PATTERN_STROKES[2]} />
             </pattern>
           </defs>
 
@@ -121,50 +157,31 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
           {categories.map((category, groupIndex) => {
             const labelX = MARGIN.left + groupIndex * groupWidth + groupWidth / 2;
             const labelY = MARGIN.top + PLOT_HEIGHT + 20;
-            const current = barGeometry(category.currentMinor, 0, groupIndex);
-            const previous = hasPrevious
-              ? barGeometry(category.previousMinor, 1, groupIndex)
-              : null;
             return (
               <g key={category.id}>
-                <path
-                  className="chart-mark"
-                  d={barTopRoundedPath(
-                    current.x,
-                    current.yTop,
-                    barWidth,
-                    current.barHeight,
-                  )}
-                  fill={SERIES_COLORS.current}
-                  tabIndex={0}
-                  role="img"
-                  aria-label={`${category.label} — ${monthLabel}: ${formatMoney(category.currentMinor)} USD`}
-                  {...tooltipHandlers(
-                    setTooltip,
-                    figureRef,
-                    `${category.label} — ${monthLabel}: ${formatMoney(category.currentMinor)} USD`,
-                  )}
-                />
-                {previous ? (
-                  <path
-                    className="chart-mark"
-                    d={barTopRoundedPath(
-                      previous.x,
-                      previous.yTop,
-                      barWidth,
-                      previous.barHeight,
-                    )}
-                    fill={`url(#${patternId})`}
-                    tabIndex={0}
-                    role="img"
-                    aria-label={`${category.label} — ${previousMonthLabel}: ${formatMoney(category.previousMinor)} USD`}
-                    {...tooltipHandlers(
-                      setTooltip,
-                      figureRef,
-                      `${category.label} — ${previousMonthLabel}: ${formatMoney(category.previousMinor)} USD`,
-                    )}
-                  />
-                ) : null}
+                {months.map((monthEntry, slotIndex) => {
+                  const value = category.totalsMinor[slotIndex] ?? 0;
+                  const geometry = barGeometry(value, slotIndex, groupIndex);
+                  const text = `${category.label} — ${monthEntry.yearLabel}: ${formatMoney(value)} USD`;
+                  return (
+                    <path
+                      key={monthEntry.month}
+                      className="chart-mark"
+                      d={barTopRoundedPath(
+                        geometry.x,
+                        geometry.yTop,
+                        barWidth,
+                        geometry.barHeight,
+                        Math.min(4, barWidth / 3),
+                      )}
+                      fill={seriesFill(slotIndex)}
+                      tabIndex={0}
+                      role="img"
+                      aria-label={text}
+                      {...tooltipHandlers(setTooltip, figureRef, text)}
+                    />
+                  );
+                })}
                 <text
                   className="chart-x-label"
                   x={labelX}
@@ -183,27 +200,20 @@ export function BarChart({ categories, monthLabel, previousMonthLabel, hasPrevio
       <figcaption className="chart-caption">{caption}</figcaption>
 
       <Legend
-        items={[
-          { label: monthLabel, color: SERIES_COLORS.current, marker: "square" },
-          ...(hasPrevious
-            ? [
-                {
-                  label: previousMonthLabel,
-                  color: SERIES_COLORS.previous,
-                  marker: "square",
-                },
-              ]
-            : []),
-        ]}
+        items={months.map((monthEntry, slotIndex) => ({
+          label: monthEntry.yearLabel,
+          color: SERIES_COLORS[slotIndex],
+          patternStroke: SERIES_PATTERN_STROKES[slotIndex],
+          marker: legendMarkers[slotIndex],
+        }))}
       />
 
       <VisuallyHiddenTable
-        caption={`Spending by category: ${monthLabel}${hasPrevious ? ` and ${previousMonthLabel}` : ""}`}
-        columns={["Category", monthLabel, ...(hasPrevious ? [previousMonthLabel] : [])]}
+        caption={`Spending by category: ${monthsPhrase}`}
+        columns={["Category", ...months.map((entry) => entry.yearLabel)]}
         rows={categories.map((category) => [
           category.label,
-          formatMoney(category.currentMinor),
-          ...(hasPrevious ? [formatMoney(category.previousMinor)] : []),
+          ...category.totalsMinor.map((value) => formatMoney(value)),
         ])}
       />
 

@@ -1,6 +1,7 @@
 // Mirrors server/src/domain/categories.js. The category set is fixed
-// (product decision #7): id/name/icon/color/displayOrder are constants; only
-// plannedMinor (from the loaded budget) and incomeMinor are ever editable.
+// (product decision #7, extended to seven by CR-001 item 2): id/name/icon/
+// color/displayOrder are constants; only plannedMinor (from the loaded
+// budget) and incomeMinor are ever editable.
 
 export const DEFAULT_CATEGORIES = [
   {
@@ -42,6 +43,22 @@ export const DEFAULT_CATEGORIES = [
     color: "blue",
     displayOrder: 5,
     plannedMinor: 300000,
+  },
+  {
+    id: "subscriptions",
+    name: "Subscriptions",
+    icon: "Repeat",
+    color: "coral",
+    displayOrder: 6,
+    plannedMinor: 60000,
+  },
+  {
+    id: "utilities",
+    name: "Utilities",
+    icon: "Plug",
+    color: "green",
+    displayOrder: 7,
+    plannedMinor: 120000,
   },
 ];
 

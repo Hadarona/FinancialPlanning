@@ -54,6 +54,38 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* CR1-5: the income value is a real button (min 44px target) that inherits
+   the metric typography; hover/focus states make the affordance visible. */
+.summary-metric-edit-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+  min-height: 44px;
+  min-width: 44px;
+  font: inherit;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .summary-metric-edit-button:hover {
+    background: var(--color-blue-50);
+  }
+}
+
+.summary-metric-edit-button:focus-visible {
+  outline: 2px solid var(--color-blue-500);
+  outline-offset: 2px;
+}
+
 @media (min-width: 768px) {
   .summary-metric-value {
     font-size: 28px;

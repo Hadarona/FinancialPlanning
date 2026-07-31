@@ -15,14 +15,15 @@ const LEGEND_MIN = 180; // side legend column width (D-DES-007)
 const LEGEND_GAP = 24; // gap between donut and side legend
 
 /**
- * Category-share donut (Chart / Donut / Category). Segment shares use the
- * documented largest-remainder percentages from the API; the center stays
- * empty per the kit composition (D-DES-009). The legend sits beside the
+ * Category-share donut (Chart / Donut / Category). CR3-4: shares are the
+ * combined spending across the 1–3 selected months (`combinedMinor`), using
+ * the documented largest-remainder percentages from the API; the center
+ * stays empty per the kit composition (D-DES-009). The legend sits beside the
  * donut only when the measured card column fits both (donut >=128px next to
  * a 180px legend), otherwise it stacks below (D-DES-007); it carries the
  * explicit "Housing 47%" identities and a hidden table mirrors the data.
  */
-export function DonutChart({ categories, totalMinor, monthLabel }) {
+export function DonutChart({ categories, totalMinor, monthsLabel }) {
   const figureRef = useRef(null);
   const plotRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
@@ -45,14 +46,14 @@ export function DonutChart({ categories, totalMinor, monthLabel }) {
   const strokeWidth = size * 0.24;
   const circumference = 2 * Math.PI * radius;
 
-  const segments = donutSegments(categories.map((category) => category.currentMinor));
+  const segments = donutSegments(categories.map((category) => category.combinedMinor));
   const hasData = segments.length > 0;
 
   const caption = hasData
-    ? `${monthLabel} spending shares: ${categories
+    ? `Spending shares across ${monthsLabel}: ${categories
         .map((category) => `${category.label} ${category.sharePercent}%`)
         .join(", ")}. Total ${formatMoney(totalMinor)}.`
-    : `No ${monthLabel} spending recorded yet, so there are no category shares to show.`;
+    : `No spending recorded for ${monthsLabel} yet, so there are no category shares to show.`;
 
   return (
     <figure className="chart-figure" ref={figureRef}>
@@ -81,7 +82,7 @@ export function DonutChart({ categories, totalMinor, monthLabel }) {
             const length = segment.fraction * circumference;
             // Shorten each visible segment by the gap unless it is alone.
             const gap = segments.length > 1 ? SEGMENT_GAP : 0;
-            const text = `${category.label} — ${monthLabel}: ${formatMoney(category.currentMinor)} USD (${category.sharePercent}%)`;
+            const text = `${category.label} — ${monthsLabel}: ${formatMoney(category.combinedMinor)} USD (${category.sharePercent}%)`;
             return (
               <circle
                 key={category.id}
@@ -118,11 +119,11 @@ export function DonutChart({ categories, totalMinor, monthLabel }) {
       <figcaption className="chart-caption">{caption}</figcaption>
 
       <VisuallyHiddenTable
-        caption={`Share of ${monthLabel} spending by category`}
+        caption={`Share of spending by category across ${monthsLabel}`}
         columns={["Category", "Amount", "Share"]}
         rows={categories.map((category) => [
           category.label,
-          formatMoney(category.currentMinor),
+          formatMoney(category.combinedMinor),
           `${category.sharePercent}%`,
         ])}
       />

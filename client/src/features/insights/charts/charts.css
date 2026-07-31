@@ -119,6 +119,17 @@
   border-radius: var(--radius-full);
 }
 
+/* Patterned series swatches (CR3): svg squares mirroring the bar fills.
+   Explicit sizing wins over the `.chart-figure svg { width: 100% }` plot
+   rule, which would otherwise inflate these tiny markers. */
+.chart-figure svg.chart-legend-marker-svg,
+.chart-legend-marker-svg {
+  display: block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
 .chart-legend-label {
   min-width: 0;
 }

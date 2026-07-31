@@ -36,12 +36,46 @@
   text-align: center;
 }
 
+/* CR3-4: one hero total per selected month (1–3), newest first. Wraps into
+   a column on narrow viewports so three totals never overflow. */
+.insights-hero-months {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+.insights-hero-month {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.insights-hero-month-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
 .insights-hero-total {
   margin: 0;
   font-family: var(--font-display);
   font-size: 44px;
   line-height: 1.15;
   color: var(--color-text-primary);
+}
+
+/* Three totals side by side need a smaller size to fit 320–390px. */
+@media (max-width: 767px) {
+  .insights-hero-months {
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .insights-hero-total {
+    font-size: 32px;
+  }
 }
 
 .insights-hero-comparison {

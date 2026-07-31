@@ -54,6 +54,21 @@ export function previousMonth(month) {
   return `${String(year).padStart(4, "0")}-${String(monthNum).padStart(2, "0")}`;
 }
 
+/**
+ * Returns `count` calendar months ending at `from` (inclusive), newest
+ * first — e.g. the last 12 months for the CR3 month multi-select. Pure
+ * string month math, year-boundary safe.
+ */
+export function lastMonths(count, from = currentMonth()) {
+  const months = [];
+  let month = from;
+  for (let i = 0; i < count; i += 1) {
+    months.push(month);
+    month = previousMonth(month);
+  }
+  return months;
+}
+
 /** Returns the calendar month immediately after `month` ("YYYY-MM"). */
 export function nextMonth(month) {
   assertMonth(month);

@@ -9,8 +9,16 @@ import "./SummaryMetrics.css";
  * Budget compositions. A negative Available (over-allocation is allowed,
  * decision #2) is conveyed with coral color PLUS an icon and warning text —
  * never color alone (D-PLN-D3 groundwork).
+ *
+ * CR1-5/7: the Income VALUE is a click-to-edit button; Planned and
+ * Available stay plain computed text with no interactive wrapper at all.
  */
-export function SummaryMetrics({ incomeMinor, plannedMinor, availableMinor }) {
+export function SummaryMetrics({
+  incomeMinor,
+  plannedMinor,
+  availableMinor,
+  onEditIncome,
+}) {
   const overAllocated = availableMinor < 0;
 
   return (
@@ -21,7 +29,14 @@ export function SummaryMetrics({ incomeMinor, plannedMinor, availableMinor }) {
             {copy.budget.incomeLabel}
           </dt>
           <dd className="summary-metric-value summary-metric-value-income">
-            {formatMoney(incomeMinor)}
+            <button
+              type="button"
+              className="summary-metric-edit-button"
+              aria-label={copy.budget.editIncomeAria(formatMoney(incomeMinor))}
+              onClick={onEditIncome}
+            >
+              {formatMoney(incomeMinor)}
+            </button>
           </dd>
         </div>
         <div className="summary-metric">

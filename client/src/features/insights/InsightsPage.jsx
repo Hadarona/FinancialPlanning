@@ -1,15 +1,14 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../../components/ui/AppHeader.jsx";
-import { MonthTabs } from "../../components/ui/MonthTabs.jsx";
+import { MonthMultiSelect } from "../../components/ui/MonthMultiSelect.jsx";
 import { Card } from "../../components/ui/Card.jsx";
 import { Skeleton } from "../../components/ui/Skeleton.jsx";
 import { EmptyState } from "../../components/ui/EmptyState.jsx";
 import { ErrorState } from "../../components/ui/ErrorState.jsx";
 import { useAuth } from "../../app/AuthProvider.jsx";
-import { useInsightsQuery } from "../../api/hooks.js";
+import { useInsightsQuery, useCreateBudgetMutation } from "../../api/hooks.js";
 import { copy } from "../../lib/copy.js";
-import { currentMonth, previousMonth, monthLabel } from "../../lib/dates.js";
+import { currentMonth, lastMonths } from "../../lib/dates.js";
 import { formatMoney } from "../../lib/money.js";
 import { BarChart } from "./charts/BarChart.jsx";
 import { DonutChart } from "./charts/DonutChart.jsx";
@@ -17,7 +16,27 @@ import { LineChart } from "./charts/LineChart.jsx";
 import "./InsightsPage.css";
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
-const PANEL_ID = "insights-panel";
+const MONTH_OPTION_COUNT = 12;
+
+/** Parses `?months=YYYY-MM,YYYY-MM` into a valid selection (1–3 unique
+ * months, newest first) or null when absent/invalid — CR3-1: plain
+ * `/insights` means the current calendar month. */
+function parseMonthsParam(raw) {
+  if (!raw) {
+    return null;
+  }
+  const months = raw.split(",");
+  const unique = [...new Set(months)];
+  if (
+    unique.length !== months.length ||
+    months.length < 1 ||
+    months.length > 3 ||
+    !months.every((month) => MONTH_PATTERN.test(month))
+  ) {
+    return null;
+  }
+  return unique.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+}
 
 function InsightsSkeleton() {
   return (
@@ -29,34 +48,26 @@ function InsightsSkeleton() {
   );
 }
 
-/** Hero total + honest comparison line. Never claims a zero change when
- * there is nothing to compare (D-INS-F5). */
+/** One hero total per selected month (newest first), each labelled with
+ * its month + year (CR3-4). */
 function InsightsHero({ insights }) {
   return (
     <div className="insights-hero">
-      <p className="insights-hero-total">
-        <span className="visually-hidden">
-          {copy.insights.totalLabel(insights.monthLabel)}:{" "}
-        </span>
-        {formatMoney(insights.currentTotalMinor)}
-      </p>
-      {insights.hasPrevious ? (
+      <div className="insights-hero-months">
+        {insights.months.map((entry) => (
+          <p key={entry.month} className="insights-hero-month">
+            <span className="insights-hero-month-label">
+              {copy.insights.totalLabel(entry.yearLabel)}
+            </span>
+            <span className="insights-hero-total">{formatMoney(entry.totalMinor)}</span>
+          </p>
+        ))}
+      </div>
+      {insights.combinedTotalMinor === 0 ? (
         <p className="insights-hero-comparison">
-          vs{" "}
-          <span className="insights-hero-comparison-amount">
-            {formatMoney(insights.previousTotalMinor)}
-          </span>{" "}
-          last month
-        </p>
-      ) : (
-        <p className="insights-hero-comparison">
-          {copy.insights.noComparison} —{" "}
-          {copy.insights.noComparisonDetail(insights.previousMonthLabel)}
-        </p>
-      )}
-      {insights.currentTotalMinor === 0 ? (
-        <p className="insights-hero-comparison">
-          {copy.insights.noSpending(insights.monthLabel)}
+          {copy.insights.noSpending(
+            insights.months.map((entry) => entry.yearLabel).join(", "),
+          )}
         </p>
       ) : null}
     </div>
@@ -66,34 +77,32 @@ function InsightsHero({ insights }) {
 export function InsightsPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const requestedMonth = searchParams.get("month");
-  const baseMonth = MONTH_PATTERN.test(requestedMonth ?? "")
-    ? requestedMonth
-    : currentMonth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [selectedMonth, setSelectedMonth] = useState(baseMonth);
-  useEffect(() => {
-    setSelectedMonth(baseMonth);
-  }, [baseMonth]);
+  // The URL is the selection state (shareable, back/forward friendly);
+  // absent or invalid params mean the CR3-1 default: the current month.
+  const selectedMonths = parseMonthsParam(searchParams.get("months")) ?? [currentMonth()];
+  const monthOptions = lastMonths(MONTH_OPTION_COUNT);
 
-  const insightsQuery = useInsightsQuery(selectedMonth);
+  const insightsQuery = useInsightsQuery(selectedMonths);
+  const createBudgetMutation = useCreateBudgetMutation();
+
+  function handleSelectionChange(nextMonths) {
+    setSearchParams({ months: nextMonths.join(",") });
+  }
+
+  async function handleCreateBudget() {
+    try {
+      await createBudgetMutation.mutateAsync();
+    } catch {
+      // The query error state keeps rendering; nothing extra to do here.
+    }
+  }
 
   async function handleLogout() {
     await logout();
     navigate("/login", { replace: true });
   }
-
-  // Current month first (renders left), previous right — kit tab order
-  // "July, June" (component-inventory.md Tabs/Month, D-DES-006).
-  const tabOptions = [
-    { value: baseMonth, label: monthLabel(baseMonth), tone: "current" },
-    {
-      value: previousMonth(baseMonth),
-      label: monthLabel(previousMonth(baseMonth)),
-      tone: "previous",
-    },
-  ];
 
   function renderContent() {
     if (insightsQuery.isLoading) {
@@ -103,10 +112,10 @@ export function InsightsPage() {
       if (insightsQuery.error?.code === "NOT_FOUND") {
         return (
           <EmptyState
-            title={copy.insights.emptyTitle(monthLabel(selectedMonth))}
+            title={copy.insights.emptyTitle}
             description={copy.insights.emptyDescription}
             actionLabel={copy.budget.createBudgetLabel}
-            onAction={() => navigate(`/budget/new?month=${selectedMonth}`)}
+            onAction={handleCreateBudget}
           />
         );
       }
@@ -121,37 +130,26 @@ export function InsightsPage() {
     }
 
     const { insights } = insightsQuery.data;
+    const monthsPhrase = insights.months.map((entry) => entry.yearLabel).join(", ");
     return (
       <>
         <InsightsHero insights={insights} />
         <div className="insights-charts">
           <Card className="insights-card insights-card-bar">
             <h2 className="insights-card-title">{copy.insights.barChartTitle}</h2>
-            <BarChart
-              categories={insights.categories}
-              monthLabel={insights.monthLabel}
-              previousMonthLabel={insights.previousMonthLabel}
-              hasPrevious={insights.hasPrevious}
-            />
+            <BarChart months={insights.months} categories={insights.categories} />
           </Card>
           <Card className="insights-card insights-card-donut">
             <h2 className="insights-card-title">{copy.insights.donutChartTitle}</h2>
             <DonutChart
               categories={insights.categories}
-              totalMinor={insights.currentTotalMinor}
-              monthLabel={insights.monthLabel}
+              totalMinor={insights.combinedTotalMinor}
+              monthsLabel={monthsPhrase}
             />
           </Card>
           <Card className="insights-card insights-card-line">
             <h2 className="insights-card-title">{copy.insights.lineChartTitle}</h2>
-            <LineChart
-              labels={insights.cashFlow.labels}
-              currentSeries={insights.cashFlow.currentCumulativeMinor}
-              previousSeries={insights.cashFlow.previousCumulativeMinor}
-              monthLabel={insights.monthLabel}
-              previousMonthLabel={insights.previousMonthLabel}
-              hasPrevious={insights.hasPrevious}
-            />
+            <LineChart months={insights.months} />
           </Card>
         </div>
       </>
@@ -163,30 +161,22 @@ export function InsightsPage() {
       <AppHeader
         title={copy.insights.title}
         onLogout={handleLogout}
-        onBack={() => navigate(`/budget?month=${selectedMonth}`)}
+        onBack={() => navigate("/budget")}
         backLabel={copy.insights.backToBudgetLabel}
         menuItems={[
           {
             label: copy.budget.title,
-            onSelect: () => navigate(`/budget?month=${selectedMonth}`),
+            onSelect: () => navigate("/budget"),
           },
         ]}
       />
       <main className="insights-main">
-        <MonthTabs
-          options={tabOptions}
-          value={selectedMonth}
-          onChange={setSelectedMonth}
-          panelId={PANEL_ID}
+        <MonthMultiSelect
+          options={monthOptions}
+          selected={selectedMonths}
+          onChange={handleSelectionChange}
         />
-        <div
-          id={PANEL_ID}
-          role="tabpanel"
-          aria-labelledby={`month-tab-${selectedMonth}`}
-          className="insights-panel"
-        >
-          {renderContent()}
-        </div>
+        <div className="insights-panel">{renderContent()}</div>
       </main>
     </div>
   );

@@ -7,15 +7,17 @@ import { Skeleton } from "../../components/ui/Skeleton.jsx";
 import { EmptyState } from "../../components/ui/EmptyState.jsx";
 import { ErrorState } from "../../components/ui/ErrorState.jsx";
 import { useAuth } from "../../app/AuthProvider.jsx";
-import { useBudgetQuery } from "../../api/hooks.js";
+import { useMonthQuery, useCreateBudgetMutation } from "../../api/hooks.js";
 import { copy } from "../../lib/copy.js";
-import { currentMonth, monthLabel } from "../../lib/dates.js";
+import { currentMonth } from "../../lib/dates.js";
 import { SummaryMetrics } from "./SummaryMetrics.jsx";
 import { CategoryRow } from "./CategoryRow.jsx";
 import { MonthNav } from "./MonthNav.jsx";
 import { ExpensePanel } from "./ExpensePanel.jsx";
 import { AddExpenseDialog } from "./AddExpenseDialog.jsx";
 import { DeleteExpenseConfirm } from "./DeleteExpenseConfirm.jsx";
+import { EditIncomeDialog } from "./EditIncomeDialog.jsx";
+import { EditCategoryPlanDialog } from "./EditCategoryPlanDialog.jsx";
 import "./BudgetPage.css";
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -24,7 +26,7 @@ function BudgetSkeleton() {
   return (
     <div className="budget-loading" aria-busy="true" aria-label="Loading budget">
       <Skeleton height={96} />
-      {[1, 2, 3, 4, 5].map((row) => (
+      {[1, 2, 3, 4, 5, 6, 7].map((row) => (
         <Skeleton key={row} height={64} />
       ))}
     </div>
@@ -40,9 +42,12 @@ export function BudgetPage() {
     ? requestedMonth
     : currentMonth();
 
-  const budgetQuery = useBudgetQuery(month);
+  const monthQuery = useMonthQuery(month);
+  const createBudgetMutation = useCreateBudgetMutation();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [editIncomeOpen, setEditIncomeOpen] = useState(false);
+  const [editCategory, setEditCategory] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const statusTimerRef = useRef(null);
 
@@ -57,18 +62,29 @@ export function BudgetPage() {
     navigate("/login", { replace: true });
   }
 
+  async function handleCreateBudget() {
+    // Defensive recovery for the "no budget row" data anomaly (CR1-11):
+    // POST /budget provisions the defaults, then the month model refetches.
+    try {
+      await createBudgetMutation.mutateAsync();
+      announce(copy.budget.budgetCreatedStatus);
+    } catch {
+      // The query error state keeps rendering; nothing extra to do here.
+    }
+  }
+
   function renderContent() {
-    if (budgetQuery.isLoading) {
+    if (monthQuery.isLoading) {
       return <BudgetSkeleton />;
     }
-    if (budgetQuery.isError) {
-      if (budgetQuery.error?.code === "NOT_FOUND") {
+    if (monthQuery.isError) {
+      if (monthQuery.error?.code === "NOT_FOUND") {
         return (
           <EmptyState
-            title={`No budget for ${monthLabel(month)} yet`}
+            title={copy.budget.emptyTitle}
             description={copy.budget.emptyDescription}
             actionLabel={copy.budget.createBudgetLabel}
-            onAction={() => navigate(`/budget/new?month=${month}`)}
+            onAction={handleCreateBudget}
           />
         );
       }
@@ -77,22 +93,27 @@ export function BudgetPage() {
           title={copy.budget.loadErrorTitle}
           description={copy.budget.loadErrorDescription}
           retryLabel={copy.budget.retryLabel}
-          onRetry={() => budgetQuery.refetch()}
+          onRetry={() => monthQuery.refetch()}
         />
       );
     }
 
-    const { budget } = budgetQuery.data;
+    const { budget } = monthQuery.data;
     return (
       <>
         <SummaryMetrics
           incomeMinor={budget.incomeMinor}
           plannedMinor={budget.plannedMinor}
           availableMinor={budget.availableMinor}
+          onEditIncome={() => setEditIncomeOpen(true)}
         />
         <ul className="budget-category-list">
           {budget.categories.map((category) => (
-            <CategoryRow key={category.id} category={category} />
+            <CategoryRow
+              key={category.id}
+              category={category}
+              onEdit={(selected) => setEditCategory(selected)}
+            />
           ))}
         </ul>
         <Button className="budget-add-expense" onClick={() => setAddOpen(true)}>
@@ -128,6 +149,24 @@ export function BudgetPage() {
             announce(copy.expense.deletedStatus);
           }}
         />
+        <EditIncomeDialog
+          open={editIncomeOpen}
+          budget={budget}
+          onClose={() => setEditIncomeOpen(false)}
+          onSaved={() => {
+            setEditIncomeOpen(false);
+            announce(copy.budget.incomeUpdatedStatus);
+          }}
+        />
+        <EditCategoryPlanDialog
+          open={editCategory !== null}
+          category={editCategory}
+          onClose={() => setEditCategory(null)}
+          onSaved={(category) => {
+            setEditCategory(null);
+            announce(copy.budget.categoryUpdatedStatus(category.name));
+          }}
+        />
       </>
     );
   }
@@ -139,13 +178,8 @@ export function BudgetPage() {
         onLogout={handleLogout}
         menuItems={[
           {
-            label: "Edit budget",
-            disabled: !budgetQuery.isSuccess,
-            onSelect: () => navigate(`/budget/${month}/edit`),
-          },
-          {
             label: copy.insights.menuLabel,
-            onSelect: () => navigate(`/insights?month=${month}`),
+            onSelect: () => navigate("/insights"),
           },
         ]}
       />
