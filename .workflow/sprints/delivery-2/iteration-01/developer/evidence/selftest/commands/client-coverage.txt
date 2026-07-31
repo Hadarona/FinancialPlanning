@@ -1,5 +1,0 @@
- Test Files  17 passed (17)
-      Tests  99 passed (99)
- % Coverage report from v8
-File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
-All files          |   85.42 |    83.56 |   82.92 |   85.42 |                   

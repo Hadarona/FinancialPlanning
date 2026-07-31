@@ -1,5 +1,0 @@
-dist/assets/InsightsPage-t71M19jw.css                               6.15 kB │ gzip:  1.53 kB
-dist/assets/index-DoUqRbY6.css                                     26.61 kB │ gzip:  4.87 kB
-dist/assets/InsightsPage-D_cZlkqo.js                               16.86 kB │ gzip:  6.10 kB
-dist/assets/index-B6VqvhQx.js                                     296.55 kB │ gzip: 93.52 kB
-✓ built in 908ms
