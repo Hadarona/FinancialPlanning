@@ -1,17 +1,47 @@
 {
   "schemaVersion": 1,
   "project": "budgeting-app",
-  "status": "ready",
+  "status": "needs_fix",
   "currentSprintIndex": 0,
   "currentSprintId": "delivery",
-  "iteration": 0,
+  "iteration": 1,
   "iterationLimit": 5,
   "phase": "developer_plan",
   "feedbackRounds": 0,
   "activeFeedbackPaths": [],
   "completedSprints": [],
   "acceptedBaselines": [],
-  "lastEvaluation": null,
+  "lastEvaluation": {
+    "developerStatus": "pass",
+    "developerIssueIds": [],
+    "qaStatus": "pass",
+    "qaProductIssueIds": [],
+    "designStatus": "issues",
+    "designIssueIds": [
+      "D-DES-001",
+      "D-DES-002",
+      "D-DES-003",
+      "D-DES-004",
+      "D-DES-005",
+      "D-DES-006",
+      "D-DES-007",
+      "D-DES-008",
+      "D-DES-009",
+      "D-DES-010",
+      "D-DES-011",
+      "D-DES-012",
+      "D-DES-013",
+      "D-DES-014",
+      "D-DES-015"
+    ],
+    "evaluatedAt": "2026-07-31T00:32:55.205Z",
+    "iteration": 1,
+    "reportPaths": {
+      "developer": ".workflow/sprints/delivery/iteration-01/developer/test-report.json",
+      "qa": ".workflow/sprints/delivery/iteration-01/qa/run-report.json",
+      "design": ".workflow/sprints/delivery/iteration-01/design/review-report.json"
+    }
+  },
   "createdAt": "2026-07-30T17:09:14.913Z",
-  "updatedAt": "2026-07-30T17:09:14.913Z"
+  "updatedAt": "2026-07-31T00:32:55.207Z"
 }
