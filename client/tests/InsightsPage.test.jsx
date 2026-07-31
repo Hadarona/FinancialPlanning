@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { InsightsPage } from "../src/features/insights/InsightsPage.jsx";
 import { renderProviders } from "./testUtils.jsx";
 import { apiClient, ApiError } from "../src/api/client.js";
-import { currentMonth, previousMonth, monthLabel } from "../src/lib/dates.js";
+import {
+  currentMonth,
+  previousMonth,
+  monthLabel,
+  monthYearLabel,
+  shortDateLabel,
+} from "../src/lib/dates.js";
 
 vi.mock("../src/api/client.js", async (importOriginal) => {
   const actual = await importOriginal();
@@ -23,143 +29,99 @@ const USER = { user: { id: "user-1", email: "a@b.com" } };
 
 const BASE = currentMonth();
 const PREVIOUS = previousMonth(BASE);
-const BASE_LABEL = monthLabel(BASE);
-const PREVIOUS_LABEL = monthLabel(PREVIOUS);
+const THIRD = previousMonth(PREVIOUS);
+const BASE_YEAR_LABEL = monthYearLabel(BASE);
+const PREVIOUS_YEAR_LABEL = monthYearLabel(PREVIOUS);
 
-/** Kit insights fixture (content.json in minor units) for the base month. */
-function insightsFixture(overrides = {}) {
+const CATEGORY_META = [
+  { id: "housing", label: "Housing", color: "blue" },
+  { id: "groceries", label: "Groceries", color: "green" },
+  { id: "transport", label: "Transport", color: "yellow" },
+  { id: "fun", label: "Fun", color: "coral" },
+  { id: "savings", label: "Savings", color: "blue" },
+  { id: "subscriptions", label: "Subscriptions", color: "coral" },
+  { id: "utilities", label: "Utilities", color: "green" },
+];
+
+/** CR-001 demo totals (minor units, sum 842,000 / 918,000 / 0). */
+const TOTALS_BY_MONTH = {
+  [BASE]: [323600, 136600, 84200, 92600, 117900, 15000, 72100],
+  [PREVIOUS]: [350000, 155000, 90000, 100000, 128000, 15000, 80000],
+  [THIRD]: [0, 0, 0, 0, 0, 0, 0],
+};
+
+function cumulativeFor(total) {
+  // A simple monotone 7-point series ending at the month total.
+  if (total === 0) {
+    return [0, 0, 0, 0, 0, 0, 0];
+  }
+  const step = Math.floor(total / 7);
+  const series = Array.from({ length: 7 }, (_, i) => step * (i + 1));
+  series[6] = total;
+  return series;
+}
+
+function sampleLabels(month) {
+  return [1, 6, 11, 16, 21, 26, 28].map((day) =>
+    shortDateLabel(`${month}-${String(day).padStart(2, "0")}`),
+  );
+}
+
+/** Builds the CR3 multi-month insights response for the given months
+ * (newest first), mirroring the server shape. */
+function insightsFixture(months) {
+  const totals = months.map((month) =>
+    TOTALS_BY_MONTH[month].reduce((sum, value) => sum + value, 0),
+  );
+  const combined = CATEGORY_META.map((_, index) =>
+    months.reduce((sum, month) => sum + TOTALS_BY_MONTH[month][index], 0),
+  );
+  const combinedTotal = combined.reduce((sum, value) => sum + value, 0);
+  // Simplified integer shares for fixtures (largest-remainder on the server).
+  let remaining = 100;
+  const shares = combined.map((value, index) => {
+    if (combinedTotal === 0) {
+      return 0;
+    }
+    if (index === combined.length - 1) {
+      return remaining;
+    }
+    const share = Math.floor((value / combinedTotal) * 100);
+    remaining -= share;
+    return share;
+  });
+
   return {
     insights: {
-      month: BASE,
-      monthLabel: BASE_LABEL,
-      previousMonth: PREVIOUS,
-      previousMonthLabel: PREVIOUS_LABEL,
-      hasPrevious: true,
-      currentTotalMinor: 842000,
-      previousTotalMinor: 918000,
-      categories: [
-        {
-          id: "housing",
-          label: "Housing",
-          color: "blue",
-          currentMinor: 395700,
-          previousMinor: 430000,
-          sharePercent: 47,
+      months: months.map((month, index) => ({
+        month,
+        label: monthLabel(month),
+        yearLabel: monthYearLabel(month),
+        totalMinor: totals[index],
+        cashFlow: {
+          labels: sampleLabels(month),
+          cumulativeMinor: cumulativeFor(totals[index]),
         },
-        {
-          id: "groceries",
-          label: "Groceries",
-          color: "green",
-          currentMinor: 151600,
-          previousMinor: 170000,
-          sharePercent: 18,
-        },
-        {
-          id: "transport",
-          label: "Transport",
-          color: "yellow",
-          currentMinor: 84200,
-          previousMinor: 90000,
-          sharePercent: 10,
-        },
-        {
-          id: "fun",
-          label: "Fun",
-          color: "coral",
-          currentMinor: 92600,
-          previousMinor: 100000,
-          sharePercent: 11,
-        },
-        {
-          id: "savings",
-          label: "Savings",
-          color: "blue",
-          currentMinor: 117900,
-          previousMinor: 128000,
-          sharePercent: 14,
-        },
-      ],
-      cashFlow: {
-        labels: ["Jul 1", "Jul 6", "Jul 11", "Jul 16", "Jul 21", "Jul 26", "Jul 31"],
-        currentCumulativeMinor: [60000, 180000, 310000, 460000, 590000, 730000, 842000],
-        previousCumulativeMinor: [80000, 210000, 350000, 500000, 650000, 790000, 918000],
-      },
-      ...overrides,
+      })),
+      categories: CATEGORY_META.map((meta, index) => ({
+        ...meta,
+        totalsMinor: months.map((month) => TOTALS_BY_MONTH[month][index]),
+        combinedMinor: combined[index],
+        sharePercent: shares[index],
+      })),
+      combinedTotalMinor: combinedTotal,
     },
   };
 }
 
-/** The previous month viewed as its own insights month (fetched when the
- * previous tab is selected); May has no budget, so no comparison. */
-function previousMonthFixture() {
-  return {
-    insights: {
-      month: PREVIOUS,
-      monthLabel: PREVIOUS_LABEL,
-      previousMonth: previousMonth(PREVIOUS),
-      previousMonthLabel: monthLabel(previousMonth(PREVIOUS)),
-      hasPrevious: false,
-      currentTotalMinor: 918000,
-      previousTotalMinor: null,
-      categories: [
-        {
-          id: "housing",
-          label: "Housing",
-          color: "blue",
-          currentMinor: 430000,
-          previousMinor: null,
-          sharePercent: 47,
-        },
-        {
-          id: "groceries",
-          label: "Groceries",
-          color: "green",
-          currentMinor: 170000,
-          previousMinor: null,
-          sharePercent: 19,
-        },
-        {
-          id: "transport",
-          label: "Transport",
-          color: "yellow",
-          currentMinor: 90000,
-          previousMinor: null,
-          sharePercent: 10,
-        },
-        {
-          id: "fun",
-          label: "Fun",
-          color: "coral",
-          currentMinor: 100000,
-          previousMinor: null,
-          sharePercent: 11,
-        },
-        {
-          id: "savings",
-          label: "Savings",
-          color: "blue",
-          currentMinor: 128000,
-          previousMinor: null,
-          sharePercent: 13,
-        },
-      ],
-      cashFlow: {
-        labels: ["Jun 1", "Jun 6", "Jun 11", "Jun 16", "Jun 21", "Jun 26", "Jun 30"],
-        currentCumulativeMinor: [80000, 210000, 350000, 500000, 650000, 790000, 918000],
-        previousCumulativeMinor: [],
-      },
-    },
-  };
-}
-
-function mockApi(fixturesByMonth) {
+function mockApi(handler) {
   apiClient.get.mockImplementation((path) => {
     if (path === "/auth/me") {
       return Promise.resolve(USER);
     }
-    const match = path.match(/^\/insights\/(\d{4}-\d{2})$/);
-    if (match && fixturesByMonth[match[1]]) {
-      return fixturesByMonth[match[1]]();
+    const match = path.match(/^\/insights\?months=(.+)$/);
+    if (match) {
+      return handler(decodeURIComponent(match[1]).split(","));
     }
     return Promise.reject(new Error(`Unexpected GET ${path}`));
   });
@@ -167,77 +129,105 @@ function mockApi(fixturesByMonth) {
 
 beforeEach(() => {
   apiClient.get.mockReset();
+  apiClient.post.mockReset();
 });
 
-describe("InsightsPage", () => {
-  it("renders the kit fixture from one response: hero 8,420, comparison, summaries (D-INS-F1/F2)", async () => {
-    mockApi({ [BASE]: () => Promise.resolve(insightsFixture()) });
+describe("InsightsPage (CR-001 multi-month comparison)", () => {
+  it("defaults to the current calendar month with a single series (CR3-1)", async () => {
+    mockApi((months) => Promise.resolve(insightsFixture(months)));
     render(renderProviders(<InsightsPage />));
 
-    expect((await screen.findAllByText("8,420")).length).toBeGreaterThanOrEqual(1);
-    expect(document.querySelector(".insights-hero-comparison").textContent).toBe(
-      "vs 9,180 last month",
-    );
-
-    // Every chart carries an accessible data-derived text summary (D-INS-D4).
-    expect(screen.getByText(new RegExp(`Housing 3,957 vs 4,300`))).toBeInTheDocument();
     expect(
-      screen.getByText(new RegExp(`${BASE_LABEL} spending shares: Housing 47%`)),
+      await screen.findByText(`Total spent in ${BASE_YEAR_LABEL}`),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("8,420").length).toBeGreaterThanOrEqual(1);
+    expect(apiClient.get).toHaveBeenCalledWith(`/insights?months=${BASE}`);
+    // No second month anywhere.
+    expect(screen.queryByText(`Total spent in ${PREVIOUS_YEAR_LABEL}`)).toBeNull();
+
+    // Every chart carries an accessible data-derived text summary.
+    expect(
+      screen.getByText(new RegExp(`Spending by category across ${BASE_YEAR_LABEL}:`)),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`Spending shares across ${BASE_YEAR_LABEL}:`)),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        new RegExp(`Cumulative spending through ${BASE_LABEL} reached 8,420`),
+        new RegExp(`Cumulative spending: 8,420 through ${BASE_YEAR_LABEL}`),
       ),
     ).toBeInTheDocument();
+    // The trigger summarizes the single selection.
+    expect(screen.getByRole("button", { name: /Months to compare/ })).toHaveTextContent(
+      BASE_YEAR_LABEL,
+    );
   });
 
-  it("shows donut legend percentages that total exactly 100 (documented rounding)", async () => {
-    const fixture = insightsFixture();
-    mockApi({ [BASE]: () => Promise.resolve(fixture) });
+  it("renders all seven categories in the charts, including the CR2 additions", async () => {
+    mockApi((months) => Promise.resolve(insightsFixture(months)));
     render(renderProviders(<InsightsPage />));
     await screen.findAllByText("8,420");
-
-    const shares = fixture.insights.categories.map((category) => category.sharePercent);
-    expect(shares.reduce((sum, value) => sum + value, 0)).toBe(100);
-    for (const share of shares) {
-      expect(screen.getAllByText(`${share}%`).length).toBeGreaterThanOrEqual(1);
-    }
-  });
-
-  it("exposes equivalent data tables for keyboard/screen-reader users (D-INS-F4)", async () => {
-    mockApi({ [BASE]: () => Promise.resolve(insightsFixture()) });
-    render(renderProviders(<InsightsPage />));
-    await screen.findAllByText("8,420");
-
-    const cashFlowTable = screen.getByRole("table", {
-      name: `Cumulative spending by date: ${BASE_LABEL} and ${PREVIOUS_LABEL}`,
-    });
-    expect(cashFlowTable).toBeInTheDocument();
-    expect(screen.getByRole("rowheader", { name: "Jul 16" })).toBeInTheDocument();
 
     const barTable = screen.getByRole("table", {
-      name: `Spending by category: ${BASE_LABEL} and ${PREVIOUS_LABEL}`,
+      name: `Spending by category: ${BASE_YEAR_LABEL}`,
     });
-    expect(barTable).toBeInTheDocument();
+    for (const meta of CATEGORY_META) {
+      expect(
+        within(barTable).getByRole("rowheader", { name: meta.label }),
+      ).toBeInTheDocument();
+    }
+    expect(within(barTable).getByRole("cell", { name: "150" })).toBeInTheDocument();
+    expect(within(barTable).getByRole("cell", { name: "721" })).toBeInTheDocument();
+  });
 
-    // Chart data points are keyboard-focusable with full labels (D-INS-D3).
+  it("selecting more months drives the query and renders one hero total per month (CR3-2/4)", async () => {
+    mockApi((months) => Promise.resolve(insightsFixture(months)));
+    render(renderProviders(<InsightsPage />));
+    await screen.findAllByText("8,420");
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /Months to compare/ }));
+    await user.click(
+      screen.getByRole("option", { name: new RegExp(PREVIOUS_YEAR_LABEL) }),
+    );
+
     expect(
-      screen.getAllByRole("img", { name: `Housing — ${BASE_LABEL}: 3,957 USD` })[0],
-    ).toHaveAttribute("tabindex", "0");
+      await screen.findByText(`Total spent in ${PREVIOUS_YEAR_LABEL}`),
+    ).toBeInTheDocument();
+    expect(apiClient.get).toHaveBeenCalledWith(`/insights?months=${BASE},${PREVIOUS}`);
+    expect(screen.getAllByText("9,180").length).toBeGreaterThanOrEqual(1);
+    // Hidden tables gain one value column per selected month.
+    const barTable = screen.getByRole("table", {
+      name: `Spending by category: ${BASE_YEAR_LABEL}, ${PREVIOUS_YEAR_LABEL}`,
+    });
+    expect(
+      within(barTable).getByRole("columnheader", { name: PREVIOUS_YEAR_LABEL }),
+    ).toBeInTheDocument();
+    // Legends identify both series explicitly.
+    expect(screen.getAllByText(PREVIOUS_YEAR_LABEL).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows donut percentages summing to 100 for the combined selection", async () => {
+    mockApi((months) => Promise.resolve(insightsFixture(months)));
+    render(renderProviders(<InsightsPage />));
+    await screen.findAllByText("8,420");
+
+    const donutTable = screen.getByRole("table", {
+      name: `Share of spending by category across ${BASE_YEAR_LABEL}`,
+    });
+    const shareCells = within(donutTable)
+      .getAllByRole("cell")
+      .map((cell) => cell.textContent)
+      .filter((text) => text.endsWith("%"));
+    const total = shareCells.reduce((sum, text) => sum + Number(text.slice(0, -1)), 0);
+    expect(total).toBe(100);
   });
 
   it("keeps hidden chart tables out of the layout width (DEV-SELFTEST-001 regression guard)", async () => {
-    mockApi({ [BASE]: () => Promise.resolve(insightsFixture()) });
+    mockApi((months) => Promise.resolve(insightsFixture(months)));
     render(renderProviders(<InsightsPage />));
     await screen.findAllByText("8,420");
 
-    // Chromium's automatic table layout ignores the .visually-hidden 1px
-    // width when the class sits on a <table> itself, letting the widest chart
-    // table (measured 335px) push the page past a 320px viewport. jsdom
-    // computes no layout, so this asserts the structural contract behind the
-    // fix — the class lives on a 1px overflow-hidden block wrapper, never on
-    // the table — while the real scrollWidth <= 320 measurement is recorded in
-    // cycle-01/evidence/insights-320-recheck.json.
     const tables = screen.getAllByRole("table");
     expect(tables).toHaveLength(3);
     for (const table of tables) {
@@ -245,97 +235,62 @@ describe("InsightsPage", () => {
       const wrapper = table.closest(".visually-hidden");
       expect(wrapper).not.toBeNull();
       expect(wrapper.tagName).toBe("DIV");
-      // The accessible data view survives the wrapper: caption plus column
-      // and row headers stay exposed to assistive tech (D-INS-F4).
       expect(table.querySelector("caption")).not.toBeNull();
       expect(table.querySelectorAll("th[scope='col']").length).toBeGreaterThan(0);
       expect(table.querySelectorAll("th[scope='row']").length).toBeGreaterThan(0);
     }
   });
 
-  it("switches months from the tabs with arrow keys and updates everything together (D-INS-F3, D-RESP-F3)", async () => {
-    mockApi({
-      [BASE]: () => Promise.resolve(insightsFixture()),
-      [PREVIOUS]: () => Promise.resolve(previousMonthFixture()),
-    });
+  it("renders a zero month as honest zeros, never an error (CR3-7)", async () => {
+    mockApi(() => Promise.resolve(insightsFixture([THIRD])));
     render(renderProviders(<InsightsPage />));
-    await screen.findAllByText("8,420");
 
-    const currentTab = screen.getByRole("tab", { name: BASE_LABEL });
-    expect(currentTab).toHaveAttribute("aria-selected", "true");
+    expect(
+      await screen.findByText(`Total spent in ${monthYearLabel(THIRD)}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`No expenses recorded for ${monthYearLabel(THIRD)}`)),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load your insights")).toBeNull();
+  });
 
-    const user = userEvent.setup();
-    currentTab.focus();
-    await user.keyboard("{ArrowLeft}");
-
-    // Hero total, labels, and summaries all now describe the previous month.
-    expect((await screen.findAllByText("9,180")).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("tab", { name: PREVIOUS_LABEL })).toHaveAttribute(
-      "aria-selected",
-      "true",
+  it("recovers from the defensive no-budget 404 by POSTing /budget (CR1-11)", async () => {
+    let hasBudget = false;
+    mockApi((months) =>
+      hasBudget
+        ? Promise.resolve(insightsFixture(months))
+        : Promise.reject(
+            new ApiError({ code: "NOT_FOUND", status: 404, message: "No budget yet." }),
+          ),
     );
-    expect(apiClient.get).toHaveBeenCalledWith(`/insights/${PREVIOUS}`);
-    expect(
-      screen.getByText(
-        new RegExp(`Cumulative spending through ${PREVIOUS_LABEL} reached 9,180`),
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it("shows an explicit no-comparison state instead of a fake zero change (D-INS-F5)", async () => {
-    const fixture = insightsFixture({
-      hasPrevious: false,
-      previousTotalMinor: null,
-      cashFlow: {
-        labels: ["Jul 1", "Jul 6", "Jul 11", "Jul 16", "Jul 21", "Jul 26", "Jul 31"],
-        currentCumulativeMinor: [60000, 180000, 310000, 460000, 590000, 730000, 842000],
-        previousCumulativeMinor: [],
-      },
-    });
-    mockApi({ [BASE]: () => Promise.resolve(fixture) });
-    render(renderProviders(<InsightsPage />));
-    await screen.findAllByText("8,420");
-
-    expect(screen.getByText(/No data to compare/)).toBeInTheDocument();
-    expect(screen.queryByText(/last month/)).not.toBeInTheDocument();
-    expect(screen.queryByText("vs 0 last month")).not.toBeInTheDocument();
-  });
-
-  it("shows the create-budget empty state when the month has no budget", async () => {
-    mockApi({
-      [BASE]: () =>
-        Promise.reject(
-          new ApiError({
-            code: "NOT_FOUND",
-            status: 404,
-            message: "No budget for this month.",
-          }),
-        ),
+    apiClient.post.mockImplementation(() => {
+      hasBudget = true;
+      return Promise.resolve({ budget: {} });
     });
     render(renderProviders(<InsightsPage />));
+    const user = userEvent.setup();
 
-    expect(
-      await screen.findByText(`No budget for ${BASE_LABEL} yet`),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
+    expect(await screen.findByText("No budget yet")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Set up your budget" }));
+
+    expect(apiClient.post).toHaveBeenCalledWith("/budget");
+    expect(await screen.findAllByText("8,420")).not.toHaveLength(0);
   });
 
   it("keeps the shell and offers retry on failure", async () => {
     let calls = 0;
-    mockApi({
-      [BASE]: () => {
-        calls += 1;
-        if (calls === 1) {
-          return Promise.reject(
-            new ApiError({
-              code: "INTERNAL",
-              status: 500,
-              message: "Something went wrong.",
-            }),
-          );
-        }
-        return Promise.resolve(insightsFixture());
-      },
+    mockApi((months) => {
+      calls += 1;
+      if (calls === 1) {
+        return Promise.reject(
+          new ApiError({
+            code: "INTERNAL",
+            status: 500,
+            message: "Something went wrong.",
+          }),
+        );
+      }
+      return Promise.resolve(insightsFixture(months));
     });
     render(renderProviders(<InsightsPage />));
 

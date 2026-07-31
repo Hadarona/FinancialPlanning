@@ -63,7 +63,7 @@ describe("DeleteExpenseConfirm", () => {
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
-    expect(apiClient.delete).toHaveBeenCalledWith("/budgets/2026-07/transactions/tx-1");
+    expect(apiClient.delete).toHaveBeenCalledWith("/months/2026-07/transactions/tx-1");
   });
 
   it("cancel is a strict no-op (D-EXP-F6)", async () => {

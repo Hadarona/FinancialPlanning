@@ -4,6 +4,8 @@ import {
   daysInMonth,
   monthRange,
   summarizeBudget,
+  monthReadModel,
+  budgetPlanModel,
   largestRemainderShares,
   monthName,
   shortDateLabel,
@@ -54,12 +56,12 @@ describe("daysInMonth / monthRange", () => {
   });
 });
 
-// Kit fixture (docs/design/figma-kit/data/content.json, in minor units):
-// income 12,500; plans 4,000/1,500/800/900/3,000 (=10,200); available 2,300.
+// Kit fixture extended per CR-001 (seven fixed categories, minor units):
+// income 12,500; plans 4,000/1,500/800/900/3,000/600/1,200 (=12,000);
+// available 500. The single budget row carries no month (CR1-2).
 function kitBudgetRow() {
   return {
     id: "budget-1",
-    month: "2026-07",
     currencyCode: "USD",
     incomeMinor: 1250000,
     categories: [
@@ -103,17 +105,38 @@ function kitBudgetRow() {
         displayOrder: 5,
         plannedMinor: 300000,
       },
+      {
+        id: "subscriptions",
+        name: "Subscriptions",
+        icon: "Repeat",
+        color: "coral",
+        displayOrder: 6,
+        plannedMinor: 60000,
+      },
+      {
+        id: "utilities",
+        name: "Utilities",
+        icon: "Plug",
+        color: "green",
+        displayOrder: 7,
+        plannedMinor: 120000,
+      },
     ],
   };
 }
 
 describe("summarizeBudget", () => {
-  it("computes kit totals: planned 10,200 and available 2,300 from income 12,500", () => {
+  it("computes CR-001 totals: planned 12,000 and available 500 from income 12,500", () => {
     const summary = summarizeBudget(kitBudgetRow(), { housing: 252000 });
     expect(summary.incomeMinor).toBe(1250000);
-    expect(summary.plannedMinor).toBe(1020000);
-    expect(summary.availableMinor).toBe(230000);
+    expect(summary.plannedMinor).toBe(1200000);
+    expect(summary.availableMinor).toBe(50000);
     expect(summary.actualMinor).toBe(252000);
+  });
+
+  it("carries no month field: the single budget applies to every month (CR1-2)", () => {
+    const summary = summarizeBudget(kitBudgetRow(), {});
+    expect(summary).not.toHaveProperty("month");
   });
 
   it("computes progress as actual/planned (housing 2,520 of 4,000 -> 63%)", () => {
@@ -168,7 +191,7 @@ describe("summarizeBudget", () => {
     const row = kitBudgetRow();
     row.incomeMinor = 900000;
     const summary = summarizeBudget(row, {});
-    expect(summary.availableMinor).toBe(-120000);
+    expect(summary.availableMinor).toBe(-300000);
   });
 
   it("orders categories by displayOrder regardless of stored order", () => {
@@ -181,6 +204,58 @@ describe("summarizeBudget", () => {
       "transport",
       "fun",
       "savings",
+      "subscriptions",
+      "utilities",
+    ]);
+  });
+});
+
+describe("monthReadModel", () => {
+  it("adds the requested month to the summarized plans + actuals (CR1-3)", () => {
+    const model = monthReadModel(kitBudgetRow(), "2026-07", { utilities: 72100 });
+    expect(model.month).toBe("2026-07");
+    expect(model.plannedMinor).toBe(1200000);
+    expect(model.actualMinor).toBe(72100);
+    const utilities = model.categories.find((category) => category.id === "utilities");
+    expect(utilities.actualMinor).toBe(72100);
+    expect(utilities.progressPercent).toBe(60);
+  });
+
+  it("returns identical plans with different actuals for two months", () => {
+    const july = monthReadModel(kitBudgetRow(), "2026-07", { housing: 100000 });
+    const may = monthReadModel(kitBudgetRow(), "2026-05", {});
+    expect(july.categories.map((c) => c.plannedMinor)).toEqual(
+      may.categories.map((c) => c.plannedMinor),
+    );
+    expect(july.actualMinor).toBe(100000);
+    expect(may.actualMinor).toBe(0);
+  });
+
+  it("rejects a malformed month", () => {
+    expect(() => monthReadModel(kitBudgetRow(), "2026-13", {})).toThrow();
+  });
+});
+
+describe("budgetPlanModel", () => {
+  it("returns plans only: computed planned/available, no actuals, no month (CR1-2)", () => {
+    const model = budgetPlanModel(kitBudgetRow());
+    expect(model.plannedMinor).toBe(1200000);
+    expect(model.availableMinor).toBe(50000);
+    expect(model).not.toHaveProperty("month");
+    expect(model).not.toHaveProperty("actualMinor");
+    expect(model.categories).toHaveLength(7);
+    for (const category of model.categories) {
+      expect(category).not.toHaveProperty("actualMinor");
+      expect(category).not.toHaveProperty("progressPercent");
+    }
+  });
+
+  it("orders categories by displayOrder", () => {
+    const row = kitBudgetRow();
+    row.categories = [...row.categories].reverse();
+    const model = budgetPlanModel(row);
+    expect(model.categories.map((category) => category.displayOrder)).toEqual([
+      1, 2, 3, 4, 5, 6, 7,
     ]);
   });
 });
@@ -191,6 +266,13 @@ describe("largestRemainderShares", () => {
     expect(shares.reduce((sum, value) => sum + value, 0)).toBe(100);
     // Kit insights percentages (content.json julyPercent values).
     expect(shares).toEqual([47, 18, 10, 11, 14]);
+  });
+
+  it("sums to 100 across the CR-001 seven-category demo distribution", () => {
+    const shares = largestRemainderShares([
+      323600, 136600, 84200, 92600, 117900, 15000, 72100,
+    ]);
+    expect(shares.reduce((sum, value) => sum + value, 0)).toBe(100);
   });
 
   it("resolves the classic 1/3 split to a 100 total", () => {

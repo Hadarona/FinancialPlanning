@@ -1,10 +1,12 @@
 # Budgeting App
 
-A single-user personal budgeting app: register/login, one private monthly
-budget per user (five fixed categories), expense tracking with instant
-recalculation, and a spending-insights dashboard comparing the current month
-with the previous one. Built as a single delivery across the sprint sections
-of `docs/product/Budgeting_App_Development_Roadmap.md`.
+A single-user personal budgeting app: register/login, ONE private recurring
+budget per user (income + seven fixed category plans, applied identically to
+every month; edited in place via click-to-edit popups), per-month expense
+tracking with instant recalculation, and a spending-insights dashboard
+comparing 1–3 selected months. Built as a single delivery across the sprint
+sections of `docs/product/Budgeting_App_Development_Roadmap.md`, then
+revised by `docs/product/change-request-001.md` (CR-001).
 
 Stack: **React** (Vite, React Router, TanStack Query) on the client,
 **Node.js/Express** on the server, **PostgreSQL** (hosted on **Neon**) for
@@ -57,8 +59,10 @@ ALLOW_DEMO_SEED=true npm run seed:demo
 ```
 
 Creates/refreshes the deterministic demo account `demo@example.com` /
-`DemoPass123!` with the current and previous months populated using the
-design kit's reference numbers. The seed **refuses to run** without
+`DemoPass123!` with one recurring budget (income 12,500; seven plans
+totalling 12,000) and the current and previous months populated across all
+seven categories (monthly totals 8,420 / 9,180, matching the design kit's
+reference cash-flow series). The seed **refuses to run** without
 `ALLOW_DEMO_SEED=true` or when `NODE_ENV=production`, is idempotent, and
 touches only the demo user's data. See `docs/demo-script.md` for the
 rehearsed demo walk.
@@ -83,7 +87,7 @@ flowchart LR
         Controllers --> Services["services (pure calc.js + business rules)"]
         Services --> Repos["repositories (parameterized SQL only)"]
     end
-    DB[(Neon PostgreSQL<br/>users · budget_periods · transactions)]
+    DB[(Neon PostgreSQL<br/>users · budgets · transactions)]
     Logs[/"rotating JSON logs<br/>logs/requests.log · logs/error.log"/]
 
     UI -- "fetch + bb_session cookie" --> MW --> Routes
@@ -98,21 +102,25 @@ isolated server in-process.
 
 ## Data model
 
-Full DDL: `server/src/db/migrations/001_init.sql` (applied by
-`npm run migrate`, tracked in `schema_migrations`).
+Full DDL: `server/src/db/migrations/001_init.sql` +
+`002_single_budget.sql` (applied in order by `npm run migrate`, tracked in
+`schema_migrations`). Migration 002 implements CR-001: it replaces the
+per-month `budget_periods` model with one `budgets` row per user
+(latest-month-wins backfill), extends the category set to seven, re-scopes
+transaction idempotency to the user, and drops `budget_periods`.
 
 - `users(id, email UNIQUE lowercase, password_hash, timestamps)` — bcrypt
   hashes; passwords never returned or logged.
-- `budget_periods(id, user_id FK, month 'YYYY-MM', currency_code,
-income_minor, categories JSONB, timestamps)` — one per user per month
-  (`UNIQUE (user_id, month)`). `categories` holds the five fixed categories
-  (`housing`, `groceries`, `transport`, `fun`, `savings`) with their planned
-  amounts; names/icons/colors/order are server constants.
-- `transactions(id, user_id FK, budget_period_id FK, category_id, type,
-amount_minor > 0, occurred_on DATE, note ≤200, client_request_id,
-timestamps)` — a partial unique index on
-  `(budget_period_id, client_request_id)` makes retried submissions
-  idempotent.
+- `budgets(id, user_id FK UNIQUE, currency_code, income_minor,
+categories JSONB, timestamps)` — exactly one per user, provisioned at
+  registration. `categories` holds the seven fixed categories (`housing`,
+  `groceries`, `transport`, `fun`, `savings`, `subscriptions`, `utilities`)
+  with their planned amounts; names/icons/colors/order are server constants.
+- `transactions(id, user_id FK, category_id, type, amount_minor > 0,
+occurred_on DATE, note ≤200, client_request_id, timestamps)` — month
+  membership is derived from `occurred_on` (date-range scoped queries); a
+  partial unique index on `(user_id, client_request_id)` makes retried
+  submissions idempotent.
 
 ## Money and dates
 
@@ -166,7 +174,7 @@ Run from the repo root (npm workspaces: `client/`, `server/`):
 | `npm run build`            | Production client build (Vite)                                                                               |
 | `npm run migrate`          | Runs pending SQL migrations against `DATABASE_URL`                                                           |
 | `npm run seed:demo`        | Deterministic demo data (guarded; see env table)                                                             |
-| `npm run smoke`            | 15-check end-to-end journey against a **running** server (`SMOKE_BASE_URL`, default `http://localhost:4000`) |
+| `npm run smoke`            | 17-check end-to-end journey against a **running** server (`SMOKE_BASE_URL`, default `http://localhost:4000`) |
 
 ## Testing and coverage
 
@@ -186,9 +194,10 @@ Run from the repo root (npm workspaces: `client/`, `server/`):
   expiry.
 - **Coverage**: `npm run coverage` — vitest + V8. Thresholds of 70%
   lines/statements/functions (60% branches) are enforced in both
-  `vitest.config.js` files; the run fails if they are breached. Final
-  delivery numbers: server 96.75% statements / 92.2% branches / 99.02%
-  functions; client 84.71% / 82.57% / 79.29%.
+  `vitest.config.js` files; the run fails if they are breached. Delivery-2
+  developer-scoped numbers (QA suites excluded during the CR-001 build):
+  server 97% statements / 92.26% branches / 99.08% functions; client
+  85.42% / 83.56% / 82.92%.
 
 ## Logging and security
 
@@ -261,14 +270,17 @@ recommend.
   post-MVP backlog #1).
 - **Savings is a spend-like category**: money "spent" into Savings counts
   toward monthly spending totals, matching the design source's semantics.
-- **Fixed category set**: the five default categories cannot be renamed,
-  added to, or removed (custom categories are post-MVP). This also means a
-  category with transactions can never be orphaned.
+- **Fixed category set**: the seven categories (five original plus CR-001's
+  Subscriptions and Utilities) cannot be renamed, added to, or removed
+  (custom categories are post-MVP). This also means a category with
+  transactions can never be orphaned.
 - **Illustrative kit percentages**: the design kit's example progress bars
   (63/34/26/28/56%) are internally inconsistent with its own authoritative
-  totals; the demo seed follows the authoritative numbers, so seeded
-  progress bars read ~99/101/105/103/39%. Recorded product decision — the
-  63% example survives as a unit-test fixture.
+  totals; the demo seed follows the authoritative numbers. Recorded product
+  decision — the 63% example survives as a unit-test fixture. The kit's
+  five-category content itself is extended to seven by CR-001 (user decision
+  outranks kit): Subscriptions (Lucide `Repeat`, coral ramp) and Utilities
+  (Lucide `Plug`, green ramp).
 - **Stateless logout**: logout clears the session cookie (the browser
   session ends); issued JWTs are not server-side revocable and expire after
   24 h.

@@ -84,6 +84,32 @@ describe("AddExpenseDialog", () => {
     );
   });
 
+  it("offers all seven categories, including Subscriptions and Utilities (CR2-2)", async () => {
+    const user = await openDialog();
+    const select = screen.getByLabelText("Category");
+    const optionLabels = Array.from(select.options).map((option) => option.textContent);
+    expect(optionLabels).toEqual([
+      "Choose a category",
+      "Housing",
+      "Groceries",
+      "Transport",
+      "Fun",
+      "Savings",
+      "Subscriptions",
+      "Utilities",
+    ]);
+
+    apiClient.post.mockResolvedValue({ transaction: { id: "t1" } });
+    await user.type(screen.getByLabelText("Amount"), "150");
+    await user.selectOptions(select, "subscriptions");
+    await user.click(screen.getByRole("button", { name: "Save expense" }));
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledTimes(1));
+    expect(apiClient.post.mock.calls[0][1]).toMatchObject({
+      categoryId: "subscriptions",
+      amountMinor: 15000,
+    });
+  });
+
   it("shows field errors for invalid input and never calls the API (D-EXP-F2)", async () => {
     const user = await openDialog();
 
@@ -106,7 +132,7 @@ describe("AddExpenseDialog", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(apiClient.post).toHaveBeenCalledTimes(1);
     const [path, payload] = apiClient.post.mock.calls[0];
-    expect(path).toBe(`/budgets/${MONTH}/transactions`);
+    expect(path).toBe(`/months/${MONTH}/transactions`);
     expect(payload).toMatchObject({
       categoryId: "groceries",
       amountMinor: 4250,

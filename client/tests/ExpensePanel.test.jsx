@@ -68,7 +68,7 @@ describe("ExpensePanel", () => {
     expect(screen.getByText("Weekly shop")).toBeInTheDocument();
     expect(screen.getByText("42.50")).toBeInTheDocument();
     expect(screen.getByText("3,957")).toBeInTheDocument();
-    expect(apiClient.get).toHaveBeenCalledWith("/budgets/2026-07/transactions");
+    expect(apiClient.get).toHaveBeenCalledWith("/months/2026-07/transactions");
   });
 
   it("names the exact transaction in each delete button and reports it on click (D-EXP-D4 naming)", async () => {

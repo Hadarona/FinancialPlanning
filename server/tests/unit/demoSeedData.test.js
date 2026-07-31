@@ -1,13 +1,17 @@
-// D-DES-012 — the demo seed's expense distribution must reproduce the kit's
-// cash-flow series (docs/design/figma-kit/data/content.json cashFlow) exactly
-// at the seven sample dates, while keeping every per-category and monthly
-// total identical to the iteration-1 dataset. Pure data test — no DB.
+// D-DES-012 / CR2-4 — the demo seed's expense distribution must reproduce
+// the kit's cash-flow series (docs/design/figma-kit/data/content.json
+// cashFlow) exactly at the seven sample dates, while keeping the monthly
+// totals identical to the delivery-1 dataset. CR-001 reworked the
+// per-category split to include Subscriptions and Utilities WITHOUT moving
+// any per-day sum, so the sampled cumulative series is byte-identical.
+// Pure data test — no DB.
 
 import { describe, it, expect } from "vitest";
 import {
   CURRENT_MONTH_EXPENSES,
   PREVIOUS_MONTH_EXPENSES,
 } from "../../src/seed/demoSeed.js";
+import { DEFAULT_CATEGORY_IDS } from "../../src/domain/categories.js";
 import { cashFlowSampleDates, cumulativeAtDates } from "../../src/services/calc.js";
 
 // content.json cashFlow cumulative values ×100 (minor units).
@@ -16,18 +20,22 @@ const KIT_PREVIOUS_SERIES = [80000, 210000, 350000, 500000, 650000, 790000, 9180
 
 const CATEGORY_TOTALS = {
   current: {
-    housing: 395700,
-    groceries: 151600,
-    transport: 84200,
-    fun: 92600,
     savings: 117900,
+    housing: 323600,
+    groceries: 136600,
+    subscriptions: 15000,
+    transport: 84200,
+    utilities: 72100,
+    fun: 92600,
   },
   previous: {
-    housing: 430000,
-    groceries: 170000,
-    transport: 90000,
-    fun: 100000,
     savings: 128000,
+    housing: 350000,
+    groceries: 155000,
+    subscriptions: 15000,
+    transport: 90000,
+    utilities: 80000,
+    fun: 100000,
   },
 };
 
@@ -54,12 +62,28 @@ function cumulativeSeries(expenses, month) {
 }
 
 describe("demo seed expense data (D-DES-012)", () => {
-  it("keeps the iteration-1 per-category totals for the current month", () => {
+  it("matches the CR-001 seven-category totals for the current month", () => {
     expect(totalsByCategory(CURRENT_MONTH_EXPENSES)).toEqual(CATEGORY_TOTALS.current);
   });
 
-  it("keeps the iteration-1 per-category totals for the previous month", () => {
+  it("matches the CR-001 seven-category totals for the previous month", () => {
     expect(totalsByCategory(PREVIOUS_MONTH_EXPENSES)).toEqual(CATEGORY_TOTALS.previous);
+  });
+
+  it("includes subscriptions and utilities expenses in both months (CR2-4)", () => {
+    for (const expenses of [CURRENT_MONTH_EXPENSES, PREVIOUS_MONTH_EXPENSES]) {
+      const ids = new Set(expenses.map((expense) => expense.categoryId));
+      expect(ids.has("subscriptions")).toBe(true);
+      expect(ids.has("utilities")).toBe(true);
+    }
+  });
+
+  it("uses only ids from the fixed seven-category set", () => {
+    const validIds = new Set(DEFAULT_CATEGORY_IDS);
+    expect(validIds.size).toBe(7);
+    for (const expense of [...CURRENT_MONTH_EXPENSES, ...PREVIOUS_MONTH_EXPENSES]) {
+      expect(validIds.has(expense.categoryId)).toBe(true);
+    }
   });
 
   it("keeps the monthly grand totals (8,420.00 / 9,180.00)", () => {

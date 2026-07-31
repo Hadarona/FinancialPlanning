@@ -52,6 +52,25 @@ describe("auth journey", () => {
     expect(meAfterLogoutRes.status).toBe(401);
   });
 
+  it("provisions the default budget at registration: GET /budget answers 200 (CR1-9)", async () => {
+    const freshClient = createCookieJarFetch(ctx.baseUrl);
+    const registerRes = await freshClient.request("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email: uniqueEmail("provision"), password: PASSWORD }),
+    });
+    expect(registerRes.status).toBe(201);
+    // The register response shape itself is unchanged (REG-1).
+    const registerBody = await registerRes.json();
+    expect(Object.keys(registerBody)).toEqual(["user"]);
+
+    const budgetRes = await freshClient.request("/budget");
+    expect(budgetRes.status).toBe(200);
+    const { budget } = await budgetRes.json();
+    expect(budget.incomeMinor).toBe(1250000);
+    expect(budget.plannedMinor).toBe(1200000);
+    expect(budget.categories).toHaveLength(7);
+  }, 30000);
+
   it("rejects a duplicate registration with 409 and does not create a second user", async () => {
     const email = uniqueEmail("dup");
     const first = await client.request("/auth/register", {

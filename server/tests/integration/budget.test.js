@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { startTestServer, createCookieJarFetch } from "./helpers/testServer.js";
-import { DEFAULT_CATEGORIES } from "../../src/domain/categories.js";
 
 const PASSWORD = "supersecret1";
 
@@ -24,44 +23,25 @@ async function registerUser(baseUrl) {
   return { client, userId: body.user.id };
 }
 
-/** Kit fixture (content.json): income 12,500; plans totaling 10,200. */
-function kitCategories(overrides = {}) {
-  return DEFAULT_CATEGORIES.map((category) => ({
-    ...category,
-    plannedMinor: overrides[category.id] ?? category.plannedMinor,
-  }));
-}
+const SEVEN_IDS = [
+  "housing",
+  "groceries",
+  "transport",
+  "fun",
+  "savings",
+  "subscriptions",
+  "utilities",
+];
 
-describe("GET /budgets/:month", () => {
+describe("single recurring budget (CR-001): /budget and /months/:month", () => {
   let ctx;
   let pool;
 
-  async function insertBudget({
-    userId,
-    month,
-    incomeMinor = 1250000,
-    categories = kitCategories(),
-  }) {
-    const result = await pool.query(
-      `INSERT INTO budget_periods (user_id, month, income_minor, categories)
-       VALUES ($1, $2, $3, $4::jsonb)
-       RETURNING id`,
-      [userId, month, incomeMinor, JSON.stringify(categories)],
-    );
-    return result.rows[0].id;
-  }
-
-  async function insertTransaction({
-    userId,
-    budgetPeriodId,
-    categoryId,
-    amountMinor,
-    occurredOn,
-  }) {
+  async function insertTransaction({ userId, categoryId, amountMinor, occurredOn }) {
     await pool.query(
-      `INSERT INTO transactions (user_id, budget_period_id, category_id, amount_minor, occurred_on)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, budgetPeriodId, categoryId, amountMinor, occurredOn],
+      `INSERT INTO transactions (user_id, category_id, amount_minor, occurred_on)
+       VALUES ($1, $2, $3, $4)`,
+      [userId, categoryId, amountMinor, occurredOn],
     );
   }
 
@@ -77,46 +57,57 @@ describe("GET /budgets/:month", () => {
     await ctx.close();
   }, 30000);
 
-  it("returns the kit fixture read model: income 12,500 / planned 10,200 / available 2,300", async () => {
+  it("GET /budget returns the default plan model provisioned at registration (CR1-2/CR1-9)", async () => {
+    const { client } = await registerUser(ctx.baseUrl);
+
+    const res = await client.request("/budget");
+    expect(res.status).toBe(200);
+    const { budget } = await res.json();
+
+    expect(budget.currencyCode).toBe("USD");
+    expect(budget.incomeMinor).toBe(1250000);
+    expect(budget.plannedMinor).toBe(1200000);
+    expect(budget.availableMinor).toBe(50000);
+    // No month, no actuals: the single budget applies to every month.
+    expect(budget).not.toHaveProperty("month");
+    expect(budget).not.toHaveProperty("actualMinor");
+    expect(budget.categories.map((category) => category.id)).toEqual(SEVEN_IDS);
+    expect(
+      budget.categories.find((category) => category.id === "subscriptions"),
+    ).toMatchObject({ name: "Subscriptions", icon: "Repeat", color: "coral" });
+    expect(
+      budget.categories.find((category) => category.id === "utilities"),
+    ).toMatchObject({ name: "Utilities", icon: "Plug", color: "green" });
+  }, 30000);
+
+  it("GET /months/:month returns plans + that month's actuals with progress (CR1-3)", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
-    const budgetId = await insertBudget({ userId, month: "2026-07" });
     // Housing actual 2,520 of 4,000 planned -> 63% (kit example), split into
     // two rows so the SUM(...) aggregation itself is exercised.
     await insertTransaction({
       userId,
-      budgetPeriodId: budgetId,
       categoryId: "housing",
       amountMinor: 200000,
       occurredOn: "2026-07-05",
     });
     await insertTransaction({
       userId,
-      budgetPeriodId: budgetId,
       categoryId: "housing",
       amountMinor: 52000,
       occurredOn: "2026-07-14",
     });
 
-    const res = await client.request("/budgets/2026-07");
+    const res = await client.request("/months/2026-07");
     expect(res.status).toBe(200);
     const { budget } = await res.json();
 
     expect(budget.month).toBe("2026-07");
-    expect(budget.currencyCode).toBe("USD");
-    expect(budget.incomeMinor).toBe(1250000);
-    expect(budget.plannedMinor).toBe(1020000);
-    expect(budget.availableMinor).toBe(230000);
+    expect(budget.plannedMinor).toBe(1200000);
+    expect(budget.availableMinor).toBe(50000);
     expect(budget.actualMinor).toBe(252000);
-
-    expect(budget.categories.map((category) => category.id)).toEqual([
-      "housing",
-      "groceries",
-      "transport",
-      "fun",
-      "savings",
-    ]);
     const housing = budget.categories[0];
     expect(housing).toMatchObject({
+      id: "housing",
       name: "Housing",
       icon: "House",
       color: "blue",
@@ -127,34 +118,55 @@ describe("GET /budgets/:month", () => {
     });
   }, 30000);
 
-  it("includes first/last-day-of-month transactions and excludes adjacent months", async () => {
+  it("two months share identical plans with independent actuals (CR1-11)", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
-    const julyId = await insertBudget({ userId, month: "2026-07" });
-    const juneId = await insertBudget({ userId, month: "2026-06" });
-
     await insertTransaction({
       userId,
-      budgetPeriodId: julyId,
+      categoryId: "utilities",
+      amountMinor: 72100,
+      occurredOn: "2026-07-18",
+    });
+
+    const julyRes = await client.request("/months/2026-07");
+    const mayRes = await client.request("/months/2026-05");
+    expect(julyRes.status).toBe(200);
+    expect(mayRes.status).toBe(200);
+    const july = (await julyRes.json()).budget;
+    const may = (await mayRes.json()).budget;
+
+    expect(july.categories.map((c) => c.plannedMinor)).toEqual(
+      may.categories.map((c) => c.plannedMinor),
+    );
+    expect(july.actualMinor).toBe(72100);
+    // A month with zero expenses is a normal zero month, never a 404.
+    expect(may.actualMinor).toBe(0);
+    for (const category of may.categories) {
+      expect(category.actualMinor).toBe(0);
+    }
+  }, 30000);
+
+  it("includes first/last-day-of-month transactions and excludes adjacent months", async () => {
+    const { client, userId } = await registerUser(ctx.baseUrl);
+    await insertTransaction({
+      userId,
       categoryId: "groceries",
       amountMinor: 1000,
       occurredOn: "2026-07-01",
     });
     await insertTransaction({
       userId,
-      budgetPeriodId: julyId,
       categoryId: "groceries",
       amountMinor: 2000,
       occurredOn: "2026-07-31",
     });
     await insertTransaction({
       userId,
-      budgetPeriodId: juneId,
       categoryId: "groceries",
       amountMinor: 40000,
       occurredOn: "2026-06-30",
     });
 
-    const res = await client.request("/budgets/2026-07");
+    const res = await client.request("/months/2026-07");
     const { budget } = await res.json();
     const groceries = budget.categories.find((category) => category.id === "groceries");
     expect(groceries.actualMinor).toBe(3000);
@@ -163,20 +175,19 @@ describe("GET /budgets/:month", () => {
 
   it("handles a zero-plan category with spending: no NaN/Infinity/500, state 'unplanned'", async () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
-    const budgetId = await insertBudget({
-      userId,
-      month: "2026-07",
-      categories: kitCategories({ fun: 0 }),
+    const patch = await client.request("/budget", {
+      method: "PATCH",
+      body: JSON.stringify({ categories: [{ id: "fun", plannedMinor: 0 }] }),
     });
+    expect(patch.status).toBe(200);
     await insertTransaction({
       userId,
-      budgetPeriodId: budgetId,
       categoryId: "fun",
       amountMinor: 5000,
       occurredOn: "2026-07-10",
     });
 
-    const res = await client.request("/budgets/2026-07");
+    const res = await client.request("/months/2026-07");
     expect(res.status).toBe(200);
     const { budget } = await res.json();
     const fun = budget.categories.find((category) => category.id === "fun");
@@ -188,7 +199,7 @@ describe("GET /budgets/:month", () => {
   it("strictly validates the :month segment (D-BUD-B1)", async () => {
     const { client } = await registerUser(ctx.baseUrl);
     for (const bad of ["2026-7", "2026-13", "202607", "2026-07-01", "july"]) {
-      const res = await client.request(`/budgets/${bad}`);
+      const res = await client.request(`/months/${bad}`);
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
@@ -197,29 +208,60 @@ describe("GET /budgets/:month", () => {
 
   it("rejects unauthenticated reads with 401", async () => {
     const anonymous = createCookieJarFetch(ctx.baseUrl);
-    const res = await anonymous.request("/budgets/2026-07");
-    expect(res.status).toBe(401);
-    const body = await res.json();
-    expect(body.error.code).toBe("UNAUTHENTICATED");
+    for (const path of ["/budget", "/months/2026-07"]) {
+      const res = await anonymous.request(path);
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body.error.code).toBe("UNAUTHENTICATED");
+    }
   }, 30000);
 
-  it("returns 404 (not data) when another user owns a budget for that month (D-BUD-B4)", async () => {
+  it("never leaks another user's actuals: each account sees only its own months", async () => {
     const userA = await registerUser(ctx.baseUrl);
     const userB = await registerUser(ctx.baseUrl);
-    await insertBudget({ userId: userA.userId, month: "2026-03" });
+    await insertTransaction({
+      userId: userA.userId,
+      categoryId: "savings",
+      amountMinor: 313370,
+      occurredOn: "2026-03-15",
+    });
 
-    const res = await userB.client.request("/budgets/2026-03");
-    expect(res.status).toBe(404);
-    const body = await res.json();
-    expect(body.error.code).toBe("NOT_FOUND");
-    expect(JSON.stringify(body)).not.toContain(userA.userId);
+    const res = await userB.client.request("/months/2026-03");
+    expect(res.status).toBe(200);
+    const { budget } = await res.json();
+    expect(budget.actualMinor).toBe(0);
+    expect(JSON.stringify(budget)).not.toContain(userA.userId);
   }, 30000);
 
-  it("enforces the unique (user_id, month) index at the database level (D-BUD-B5)", async () => {
+  it("defensive path (CR1-11): missing budget row answers 404 and POST /budget recovers", async () => {
+    const { client, userId } = await registerUser(ctx.baseUrl);
+    // Simulate the data anomaly directly (unreachable through the API).
+    await pool.query("DELETE FROM budgets WHERE user_id = $1", [userId]);
+
+    for (const path of ["/budget", "/months/2026-07"]) {
+      const res = await client.request(path);
+      expect(res.status).toBe(404);
+      const body = await res.json();
+      expect(body.error.code).toBe("NOT_FOUND");
+      expect(body.error.message).toBeTruthy();
+    }
+
+    const recreate = await client.request("/budget", { method: "POST" });
+    expect(recreate.status).toBe(201);
+    const { budget } = await recreate.json();
+    expect(budget.plannedMinor).toBe(1200000);
+    const after = await client.request("/months/2026-07");
+    expect(after.status).toBe(200);
+  }, 30000);
+
+  it("enforces one budget per user at the database level (unique user_id)", async () => {
     const { userId } = await registerUser(ctx.baseUrl);
-    await insertBudget({ userId, month: "2026-05" });
-    await expect(insertBudget({ userId, month: "2026-05" })).rejects.toMatchObject({
-      code: "23505",
-    });
+    await expect(
+      pool.query(
+        `INSERT INTO budgets (user_id, income_minor, categories)
+         VALUES ($1, 1, '[]'::jsonb)`,
+        [userId],
+      ),
+    ).rejects.toMatchObject({ code: "23505" });
   }, 30000);
 });

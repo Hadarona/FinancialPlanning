@@ -1,0 +1,10 @@
+{
+    "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid query parameters.",
+        "fieldErrors": {
+            "months": "Select at most three months."
+        },
+        "requestId": "4e7fe347-98f6-42ef-a30a-47052af17358"
+    }
+}

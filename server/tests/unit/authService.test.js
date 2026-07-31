@@ -17,10 +17,22 @@ function makeUserRepo(overrides = {}) {
   };
 }
 
+/** CR1-9: registration provisions the default budget via budgetService. */
+function makeBudgetService(overrides = {}) {
+  return {
+    createDefaultBudget: vi.fn(async () => ({ budget: { id: "budget-1" } })),
+    ...overrides,
+  };
+}
+
 describe("authService.register", () => {
   it("hashes the password and never returns it", async () => {
     const userRepo = makeUserRepo();
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
 
     const user = await authService.register({
       email: "a@b.com",
@@ -42,7 +54,11 @@ describe("authService.register", () => {
         throw err;
       }),
     });
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
 
     await expect(
       authService.register({ email: "a@b.com", password: "supersecret" }),
@@ -55,18 +71,82 @@ describe("authService.register", () => {
         throw new Error("connection lost");
       }),
     });
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
 
     await expect(
       authService.register({ email: "a@b.com", password: "supersecret" }),
     ).rejects.toThrow("connection lost");
+  });
+
+  it("provisions the default budget for the new user (CR1-9)", async () => {
+    const userRepo = makeUserRepo();
+    const budgetService = makeBudgetService();
+    const authService = createAuthService({
+      userRepo,
+      budgetService,
+      config: testConfig,
+    });
+
+    const user = await authService.register({
+      email: "a@b.com",
+      password: "supersecret",
+    });
+
+    expect(budgetService.createDefaultBudget).toHaveBeenCalledTimes(1);
+    expect(budgetService.createDefaultBudget).toHaveBeenCalledWith(user.id);
+  });
+
+  it("propagates a budget-provisioning failure (no silent half-success)", async () => {
+    const budgetService = makeBudgetService({
+      createDefaultBudget: vi.fn(async () => {
+        throw new Error("budget insert failed");
+      }),
+    });
+    const authService = createAuthService({
+      userRepo: makeUserRepo(),
+      budgetService,
+      config: testConfig,
+    });
+
+    await expect(
+      authService.register({ email: "a@b.com", password: "supersecret" }),
+    ).rejects.toThrow("budget insert failed");
+  });
+
+  it("does not attempt budget provisioning when the email is taken", async () => {
+    const userRepo = makeUserRepo({
+      createUser: vi.fn(async () => {
+        const err = new Error("duplicate key value violates unique constraint");
+        err.code = "23505";
+        throw err;
+      }),
+    });
+    const budgetService = makeBudgetService();
+    const authService = createAuthService({
+      userRepo,
+      budgetService,
+      config: testConfig,
+    });
+
+    await expect(
+      authService.register({ email: "a@b.com", password: "supersecret" }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(budgetService.createDefaultBudget).not.toHaveBeenCalled();
   });
 });
 
 describe("authService.login", () => {
   it("logs in with correct credentials", async () => {
     const userRepo = makeUserRepo();
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
     const registered = await authService.register({
       email: "a@b.com",
       password: "supersecret",
@@ -85,7 +165,11 @@ describe("authService.login", () => {
 
   it("rejects an unknown email with a generic message", async () => {
     const userRepo = makeUserRepo({ findByEmail: vi.fn(async () => null) });
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
 
     await expect(
       authService.login({ email: "nobody@example.com", password: "whatever" }),
@@ -100,7 +184,11 @@ describe("authService.login", () => {
         password_hash: "$2a$04$abcdefghijklmnopqrstuv", // not a real match
       })),
     });
-    const authService = createAuthService({ userRepo, config: testConfig });
+    const authService = createAuthService({
+      userRepo,
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
 
     let unknownEmailError;
     let wrongPasswordError;
@@ -127,6 +215,7 @@ describe("authService session tokens", () => {
   it("signs and verifies a round-trip session", () => {
     const authService = createAuthService({
       userRepo: makeUserRepo(),
+      budgetService: makeBudgetService(),
       config: testConfig,
     });
     const token = authService.signSession({ id: "user-1", email: "a@b.com" });
@@ -138,6 +227,7 @@ describe("authService session tokens", () => {
   it("returns null for a malformed or invalid token", () => {
     const authService = createAuthService({
       userRepo: makeUserRepo(),
+      budgetService: makeBudgetService(),
       config: testConfig,
     });
     expect(authService.verifySession("not-a-real-token")).toBeNull();
@@ -146,10 +236,12 @@ describe("authService session tokens", () => {
   it("returns null for a token signed with a different secret", () => {
     const authService = createAuthService({
       userRepo: makeUserRepo(),
+      budgetService: makeBudgetService(),
       config: testConfig,
     });
     const otherService = createAuthService({
       userRepo: makeUserRepo(),
+      budgetService: makeBudgetService(),
       config: { ...testConfig, jwtSecret: "a-different-secret" },
     });
     const token = otherService.signSession({ id: "user-1", email: "a@b.com" });

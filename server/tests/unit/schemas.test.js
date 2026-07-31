@@ -3,6 +3,9 @@ import {
   registerSchema,
   loginSchema,
   monthSchema,
+  emptyBodySchema,
+  patchBudgetSchema,
+  insightsQuerySchema,
   createTransactionSchema,
   listTransactionsQuerySchema,
 } from "../../src/validation/schemas.js";
@@ -61,6 +64,107 @@ describe("monthSchema", () => {
     for (const bad of ["2026-7", "2026-13", "2026-00", "202607", "2026-07-01"]) {
       expect(monthSchema.safeParse(bad).success).toBe(false);
     }
+  });
+});
+
+describe("emptyBodySchema (POST /budget takes no body, CR1-2)", () => {
+  it("accepts an absent or empty body", () => {
+    expect(emptyBodySchema.safeParse(undefined).success).toBe(true);
+    expect(emptyBodySchema.safeParse({}).success).toBe(true);
+  });
+
+  it("rejects any supplied key (defaults are server constants)", () => {
+    expect(emptyBodySchema.safeParse({ incomeMinor: 1 }).success).toBe(false);
+    expect(emptyBodySchema.safeParse({ month: "2026-07" }).success).toBe(false);
+  });
+});
+
+describe("patchBudgetSchema (seven fixed categories, CR2-3)", () => {
+  it("accepts income only, categories only, or both", () => {
+    expect(patchBudgetSchema.safeParse({ incomeMinor: 1250000 }).success).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({
+        categories: [{ id: "subscriptions", plannedMinor: 70000 }],
+      }).success,
+    ).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({
+        incomeMinor: 1300000,
+        categories: [{ id: "utilities", plannedMinor: 90000 }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts all seven unique categories and rejects an eighth/duplicate", () => {
+    const seven = [
+      "housing",
+      "groceries",
+      "transport",
+      "fun",
+      "savings",
+      "subscriptions",
+      "utilities",
+    ].map((id) => ({ id, plannedMinor: 1000 }));
+    expect(patchBudgetSchema.safeParse({ categories: seven }).success).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({
+        categories: [...seven, { id: "housing", plannedMinor: 1 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      patchBudgetSchema.safeParse({
+        categories: [
+          { id: "housing", plannedMinor: 1 },
+          { id: "housing", plannedMinor: 2 },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects unknown category ids, empty patches, and unknown keys", () => {
+    expect(
+      patchBudgetSchema.safeParse({ categories: [{ id: "pets", plannedMinor: 1 }] })
+        .success,
+    ).toBe(false);
+    expect(patchBudgetSchema.safeParse({}).success).toBe(false);
+    expect(patchBudgetSchema.safeParse({ month: "2026-07" }).success).toBe(false);
+  });
+});
+
+describe("insightsQuerySchema (1-3 unique months, CR3-3)", () => {
+  it("parses one, two, and three comma-separated months", () => {
+    expect(insightsQuerySchema.parse({ months: "2026-07" }).months).toEqual(["2026-07"]);
+    expect(insightsQuerySchema.parse({ months: "2026-07,2026-06" }).months).toEqual([
+      "2026-07",
+      "2026-06",
+    ]);
+    expect(
+      insightsQuerySchema.parse({ months: "2025-12,2026-01,2026-02" }).months,
+    ).toEqual(["2025-12", "2026-01", "2026-02"]);
+  });
+
+  it("requires the parameter and rejects an empty value", () => {
+    expect(insightsQuerySchema.safeParse({}).success).toBe(false);
+    expect(insightsQuerySchema.safeParse({ months: "" }).success).toBe(false);
+  });
+
+  it("rejects four months, duplicates, and malformed values", () => {
+    expect(
+      insightsQuerySchema.safeParse({ months: "2026-07,2026-06,2026-05,2026-04" })
+        .success,
+    ).toBe(false);
+    expect(insightsQuerySchema.safeParse({ months: "2026-07,2026-07" }).success).toBe(
+      false,
+    );
+    for (const bad of ["2026-7", "2026-13", "2026-07-01", "july"]) {
+      expect(insightsQuerySchema.safeParse({ months: bad }).success).toBe(false);
+    }
+  });
+
+  it("rejects unknown query keys (strict schema)", () => {
+    expect(insightsQuerySchema.safeParse({ months: "2026-07", limit: "5" }).success).toBe(
+      false,
+    );
   });
 });
 

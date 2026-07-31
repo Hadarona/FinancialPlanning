@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { startTestServer, createCookieJarFetch } from "./helpers/testServer.js";
-import { DEFAULT_CATEGORIES } from "../../src/domain/categories.js";
 
 const PASSWORD = "supersecret1";
 const NOTE_MARKER = "never-log-this-grocery-note";
@@ -29,25 +28,17 @@ describe("transactions API", () => {
     return { client, userId: body.user.id };
   }
 
-  async function insertBudget(userId, month) {
-    const result = await pool.query(
-      `INSERT INTO budget_periods (user_id, month, income_minor, categories)
-       VALUES ($1, $2, $3, $4::jsonb)
-       RETURNING id`,
-      [userId, month, 1250000, JSON.stringify(DEFAULT_CATEGORIES)],
-    );
-    return result.rows[0].id;
-  }
-
+  // CR-001: registration provisions the single budget, so no per-month
+  // budget setup is needed; expenses are scoped by occurred_on date ranges.
   async function createExpense(client, month, payload) {
-    return client.request(`/budgets/${month}/transactions`, {
+    return client.request(`/months/${month}/transactions`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
   async function categoryActual(client, month, categoryId) {
-    const res = await client.request(`/budgets/${month}`);
+    const res = await client.request(`/months/${month}`);
     expect(res.status).toBe(200);
     const { budget } = await res.json();
     return budget.categories.find((category) => category.id === categoryId).actualMinor;
@@ -67,8 +58,7 @@ describe("transactions API", () => {
   it(
     "creates, recalculates, deletes, and rolls the aggregate back (D-EXP-B1, D-EXP-Q1 enabler)",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
 
       expect(await categoryActual(client, "2026-07", "groceries")).toBe(0);
 
@@ -90,14 +80,14 @@ describe("transactions API", () => {
 
       expect(await categoryActual(client, "2026-07", "groceries")).toBe(4250);
 
-      const listRes = await client.request("/budgets/2026-07/transactions");
+      const listRes = await client.request("/months/2026-07/transactions");
       expect(listRes.status).toBe(200);
       const listBody = await listRes.json();
       expect(listBody.total).toBe(1);
       expect(listBody.transactions[0].id).toBe(transaction.id);
 
       const deleteRes = await client.request(
-        `/budgets/2026-07/transactions/${transaction.id}`,
+        `/months/2026-07/transactions/${transaction.id}`,
         {
           method: "DELETE",
         },
@@ -111,8 +101,7 @@ describe("transactions API", () => {
   it(
     "sums minor units exactly: 1099 + 2101 = 3200, no float drift",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
 
       for (const amountMinor of [1099, 2101]) {
         const res = await createExpense(client, "2026-07", {
@@ -130,8 +119,7 @@ describe("transactions API", () => {
   it(
     "rejects every invalid payload without mutating anything (D-EXP-B2)",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
 
       const badPayloads = [
         // Unknown category.
@@ -201,7 +189,7 @@ describe("transactions API", () => {
         }
       }
 
-      const listRes = await client.request("/budgets/2026-07/transactions");
+      const listRes = await client.request("/months/2026-07/transactions");
       const listBody = await listRes.json();
       expect(listBody.total).toBe(0);
     },
@@ -211,8 +199,7 @@ describe("transactions API", () => {
   it(
     "makes retries idempotent via clientRequestId: one row, 201 then 200 (D-EXP-B6)",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
       const clientRequestId = randomUUID();
       const payload = {
         categoryId: "transport",
@@ -230,10 +217,58 @@ describe("transactions API", () => {
       const retryBody = await retry.json();
       expect(retryBody.transaction.id).toBe(firstBody.transaction.id);
 
-      const listRes = await client.request("/budgets/2026-07/transactions");
+      const listRes = await client.request("/months/2026-07/transactions");
       const listBody = await listRes.json();
       expect(listBody.total).toBe(1);
       expect(await categoryActual(client, "2026-07", "transport")).toBe(1500);
+    },
+    SLOW_TEST_TIMEOUT,
+  );
+
+  it(
+    "scopes idempotency per user: a cross-month retry returns the original row (CR1-12)",
+    async () => {
+      const { client } = await registerUser();
+      const clientRequestId = randomUUID();
+
+      const first = await createExpense(client, "2026-07", {
+        categoryId: "subscriptions",
+        amountMinor: 15000,
+        occurredOn: "2026-07-04",
+        clientRequestId,
+      });
+      expect(first.status).toBe(201);
+      const firstBody = await first.json();
+
+      // Same clientRequestId retried against another month: the
+      // (user_id, client_request_id) index still dedupes it.
+      const retry = await createExpense(client, "2026-08", {
+        categoryId: "subscriptions",
+        amountMinor: 15000,
+        occurredOn: "2026-08-04",
+        clientRequestId,
+      });
+      expect(retry.status).toBe(200);
+      const retryBody = await retry.json();
+      expect(retryBody.transaction.id).toBe(firstBody.transaction.id);
+      expect(await categoryActual(client, "2026-08", "subscriptions")).toBe(0);
+    },
+    SLOW_TEST_TIMEOUT,
+  );
+
+  it(
+    "accepts expenses in the new categories (CR2-3)",
+    async () => {
+      const { client } = await registerUser();
+      for (const categoryId of ["subscriptions", "utilities"]) {
+        const res = await createExpense(client, "2026-07", {
+          categoryId,
+          amountMinor: 4200,
+          occurredOn: "2026-07-09",
+        });
+        expect(res.status).toBe(201);
+        expect(await categoryActual(client, "2026-07", categoryId)).toBe(4200);
+      }
     },
     SLOW_TEST_TIMEOUT,
   );
@@ -243,8 +278,6 @@ describe("transactions API", () => {
     async () => {
       const userA = await registerUser();
       const userB = await registerUser();
-      await insertBudget(userA.userId, "2026-04");
-      await insertBudget(userB.userId, "2026-04");
 
       const created = await createExpense(userA.client, "2026-04", {
         categoryId: "housing",
@@ -253,9 +286,9 @@ describe("transactions API", () => {
       });
       const { transaction } = await created.json();
 
-      // B cannot delete A's transaction even though B owns a budget that month.
+      // B cannot delete A's transaction even though B has a budget too.
       const crossDelete = await userB.client.request(
-        `/budgets/2026-04/transactions/${transaction.id}`,
+        `/months/2026-04/transactions/${transaction.id}`,
         { method: "DELETE" },
       );
       expect(crossDelete.status).toBe(404);
@@ -266,7 +299,9 @@ describe("transactions API", () => {
       expect(await categoryActual(userA.client, "2026-04", "housing")).toBe(9999);
       expect(await categoryActual(userB.client, "2026-04", "housing")).toBe(0);
 
-      // Adding to a month where the user has no budget is a plain 404.
+      // Defensive anomaly path: a user whose budget row is missing gets a
+      // plain 404 when adding expenses (CR1-11 groundwork).
+      await pool.query("DELETE FROM budgets WHERE user_id = $1", [userB.userId]);
       const noBudget = await createExpense(userB.client, "2026-03", {
         categoryId: "housing",
         amountMinor: 100,
@@ -278,18 +313,44 @@ describe("transactions API", () => {
   );
 
   it(
+    "deleting an owned transaction through the wrong month answers 404 (CR1-4)",
+    async () => {
+      const { client } = await registerUser();
+      const created = await createExpense(client, "2026-07", {
+        categoryId: "fun",
+        amountMinor: 2500,
+        occurredOn: "2026-07-20",
+      });
+      const { transaction } = await created.json();
+
+      const wrongMonth = await client.request(
+        `/months/2026-06/transactions/${transaction.id}`,
+        { method: "DELETE" },
+      );
+      expect(wrongMonth.status).toBe(404);
+      // Still present and deletable through its own month.
+      expect(await categoryActual(client, "2026-07", "fun")).toBe(2500);
+      const rightMonth = await client.request(
+        `/months/2026-07/transactions/${transaction.id}`,
+        { method: "DELETE" },
+      );
+      expect(rightMonth.status).toBe(204);
+    },
+    SLOW_TEST_TIMEOUT,
+  );
+
+  it(
     "returns the same 404 body for nonexistent and malformed transaction ids",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
 
       const missing = await client.request(
-        `/budgets/2026-07/transactions/${randomUUID()}`,
+        `/months/2026-07/transactions/${randomUUID()}`,
         {
           method: "DELETE",
         },
       );
-      const malformed = await client.request("/budgets/2026-07/transactions/not-a-uuid", {
+      const malformed = await client.request("/months/2026-07/transactions/not-a-uuid", {
         method: "DELETE",
       });
       expect(missing.status).toBe(404);
@@ -306,8 +367,7 @@ describe("transactions API", () => {
   it(
     "paginates with enforced bounds and deterministic ordering",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-07");
+      const { client } = await registerUser();
 
       // Same-day rows exercise the created_at/id tiebreakers.
       const days = ["2026-07-03", "2026-07-03", "2026-07-05", "2026-07-01", "2026-07-05"];
@@ -321,14 +381,14 @@ describe("transactions API", () => {
       }
 
       const pageOne = await client.request(
-        "/budgets/2026-07/transactions?limit=2&offset=0",
+        "/months/2026-07/transactions?limit=2&offset=0",
       );
       const pageOneBody = await pageOne.json();
       expect(pageOneBody.total).toBe(5);
       expect(pageOneBody.transactions).toHaveLength(2);
       expect(pageOneBody.limit).toBe(2);
 
-      const pageAll = await client.request("/budgets/2026-07/transactions");
+      const pageAll = await client.request("/months/2026-07/transactions");
       const allBody = await pageAll.json();
       const dates = allBody.transactions.map((transaction) => transaction.occurredOn);
       expect(dates).toEqual([...dates].sort().reverse());
@@ -337,10 +397,10 @@ describe("transactions API", () => {
         allBody.transactions.slice(0, 2).map((t) => t.id),
       );
 
-      const tooBig = await client.request("/budgets/2026-07/transactions?limit=500");
+      const tooBig = await client.request("/months/2026-07/transactions?limit=500");
       expect(tooBig.status).toBe(400);
       const negativeOffset = await client.request(
-        "/budgets/2026-07/transactions?offset=-1",
+        "/months/2026-07/transactions?offset=-1",
       );
       expect(negativeOffset.status).toBe(400);
     },
@@ -350,8 +410,7 @@ describe("transactions API", () => {
   it(
     "never writes expense notes into the request/error logs (D-EXP-B5)",
     async () => {
-      const { client, userId } = await registerUser();
-      await insertBudget(userId, "2026-05");
+      const { client } = await registerUser();
       const res = await createExpense(client, "2026-05", {
         categoryId: "groceries",
         amountMinor: 777,

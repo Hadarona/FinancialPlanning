@@ -62,11 +62,14 @@ describe("SERVE_CLIENT static serving + SPA fallback", () => {
     expect(await res.text()).toContain("Budgeting App");
   });
 
-  it("falls back to index.html for every supported SPA route (refresh works)", async () => {
+  it("falls back to index.html for every SPA route (refresh works; removed routes render the SPA NotFound page)", async () => {
+    // /budget/new and /budget/:month/edit were removed by CR1-8: the server
+    // still serves the SPA shell and the client router renders NotFound.
     for (const route of [
       "/login",
       "/register",
       "/budget",
+      "/budget/new",
       "/budget/2026-07/edit",
       "/insights",
     ]) {

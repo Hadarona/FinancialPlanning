@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { BudgetPage } from "../src/features/budget/BudgetPage.jsx";
 import { renderProviders } from "./testUtils.jsx";
 import { apiClient, ApiError } from "../src/api/client.js";
-import { currentMonth, monthLabel, previousMonth } from "../src/lib/dates.js";
+import { currentMonth, previousMonth } from "../src/lib/dates.js";
 
 vi.mock("../src/api/client.js", async (importOriginal) => {
   const actual = await importOriginal();
@@ -21,16 +21,17 @@ vi.mock("../src/api/client.js", async (importOriginal) => {
 
 const USER = { user: { id: "user-1", email: "a@b.com" } };
 
-/** Kit-numbers fixture as returned by GET /budgets/:month. */
-function budgetFixture(overrides = {}) {
+/** CR-001 month read model as returned by GET /months/:month (seven fixed
+ * categories; income 12,500 / planned 12,000 / available 500). */
+function monthFixture(overrides = {}) {
   return {
     budget: {
       id: "budget-1",
       month: currentMonth(),
       currencyCode: "USD",
       incomeMinor: 1250000,
-      plannedMinor: 1020000,
-      availableMinor: 230000,
+      plannedMinor: 1200000,
+      availableMinor: 50000,
       actualMinor: 252000,
       categories: [
         {
@@ -88,13 +89,35 @@ function budgetFixture(overrides = {}) {
           progressPercent: 56,
           state: "normal",
         },
+        {
+          id: "subscriptions",
+          name: "Subscriptions",
+          icon: "Repeat",
+          color: "coral",
+          displayOrder: 6,
+          plannedMinor: 60000,
+          actualMinor: 15000,
+          progressPercent: 25,
+          state: "normal",
+        },
+        {
+          id: "utilities",
+          name: "Utilities",
+          icon: "Plug",
+          color: "green",
+          displayOrder: 7,
+          plannedMinor: 120000,
+          actualMinor: 72100,
+          progressPercent: 60,
+          state: "normal",
+        },
       ],
       ...overrides,
     },
   };
 }
 
-function mockApi({ budget, transactions } = {}) {
+function mockApi({ month, transactions } = {}) {
   apiClient.get.mockImplementation((path) => {
     if (path === "/auth/me") {
       return Promise.resolve(USER);
@@ -104,8 +127,8 @@ function mockApi({ budget, transactions } = {}) {
         transactions ?? { transactions: [], total: 0, limit: 50, offset: 0 },
       );
     }
-    if (path.startsWith("/budgets/")) {
-      return typeof budget === "function" ? budget() : budget;
+    if (path.startsWith("/months/")) {
+      return typeof month === "function" ? month() : month;
     }
     return Promise.reject(new Error(`Unexpected GET ${path}`));
   });
@@ -113,77 +136,146 @@ function mockApi({ budget, transactions } = {}) {
 
 beforeEach(() => {
   apiClient.get.mockReset();
+  apiClient.post.mockReset();
+  apiClient.patch.mockReset();
 });
 
 describe("BudgetPage", () => {
-  it("shows a loading skeleton while the budget is pending", async () => {
-    mockApi({ budget: () => new Promise(() => {}) });
+  it("shows a loading skeleton while the month is pending", async () => {
+    mockApi({ month: () => new Promise(() => {}) });
     render(renderProviders(<BudgetPage />));
     expect(await screen.findByLabelText("Loading budget")).toBeInTheDocument();
   });
 
-  it("renders the kit fixture: 12,500 income / 10,200 planned / 2,300 available (D-BUD-F2)", async () => {
-    mockApi({ budget: () => Promise.resolve(budgetFixture()) });
+  it("renders the CR-001 fixture: 12,500 income / 12,000 planned / 500 available with seven rows", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
     render(renderProviders(<BudgetPage />));
 
     expect(await screen.findByText("12,500")).toBeInTheDocument();
-    expect(screen.getByText("10,200")).toBeInTheDocument();
-    expect(screen.getByText("2,300")).toBeInTheDocument();
-    // All five categories with their planned amounts.
-    expect(screen.getByText("Housing")).toBeInTheDocument();
+    expect(screen.getByText("12,000")).toBeInTheDocument();
+    expect(screen.getByText("500")).toBeInTheDocument();
+    // All seven categories, including the two CR2 additions.
+    for (const name of [
+      "Housing",
+      "Groceries",
+      "Transport",
+      "Fun",
+      "Savings",
+      "Subscriptions",
+      "Utilities",
+    ]) {
+      expect(screen.getByText(name)).toBeInTheDocument();
+    }
     expect(screen.getByText("4,000")).toBeInTheDocument();
-    expect(screen.getByText("3,000")).toBeInTheDocument();
+    expect(screen.getByText("1,200")).toBeInTheDocument();
   });
 
-  it("exposes screen-reader progress text per category (D-BUD-F6)", async () => {
-    mockApi({ budget: () => Promise.resolve(budgetFixture()) });
+  it("opens the income popup from the income value and PATCHes incomeMinor (CR1-5)", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
+    apiClient.patch.mockResolvedValue({ budget: {} });
+    render(renderProviders(<BudgetPage />));
+    const user = userEvent.setup();
+
+    const incomeButton = await screen.findByRole("button", {
+      name: "Edit income, current value 12,500",
+    });
+    await user.click(incomeButton);
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit income" });
+    const input = screen.getByLabelText("Income");
+    expect(input).toHaveValue("12500");
+
+    await user.clear(input);
+    await user.type(input, "13000");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(apiClient.patch).toHaveBeenCalledWith("/budget", { incomeMinor: 1300000 });
+    expect(dialog).not.toBeInTheDocument();
+    expect(await screen.findByText("Income updated")).toBeInTheDocument();
+  });
+
+  it("opens a category popup from its row and PATCHes that category only (CR1-6)", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
+    apiClient.patch.mockResolvedValue({ budget: {} });
+    render(renderProviders(<BudgetPage />));
+    const user = userEvent.setup();
+
+    const utilitiesRow = await screen.findByRole("button", {
+      name: /Utilities: 721 spent of 1,200 planned, 60%, edit planned amount/,
+    });
+    await user.click(utilitiesRow);
+
+    await screen.findByRole("dialog", { name: "Edit Utilities plan" });
+    const input = screen.getByLabelText("Planned amount");
+    expect(input).toHaveValue("1200");
+
+    await user.clear(input);
+    await user.type(input, "900");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(apiClient.patch).toHaveBeenCalledWith("/budget", {
+      categories: [{ id: "utilities", plannedMinor: 90000 }],
+    });
+    expect(await screen.findByText("Utilities plan updated")).toBeInTheDocument();
+  });
+
+  it("keeps Planned and Available non-interactive (CR1-7)", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
+    render(renderProviders(<BudgetPage />));
+    await screen.findByText("12,500");
+
+    // The only summary-metric button is the income editor.
+    const planned = screen.getByText("12,000");
+    const available = screen.getByText("500");
+    for (const value of [planned, available]) {
+      expect(value.closest("button")).toBeNull();
+      expect(value.closest("a")).toBeNull();
+    }
+  });
+
+  it("has no 'Edit budget' menu item (CR1-8) and offers Insights", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
+    render(renderProviders(<BudgetPage />));
+    await screen.findByText("12,500");
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "More options" }));
+    const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
+    expect(items).not.toContain("Edit budget");
+    expect(items).toContain("View insights");
+  });
+
+  it("exposes the full progress sentence on each category-row button (D-BUD-F6)", async () => {
+    mockApi({ month: () => Promise.resolve(monthFixture()) });
     render(renderProviders(<BudgetPage />));
 
-    const housing = await screen.findByRole("progressbar", {
-      name: "Housing: 2,520 spent of 4,000 planned, 63%",
-    });
-    expect(housing).toHaveAttribute("aria-valuenow", "63");
+    expect(
+      await screen.findByRole("button", {
+        name: "Housing: 2,520 spent of 4,000 planned, 63%, edit planned amount",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("marks an overspent category with text, not color alone (D-BUD-D3)", async () => {
-    const fixture = budgetFixture();
+    const fixture = monthFixture();
     fixture.budget.categories[2] = {
       ...fixture.budget.categories[2],
       actualMinor: 92000,
       progressPercent: 115,
       state: "overspent",
     };
-    mockApi({ budget: () => Promise.resolve(fixture) });
+    mockApi({ month: () => Promise.resolve(fixture) });
     render(renderProviders(<BudgetPage />));
 
     expect(await screen.findByText("over plan")).toBeInTheDocument();
     expect(
-      screen.getByRole("progressbar", {
-        name: "Transport: 920 spent of 800 planned, 115%, over plan",
+      screen.getByRole("button", {
+        name: "Transport: 920 spent of 800 planned, 115%, over plan, edit planned amount",
       }),
     ).toBeInTheDocument();
   });
 
-  it("shows the Create budget empty state when no budget exists (D-BUD-F4)", async () => {
-    mockApi({
-      budget: () =>
-        Promise.reject(
-          new ApiError({
-            code: "NOT_FOUND",
-            status: 404,
-            message: "No budget for this month.",
-          }),
-        ),
-    });
-    render(renderProviders(<BudgetPage />));
-
-    expect(
-      await screen.findByText(`No budget for ${monthLabel(currentMonth())} yet`),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
-  });
-
-  it("navigates months and shows a clear empty state for a month without a budget (D-PLN-F4)", async () => {
+  it("shows per-month actuals over the same plans when navigating months (CR1-11)", async () => {
     const prev = previousMonth(currentMonth());
     apiClient.get.mockImplementation((path) => {
       if (path === "/auth/me") {
@@ -192,17 +284,18 @@ describe("BudgetPage", () => {
       if (path.includes("/transactions")) {
         return Promise.resolve({ transactions: [], total: 0, limit: 50, offset: 0 });
       }
-      if (path === `/budgets/${currentMonth()}`) {
-        return Promise.resolve(budgetFixture());
+      if (path === `/months/${currentMonth()}`) {
+        return Promise.resolve(monthFixture());
       }
-      if (path === `/budgets/${prev}`) {
-        return Promise.reject(
-          new ApiError({
-            code: "NOT_FOUND",
-            status: 404,
-            message: "No budget for this month.",
-          }),
-        );
+      if (path === `/months/${prev}`) {
+        // Same plans, zero actuals — a zero month renders, never a 404.
+        const zeroed = monthFixture({ actualMinor: 0 });
+        zeroed.budget.categories = zeroed.budget.categories.map((category) => ({
+          ...category,
+          actualMinor: 0,
+          progressPercent: 0,
+        }));
+        return Promise.resolve(zeroed);
       }
       return Promise.reject(new Error(`Unexpected GET ${path}`));
     });
@@ -212,21 +305,43 @@ describe("BudgetPage", () => {
     expect(await screen.findByText("12,500")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous month" }));
-
     expect(
-      await screen.findByText(`No budget for ${monthLabel(prev)} yet`),
+      await screen.findByRole("button", {
+        name: "Housing: 0 spent of 4,000 planned, 0%, edit planned amount",
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
+    // Plans unchanged.
+    expect(screen.getByText("12,000")).toBeInTheDocument();
+  });
 
-    // Navigating back restores the loaded month.
-    await user.click(screen.getByRole("button", { name: "Next month" }));
+  it("recovers from the defensive no-budget state by POSTing /budget (CR1-11)", async () => {
+    let hasBudget = false;
+    mockApi({
+      month: () =>
+        hasBudget
+          ? Promise.resolve(monthFixture())
+          : Promise.reject(
+              new ApiError({ code: "NOT_FOUND", status: 404, message: "No budget yet." }),
+            ),
+    });
+    apiClient.post.mockImplementation(() => {
+      hasBudget = true;
+      return Promise.resolve({ budget: {} });
+    });
+    render(renderProviders(<BudgetPage />));
+    const user = userEvent.setup();
+
+    expect(await screen.findByText("No budget yet")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Set up your budget" }));
+
+    expect(apiClient.post).toHaveBeenCalledWith("/budget");
     expect(await screen.findByText("12,500")).toBeInTheDocument();
   });
 
   it("keeps the authenticated shell and offers retry on failure (D-BUD-F5)", async () => {
     let calls = 0;
     mockApi({
-      budget: () => {
+      month: () => {
         calls += 1;
         if (calls === 1) {
           return Promise.reject(
@@ -237,7 +352,7 @@ describe("BudgetPage", () => {
             }),
           );
         }
-        return Promise.resolve(budgetFixture());
+        return Promise.resolve(monthFixture());
       },
     });
     render(renderProviders(<BudgetPage />));

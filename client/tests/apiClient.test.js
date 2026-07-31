@@ -34,11 +34,11 @@ describe("apiClient (fetch wrapper)", () => {
   it("GETs with credentials included and returns the parsed payload", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ budget: { month: "2026-07" } }));
 
-    const payload = await apiClient.get("/budgets/2026-07");
+    const payload = await apiClient.get("/months/2026-07");
 
     expect(payload).toEqual({ budget: { month: "2026-07" } });
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/api/v1/budgets/2026-07");
+    expect(url).toBe("/api/v1/months/2026-07");
     expect(init.credentials).toBe("include");
     expect(init.headers).toBeUndefined();
     expect(init.body).toBeUndefined();
@@ -66,7 +66,7 @@ describe("apiClient (fetch wrapper)", () => {
   it("returns null for an empty (204) response body", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(null, { status: 204 }));
     await expect(
-      apiClient.delete("/budgets/2026-07/transactions/tx1"),
+      apiClient.delete("/months/2026-07/transactions/tx1"),
     ).resolves.toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe("apiClient (fetch wrapper)", () => {
       new Response("<html>gateway error</html>", { status: 502 }),
     );
 
-    const err = await apiClient.get("/budgets/2026-07").catch((e) => e);
+    const err = await apiClient.get("/months/2026-07").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.code).toBe("INTERNAL");
     expect(err.status).toBe(502);
@@ -120,7 +120,7 @@ describe("apiClient (fetch wrapper)", () => {
       ),
     );
 
-    await apiClient.get("/budgets/2026-07").catch(() => {});
+    await apiClient.get("/months/2026-07").catch(() => {});
     expect(sessionExpiredEvents).toBe(1);
 
     await apiClient.get("/auth/me").catch(() => {});

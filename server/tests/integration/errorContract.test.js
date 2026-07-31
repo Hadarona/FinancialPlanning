@@ -2,17 +2,8 @@ import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { startTestServer, createCookieJarFetch } from "./helpers/testServer.js";
 import { dropSchema } from "../../src/db/migrate.js";
-import { DEFAULT_CATEGORIES } from "../../src/domain/categories.js";
 
 const PASSWORD = "supersecret1";
-
-function kitBudgetBody(month) {
-  return {
-    month,
-    incomeMinor: 1250000,
-    categories: DEFAULT_CATEGORIES.map(({ id, plannedMinor }) => ({ id, plannedMinor })),
-  };
-}
 
 async function registerUser(baseUrl) {
   const client = createCookieJarFetch(baseUrl);
@@ -76,7 +67,7 @@ describe("error contract (D-RESP-B1/B2): one envelope for every failure class", 
 
   it("malformed :month path -> 400 VALIDATION_ERROR with fieldErrors", async () => {
     const client = await registerUser(ctx.baseUrl);
-    const res = await client.request("/budgets/not-a-month");
+    const res = await client.request("/months/not-a-month");
     await expectErrorEnvelope(res, {
       status: 400,
       code: "VALIDATION_ERROR",
@@ -84,24 +75,34 @@ describe("error contract (D-RESP-B1/B2): one envelope for every failure class", 
     });
   }, 30000);
 
+  it("malformed insights months query -> 400 VALIDATION_ERROR with fieldErrors", async () => {
+    const client = await registerUser(ctx.baseUrl);
+    const res = await client.request("/insights?months=2026-07,nope");
+    await expectErrorEnvelope(res, {
+      status: 400,
+      code: "VALIDATION_ERROR",
+      fieldErrors: true,
+    });
+  }, 30000);
+
+  it("removed form-flow routes -> 404 NOT_FOUND (CR1-8, REG-6)", async () => {
+    const client = await registerUser(ctx.baseUrl);
+    for (const path of ["/budgets/2026-07", "/budgets/2026-07/transactions"]) {
+      const res = await client.request(path);
+      await expectErrorEnvelope(res, { status: 404, code: "NOT_FOUND" });
+    }
+  }, 30000);
+
   it("missing session -> 401 UNAUTHENTICATED", async () => {
     const anonymous = createCookieJarFetch(ctx.baseUrl);
-    const res = await anonymous.request("/budgets/2026-07");
+    const res = await anonymous.request("/months/2026-07");
     await expectErrorEnvelope(res, { status: 401, code: "UNAUTHENTICATED" });
   }, 30000);
 
-  it("duplicate budget month -> 409 CONFLICT", async () => {
+  it("duplicate budget (registration already provisioned one) -> 409 CONFLICT", async () => {
     const client = await registerUser(ctx.baseUrl);
-    const first = await client.request("/budgets", {
-      method: "POST",
-      body: JSON.stringify(kitBudgetBody("2026-07")),
-    });
-    expect(first.status).toBe(201);
-    const second = await client.request("/budgets", {
-      method: "POST",
-      body: JSON.stringify(kitBudgetBody("2026-07")),
-    });
-    await expectErrorEnvelope(second, { status: 409, code: "CONFLICT" });
+    const res = await client.request("/budget", { method: "POST" });
+    await expectErrorEnvelope(res, { status: 409, code: "CONFLICT" });
   }, 30000);
 
   it("invalid body -> 400 VALIDATION_ERROR with per-field messages", async () => {
@@ -122,13 +123,8 @@ describe("error contract (D-RESP-B1/B2): one envelope for every failure class", 
 
   it("malformed transaction id -> the same 404 body as a missing one", async () => {
     const client = await registerUser(ctx.baseUrl);
-    const create = await client.request("/budgets", {
-      method: "POST",
-      body: JSON.stringify(kitBudgetBody("2026-08")),
-    });
-    expect(create.status).toBe(201);
     const res = await client.request(
-      "/budgets/2026-08/transactions/definitely-not-a-uuid",
+      "/months/2026-08/transactions/definitely-not-a-uuid",
       {
         method: "DELETE",
       },
@@ -163,7 +159,7 @@ describe("database failure path (D-RESP-B4)", () => {
     // Break the backing schema out from under the running server.
     await dropSchema({ databaseUrl: ctx.config.databaseUrl, schema: ctx.schema });
 
-    const res = await client.request("/budgets/2026-07");
+    const res = await client.request("/months/2026-07");
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error.code).toBe("INTERNAL");

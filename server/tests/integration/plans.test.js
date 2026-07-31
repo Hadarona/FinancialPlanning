@@ -9,23 +9,13 @@ function uniqueEmail(prefix) {
   return `${prefix}-${randomUUID()}@example.com`;
 }
 
-/** Kit default plans (4,000/1,500/800/900/3,000 => planned 10,200). */
-function defaultPlans(overrides = {}) {
-  const base = {
-    housing: 400000,
-    groceries: 150000,
-    transport: 80000,
-    fun: 90000,
-    savings: 300000,
-  };
-  return Object.entries({ ...base, ...overrides }).map(([id, plannedMinor]) => ({
-    id,
-    plannedMinor,
-  }));
-}
-
-describe("budget create/update API", () => {
+// CR-001: the per-month create/duplicate-month/month-concurrency semantics
+// are superseded by the single-budget lifecycle: registration provisions the
+// default budget, POST /budget is the defensive re-create (409 when one
+// exists), and PATCH /budget edits income/plans in place.
+describe("single-budget lifecycle (CR-001)", () => {
   let ctx;
+  let pool;
 
   async function registerUser() {
     const client = createCookieJarFetch(ctx.baseUrl);
@@ -38,89 +28,72 @@ describe("budget create/update API", () => {
     return { client, userId: body.user.id };
   }
 
-  async function createBudget(client, body) {
-    return client.request("/budgets", { method: "POST", body: JSON.stringify(body) });
-  }
-
   beforeAll(async () => {
     ctx = await startTestServer({ RATE_LIMIT_AUTH_MAX: 1000, RATE_LIMIT_MAX: 5000 });
+    const { createPool } = await import("../../src/db/pool.js");
+    pool = createPool(ctx.config);
   }, 30000);
 
   afterAll(async () => {
+    await pool.end();
     await ctx.close();
   });
 
   it(
-    "creates exactly one owned budget and returns the read model (D-PLN-B1)",
+    "POST /budget answers 409 CONFLICT while a budget exists (CR1-2)",
     async () => {
       const { client } = await registerUser();
-      const res = await createBudget(client, {
-        month: "2026-07",
-        incomeMinor: 1250000,
-        categories: defaultPlans(),
-      });
-      expect(res.status).toBe(201);
-      const { budget } = await res.json();
-      expect(budget).toMatchObject({
-        month: "2026-07",
-        incomeMinor: 1250000,
-        plannedMinor: 1020000,
-        availableMinor: 230000,
-        actualMinor: 0,
-      });
-      // Server-side constants fill the metadata; the client never sent them.
-      expect(budget.categories[0]).toMatchObject({
-        id: "housing",
-        name: "Housing",
-        icon: "House",
-        color: "blue",
-        displayOrder: 1,
-        plannedMinor: 400000,
-      });
-
-      // Persisted: a follow-up GET returns the same read model.
-      const getRes = await client.request("/budgets/2026-07");
-      expect(getRes.status).toBe(200);
-      const fetched = await getRes.json();
-      expect(fetched.budget.id).toBe(budget.id);
+      const res = await client.request("/budget", { method: "POST" });
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.error.code).toBe("CONFLICT");
     },
     SLOW_TEST_TIMEOUT,
   );
 
   it(
-    "resolves concurrent duplicate creation as one 201 + one 409, no duplicates (D-PLN-B2)",
+    "resolves concurrent defensive re-creates as one 201 + one 409 (unique user_id)",
     async () => {
-      const { client } = await registerUser();
-      const body = { month: "2026-08", incomeMinor: 1000000, categories: defaultPlans() };
+      const { client, userId } = await registerUser();
+      await pool.query("DELETE FROM budgets WHERE user_id = $1", [userId]);
 
       const [first, second] = await Promise.all([
-        createBudget(client, body),
-        createBudget(client, body),
+        client.request("/budget", { method: "POST" }),
+        client.request("/budget", { method: "POST" }),
       ]);
       const statuses = [first.status, second.status].sort();
       expect(statuses).toEqual([201, 409]);
 
-      const conflict = first.status === 409 ? first : second;
-      const conflictBody = await conflict.json();
-      expect(conflictBody.error.code).toBe("CONFLICT");
-
-      const getRes = await client.request("/budgets/2026-08");
-      expect(getRes.status).toBe(200);
+      const count = await pool.query(
+        "SELECT COUNT(*)::int AS total FROM budgets WHERE user_id = $1",
+        [userId],
+      );
+      expect(count.rows[0].total).toBe(1);
     },
     SLOW_TEST_TIMEOUT,
   );
 
   it(
-    "recalculates the summary from stored fields after a patch (D-PLN-B3)",
+    "POST /budget strictly rejects any body (defaults are server constants)",
     async () => {
       const { client } = await registerUser();
-      await createBudget(client, {
-        month: "2026-07",
-        incomeMinor: 1250000,
-        categories: defaultPlans(),
+      const res = await client.request("/budget", {
+        method: "POST",
+        body: JSON.stringify({ incomeMinor: 999999 }),
       });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error.code).toBe("VALIDATION_ERROR");
+    },
+    SLOW_TEST_TIMEOUT,
+  );
 
-      const patchRes = await client.request("/budgets/2026-07", {
+  it(
+    "recalculates the summary from stored fields after a patch (CR1-5/6)",
+    async () => {
+      const { client } = await registerUser();
+
+      const patchRes = await client.request("/budget", {
         method: "PATCH",
         body: JSON.stringify({
           incomeMinor: 1300000,
@@ -130,118 +103,160 @@ describe("budget create/update API", () => {
       expect(patchRes.status).toBe(200);
       const { budget } = await patchRes.json();
       expect(budget.incomeMinor).toBe(1300000);
-      // 10,200 - 900 + 1,200 = 10,500 planned; 13,000 - 10,500 = 2,500.
-      expect(budget.plannedMinor).toBe(1050000);
-      expect(budget.availableMinor).toBe(250000);
+      // 12,000 - 900 + 1,200 = 12,300 planned; 13,000 - 12,300 = 700.
+      expect(budget.plannedMinor).toBe(1230000);
+      expect(budget.availableMinor).toBe(70000);
       // Untouched categories keep their plans; the set never shrinks.
-      expect(budget.categories).toHaveLength(5);
+      expect(budget.categories).toHaveLength(7);
       expect(budget.categories.find((c) => c.id === "housing").plannedMinor).toBe(400000);
+      expect(budget.categories.find((c) => c.id === "utilities").plannedMinor).toBe(
+        120000,
+      );
 
-      const getRes = await client.request("/budgets/2026-07");
+      const getRes = await client.request("/budget");
       const fetched = await getRes.json();
-      expect(fetched.budget.plannedMinor).toBe(1050000);
+      expect(fetched.budget.plannedMinor).toBe(1230000);
     },
     SLOW_TEST_TIMEOUT,
   );
 
   it(
-    "rejects invalid category sets and amounts without mutation (D-PLN-B4)",
+    "accepts a patch across all seven categories, including the new ones (CR2-3)",
+    async () => {
+      const { client } = await registerUser();
+      const seven = [
+        { id: "housing", plannedMinor: 100000 },
+        { id: "groceries", plannedMinor: 100000 },
+        { id: "transport", plannedMinor: 100000 },
+        { id: "fun", plannedMinor: 100000 },
+        { id: "savings", plannedMinor: 100000 },
+        { id: "subscriptions", plannedMinor: 100000 },
+        { id: "utilities", plannedMinor: 100000 },
+      ];
+      const res = await client.request("/budget", {
+        method: "PATCH",
+        body: JSON.stringify({ categories: seven }),
+      });
+      expect(res.status).toBe(200);
+      const { budget } = await res.json();
+      expect(budget.plannedMinor).toBe(700000);
+      expect(budget.categories.every((c) => c.plannedMinor === 100000)).toBe(true);
+    },
+    SLOW_TEST_TIMEOUT,
+  );
+
+  it(
+    "concurrent patches both succeed and leave a consistent stored budget",
+    async () => {
+      const { client, userId } = await registerUser();
+      const [first, second] = await Promise.all([
+        client.request("/budget", {
+          method: "PATCH",
+          body: JSON.stringify({ categories: [{ id: "housing", plannedMinor: 111100 }] }),
+        }),
+        client.request("/budget", {
+          method: "PATCH",
+          body: JSON.stringify({ categories: [{ id: "savings", plannedMinor: 222200 }] }),
+        }),
+      ]);
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+
+      const stored = await pool.query(
+        "SELECT categories FROM budgets WHERE user_id = $1",
+        [userId],
+      );
+      const categories = stored.rows[0].categories;
+      // Exactly one budgets row, still seven well-formed categories; each
+      // patched value is one of the two submitted outcomes (last write wins
+      // per full-row update, but the row can never interleave into an
+      // invalid shape).
+      expect(categories).toHaveLength(7);
+      const byId = Object.fromEntries(categories.map((c) => [c.id, c.plannedMinor]));
+      expect([111100, 400000]).toContain(byId.housing);
+      expect([222200, 300000]).toContain(byId.savings);
+    },
+    SLOW_TEST_TIMEOUT,
+  );
+
+  it(
+    "rejects invalid patches without mutation (D-PLN-B4 semantics kept)",
     async () => {
       const { client } = await registerUser();
 
       const badBodies = [
         // Unknown category id.
+        { categories: [{ id: "yachts", plannedMinor: 1 }] },
+        // Duplicate ids.
         {
-          month: "2026-07",
-          incomeMinor: 1,
-          categories: defaultPlans().map((c) =>
-            c.id === "fun" ? { ...c, id: "yachts" } : c,
-          ),
+          categories: [
+            { id: "housing", plannedMinor: 1 },
+            { id: "housing", plannedMinor: 2 },
+          ],
         },
-        // Duplicate ids (still 5 entries).
+        // Eight entries can never be unique over seven ids.
         {
-          month: "2026-07",
-          incomeMinor: 1,
-          categories: [...defaultPlans().slice(0, 4), { id: "housing", plannedMinor: 1 }],
+          categories: [
+            "housing",
+            "groceries",
+            "transport",
+            "fun",
+            "savings",
+            "subscriptions",
+            "utilities",
+            "housing",
+          ].map((id) => ({ id, plannedMinor: 1 })),
         },
-        // Missing a category.
-        { month: "2026-07", incomeMinor: 1, categories: defaultPlans().slice(0, 4) },
         // Negative and non-integer amounts.
-        { month: "2026-07", incomeMinor: 1, categories: defaultPlans({ fun: -100 }) },
-        { month: "2026-07", incomeMinor: 1, categories: defaultPlans({ fun: 10.5 }) },
+        { categories: [{ id: "fun", plannedMinor: -100 }] },
+        { categories: [{ id: "fun", plannedMinor: 10.5 }] },
         // Negative / non-integer income.
-        { month: "2026-07", incomeMinor: -1, categories: defaultPlans() },
-        { month: "2026-07", incomeMinor: 100.5, categories: defaultPlans() },
+        { incomeMinor: -1 },
+        { incomeMinor: 100.5 },
         // Client-supplied metadata is rejected outright (strict schema).
-        {
-          month: "2026-07",
-          incomeMinor: 1,
-          categories: defaultPlans().map((c) =>
-            c.id === "fun" ? { ...c, name: "Hacked" } : c,
-          ),
-        },
-        // Malformed month.
-        { month: "2026-7", incomeMinor: 1, categories: defaultPlans() },
+        { categories: [{ id: "fun", plannedMinor: 1, name: "Hacked" }] },
+        // The old per-month field no longer exists.
+        { month: "2026-07", incomeMinor: 1 },
+        // Empty patch.
+        {},
       ];
 
       for (const body of badBodies) {
-        const res = await createBudget(client, body);
+        const res = await client.request("/budget", {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
         expect(res.status).toBe(400);
         const parsed = await res.json();
         expect(parsed.error.code).toBe("VALIDATION_ERROR");
       }
 
-      // Nothing was created.
-      const getRes = await client.request("/budgets/2026-07");
-      expect(getRes.status).toBe(404);
-
-      // A patch with an empty body is also rejected.
-      await createBudget(client, {
-        month: "2026-07",
-        incomeMinor: 1250000,
-        categories: defaultPlans(),
-      });
-      const emptyPatch = await client.request("/budgets/2026-07", {
-        method: "PATCH",
-        body: JSON.stringify({}),
-      });
-      expect(emptyPatch.status).toBe(400);
+      // Nothing was mutated: the defaults are intact.
+      const getRes = await client.request("/budget");
+      const fetched = await getRes.json();
+      expect(fetched.budget.incomeMinor).toBe(1250000);
+      expect(fetched.budget.plannedMinor).toBe(1200000);
     },
     SLOW_TEST_TIMEOUT,
   );
 
   it(
-    "cannot create or update another user's budget (D-PLN-B6)",
+    "cannot update another user's budget (ownership by session, REG-3)",
     async () => {
       const userA = await registerUser();
       const userB = await registerUser();
 
-      // Creation is bound to the session user by construction: the body has
-      // no user field, so A creating a month only ever creates A's budget.
-      await createBudget(userA.client, {
-        month: "2026-09",
-        incomeMinor: 500000,
-        categories: defaultPlans(),
-      });
-
-      // B patching a month only A owns -> 404, and A's budget is untouched.
-      const crossPatch = await userB.client.request("/budgets/2026-09", {
+      // The PATCH is bound to the session user by construction; B's patch
+      // touches only B's budget.
+      const patchB = await userB.client.request("/budget", {
         method: "PATCH",
         body: JSON.stringify({ incomeMinor: 1 }),
       });
-      expect(crossPatch.status).toBe(404);
+      expect(patchB.status).toBe(200);
 
-      const getA = await userA.client.request("/budgets/2026-09");
+      const getA = await userA.client.request("/budget");
       const bodyA = await getA.json();
-      expect(bodyA.budget.incomeMinor).toBe(500000);
-
-      // B can still create its own budget for the same month.
-      const createB = await createBudget(userB.client, {
-        month: "2026-09",
-        incomeMinor: 700000,
-        categories: defaultPlans(),
-      });
-      expect(createB.status).toBe(201);
+      expect(bodyA.budget.incomeMinor).toBe(1250000);
     },
     SLOW_TEST_TIMEOUT,
   );
@@ -250,15 +265,14 @@ describe("budget create/update API", () => {
     "accepts over-allocation: planned > income yields a negative available (decision #2)",
     async () => {
       const { client } = await registerUser();
-      const res = await createBudget(client, {
-        month: "2026-10",
-        incomeMinor: 900000,
-        categories: defaultPlans(),
+      const res = await client.request("/budget", {
+        method: "PATCH",
+        body: JSON.stringify({ incomeMinor: 900000 }),
       });
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(200);
       const { budget } = await res.json();
-      expect(budget.plannedMinor).toBe(1020000);
-      expect(budget.availableMinor).toBe(-120000);
+      expect(budget.plannedMinor).toBe(1200000);
+      expect(budget.availableMinor).toBe(-300000);
     },
     SLOW_TEST_TIMEOUT,
   );

@@ -1,21 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { startTestServer, createCookieJarFetch } from "./helpers/testServer.js";
-import { DEFAULT_CATEGORIES } from "../../src/domain/categories.js";
 
 const PASSWORD = "supersecret1";
 const SLOW_TEST_TIMEOUT = 30000;
 
 function uniqueEmail(prefix) {
   return `${prefix}-${randomUUID()}@example.com`;
-}
-
-function kitBudgetBody(month) {
-  return {
-    month,
-    incomeMinor: 1250000,
-    categories: DEFAULT_CATEGORIES.map(({ id, plannedMinor }) => ({ id, plannedMinor })),
-  };
 }
 
 async function registerUser(baseUrl, prefix = "sec") {
@@ -140,7 +131,7 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
       '"; DROP TABLE users; --',
       "1; SELECT pg_sleep(10)",
       '{ "$where": "sleep(100)" }',
-      "Robert'); DROP TABLE budget_periods;--",
+      "Robert'); DROP TABLE budgets;--",
     ];
 
     it(
@@ -156,17 +147,19 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
           expect(register.status).toBe(400);
           expect((await register.json()).error.code).toBe("VALIDATION_ERROR");
 
-          const month = await client.request(`/budgets/${encodeURIComponent(payload)}`);
+          const month = await client.request(`/months/${encodeURIComponent(payload)}`);
           expect(month.status).toBe(400);
           expect((await month.json()).error.code).toBe("VALIDATION_ERROR");
+
+          const insights = await client.request(
+            `/insights?months=${encodeURIComponent(payload)}`,
+          );
+          expect(insights.status).toBe(400);
+          expect((await insights.json()).error.code).toBe("VALIDATION_ERROR");
         }
 
-        // Category id is validated against the fixed five-category set.
-        await client.request("/budgets", {
-          method: "POST",
-          body: JSON.stringify(kitBudgetBody("2026-07")),
-        });
-        const tx = await client.request("/budgets/2026-07/transactions", {
+        // Category id is validated against the fixed seven-category set.
+        const tx = await client.request("/months/2026-07/transactions", {
           method: "POST",
           body: JSON.stringify({
             categoryId: CORPUS[0],
@@ -184,14 +177,9 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
       "stores an injection-shaped note verbatim as inert text (parameterized queries)",
       async () => {
         const { client } = await registerUser(ctx.baseUrl, "note-inject");
-        const create = await client.request("/budgets", {
-          method: "POST",
-          body: JSON.stringify(kitBudgetBody("2026-07")),
-        });
-        expect(create.status).toBe(201);
 
         const note = "'; DROP TABLE transactions; --";
-        const tx = await client.request("/budgets/2026-07/transactions", {
+        const tx = await client.request("/months/2026-07/transactions", {
           method: "POST",
           body: JSON.stringify({
             categoryId: "groceries",
@@ -205,7 +193,7 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
         expect(transaction.note).toBe(note);
 
         // The table survived and the row round-trips byte-for-byte.
-        const list = await client.request("/budgets/2026-07/transactions");
+        const list = await client.request("/months/2026-07/transactions");
         expect(list.status).toBe(200);
         const body = await list.json();
         expect(body.transactions.find((t) => t.id === transaction.id).note).toBe(note);
@@ -214,19 +202,14 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
     );
   });
 
-  describe("ownership matrix (D-SEC-B1): every private endpoint x anonymous + foreign session", () => {
-    it("rejects every private endpoint for anonymous (401) and foreign (404, no mutation) callers", async () => {
+  describe("ownership matrix (REG-3): every private endpoint x anonymous + foreign session", () => {
+    it("rejects anonymous callers (401) and scopes every foreign call to the caller's own data", async () => {
       const MONTH = "2026-07";
       const owner = await registerUser(ctx.baseUrl, "owner");
       const foreign = await registerUser(ctx.baseUrl, "foreign");
       const anonymous = createCookieJarFetch(ctx.baseUrl);
 
-      const createBudget = await owner.client.request("/budgets", {
-        method: "POST",
-        body: JSON.stringify(kitBudgetBody(MONTH)),
-      });
-      expect(createBudget.status).toBe(201);
-      const txRes = await owner.client.request(`/budgets/${MONTH}/transactions`, {
+      const txRes = await owner.client.request(`/months/${MONTH}/transactions`, {
         method: "POST",
         body: JSON.stringify({
           categoryId: "housing",
@@ -239,16 +222,18 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
 
       const matrix = [
         { method: "GET", path: "/auth/me" },
-        { method: "GET", path: `/budgets/${MONTH}` },
-        { method: "PATCH", path: `/budgets/${MONTH}`, body: { incomeMinor: 999900 } },
-        { method: "GET", path: `/budgets/${MONTH}/transactions` },
+        { method: "GET", path: "/budget" },
+        { method: "POST", path: "/budget" },
+        { method: "PATCH", path: "/budget", body: { incomeMinor: 999900 } },
+        { method: "GET", path: `/months/${MONTH}` },
+        { method: "GET", path: `/months/${MONTH}/transactions` },
         {
           method: "POST",
-          path: `/budgets/${MONTH}/transactions`,
+          path: `/months/${MONTH}/transactions`,
           body: { categoryId: "fun", amountMinor: 100, occurredOn: `${MONTH}-11` },
         },
-        { method: "DELETE", path: `/budgets/${MONTH}/transactions/${transaction.id}` },
-        { method: "GET", path: `/insights/${MONTH}` },
+        { method: "DELETE", path: `/months/${MONTH}/transactions/${transaction.id}` },
+        { method: "GET", path: `/insights?months=${MONTH}` },
       ];
 
       for (const { method, path, body } of matrix) {
@@ -260,26 +245,38 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
         expect((await anonRes.json()).error.code).toBe("UNAUTHENTICATED");
       }
 
-      // The foreign user is authenticated but owns nothing for MONTH:
-      // reads and writes must resolve 404 through the same code path,
-      // never leaking whether the owner's resources exist.
-      // (/auth/me is the caller's own identity; POST /budgets can only
-      // create for the session user by construction — both excluded.)
-      for (const { method, path, body } of matrix.slice(1)) {
-        const res = await foreign.client.request(path, {
-          method,
-          ...(body ? { body: JSON.stringify(body) } : {}),
-        });
-        expect(res.status, `foreign ${method} ${path}`).toBe(404);
-        expect((await res.json()).error.code).toBe("NOT_FOUND");
-      }
+      // CR-001: every account owns exactly one budget, so a foreign session
+      // never resolves the owner's data — reads return the caller's OWN
+      // (empty) months and mutations touch only the caller's rows. Deleting
+      // the owner's transaction id resolves 404 through the same code path
+      // as a missing id, never leaking that it exists.
+      const crossDelete = await foreign.client.request(
+        `/months/${MONTH}/transactions/${transaction.id}`,
+        { method: "DELETE" },
+      );
+      expect(crossDelete.status).toBe(404);
+      expect((await crossDelete.json()).error.code).toBe("NOT_FOUND");
+
+      const foreignMonth = await foreign.client.request(`/months/${MONTH}`);
+      expect(foreignMonth.status).toBe(200);
+      expect((await foreignMonth.json()).budget.actualMinor).toBe(0);
+
+      const foreignInsights = await foreign.client.request(`/insights?months=${MONTH}`);
+      expect(foreignInsights.status).toBe(200);
+      expect((await foreignInsights.json()).insights.months[0].totalMinor).toBe(0);
+
+      const foreignPatch = await foreign.client.request("/budget", {
+        method: "PATCH",
+        body: JSON.stringify({ incomeMinor: 999900 }),
+      });
+      expect(foreignPatch.status).toBe(200);
 
       // Nothing about the owner's data changed under the foreign attempts.
-      const after = await owner.client.request(`/budgets/${MONTH}`);
+      const after = await owner.client.request(`/months/${MONTH}`);
       const { budget } = await after.json();
       expect(budget.incomeMinor).toBe(1250000);
       expect(budget.actualMinor).toBe(5000);
-      const list = await owner.client.request(`/budgets/${MONTH}/transactions`);
+      const list = await owner.client.request(`/months/${MONTH}/transactions`);
       expect((await list.json()).total).toBe(1);
     }, 60000);
   });
