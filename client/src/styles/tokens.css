@@ -1,0 +1,66 @@
+:root {
+  --color-blue-50: #eef3fc;
+  --color-blue-100: #e7eef9;
+  --color-blue-500: #5b86d6;
+  --color-blue-600: #476fb9;
+  --color-blue-700: #36558f;
+
+  --color-green-50: #eff7f1;
+  --color-green-100: #e6f1e9;
+  --color-green-500: #5fa873;
+  --color-green-600: #4c8e60;
+  --color-green-700: #3b6f4a;
+
+  --color-yellow-50: #fcf7ea;
+  --color-yellow-100: #f8efd7;
+  --color-yellow-500: #e2be62;
+  --color-yellow-600: #c29d40;
+  --color-yellow-700: #927427;
+
+  --color-coral-50: #fdf1ef;
+  --color-coral-100: #f8e6e3;
+  --color-coral-500: #d97972;
+  --color-coral-600: #bd5e57;
+  --color-coral-700: #924640;
+
+  --color-white: #ffffff;
+  --color-background: #faf8f4;
+  --color-surface: #fffdf9;
+  --color-border: #e5e5e2;
+  --color-text-secondary: #4b5563;
+  --color-text-primary: #111827;
+
+  --color-action-primary: var(--color-blue-500);
+  --color-positive: var(--color-green-500);
+  --color-comparison: var(--color-yellow-500);
+  --color-fun: var(--color-coral-500);
+  --color-focus: var(--color-blue-700);
+  --color-error: var(--color-coral-600);
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "DM Serif Display", Georgia, serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  --shadow-card: 0 4px 16px rgba(17, 24, 39, 0.08);
+
+  --page-padding-mobile: 20px;
+  --page-padding-desktop: 64px;
+  --content-max-desktop: 1200px;
+}
+

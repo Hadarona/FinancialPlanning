@@ -1,0 +1,14 @@
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.month-nav-label {
+  min-width: 10ch;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
