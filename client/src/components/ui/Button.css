@@ -1,0 +1,81 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  min-width: 44px;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-md);
+  border: none;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Inline-flex keeps an icon child on the same line as the label text —
+   defeats the global `svg { display: block }` reset (D-DES-005). */
+.btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* blue-600 keeps the white 16px label at 4.95:1 (blue-500 is 3.60 —
+   accessibility-checklist.md AA gate, D-DES-014); hover steps to blue-700
+   (~7.3:1) to stay distinguishable from the new default. */
+.btn-primary {
+  background: var(--color-blue-600);
+  color: var(--color-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-blue-700);
+}
+
+/* coral-700 keeps the white 16px label at >=4.5:1 (coral-600 is 4.28). */
+.btn-danger {
+  background: var(--color-coral-700);
+  color: var(--color-white);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-blue-50);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--color-white);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn-spinner {
+    animation: btn-spin 700ms linear infinite;
+  }
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

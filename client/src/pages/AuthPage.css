@@ -1,0 +1,69 @@
+.auth-page {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--page-padding-mobile);
+}
+
+/* Mobile (320-767): plain form capped at 350px (D-DES-003,
+   responsive-layout.md "Login Mobile"). */
+.auth-card {
+  width: 100%;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Desktop (>=768): centered visible surface card, 440px wide with 40px
+   padding (D-DES-002, responsive-layout.md "Login Desktop"; same surface
+   recipe as Card.css). */
+@media (min-width: 768px) {
+  .auth-card {
+    max-width: 440px;
+    padding: var(--space-10);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+.auth-logo {
+  border-radius: var(--radius-md);
+}
+
+.auth-title {
+  font-size: 32px;
+  text-align: center;
+}
+
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-form-error {
+  margin: 0;
+  color: var(--color-coral-700);
+  font-size: 14px;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-session-expired {
+  margin: 0;
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-yellow-50);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  text-align: center;
+}

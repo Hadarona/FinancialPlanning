@@ -1,0 +1,107 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/dm-serif-display/400.css";
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only content (e.g. chart data tables). Apply this class to a
+   block wrapper (div/span), never directly to a <table>: Chromium's automatic
+   table layout treats an explicit 1px width on a <table> as a minimum and
+   expands it to min-content width, which made hidden chart tables create real
+   horizontal scroll at a 320px viewport (DEV-SELFTEST-001). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Defense in depth for DEV-SELFTEST-001: force the fixed table-layout
+   algorithm on any table under the hidden utility so cell content can never
+   drive min-content sizing. Chromium still widens the table wrapper box to a
+   nowrap <caption>'s width, so this alone is not sufficient — the 1px
+   overflow-hidden block wrapper above is the load-bearing containment
+   (VisuallyHiddenTable.jsx puts the class on a <div>, never the <table>;
+   enforced by the InsightsPage regression test). */
+.visually-hidden table,
+table.visually-hidden {
+  table-layout: fixed;
+  width: 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .transition {
+    transition-duration: 180ms;
+    transition-timing-function: ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

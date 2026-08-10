@@ -1,0 +1,26 @@
+/* blue-600 keeps the 14px action text at >=4.5:1 on the page background
+   (blue-500 is 3.60 — same AA pairing remediated under D-DES-014). */
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--color-blue-600);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.text-btn:hover,
+.text-btn:focus-visible {
+  text-decoration: underline;
+}
+
+.text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

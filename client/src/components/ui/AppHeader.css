@@ -1,0 +1,24 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--page-padding-mobile);
+}
+
+@media (min-width: 768px) {
+  .app-header {
+    padding: var(--space-4) var(--page-padding-desktop);
+  }
+}
+
+.app-header-logo {
+  border-radius: var(--radius-sm);
+}
+
+/* Heading/Page ramp: DM Serif Display 400 at 28/36 (figma-build-spec.md §3,
+   D-DES-004). Family/weight inherited from the global h1 rule. */
+.app-header-title {
+  flex: 1;
+  font-size: 28px;
+  line-height: 36px;
+}
