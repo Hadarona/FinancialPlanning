@@ -1,0 +1,41 @@
+{
+  "name": "budgeting-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "workflow:init": "node tools/workflow.mjs init",
+    "workflow:status": "node tools/workflow.mjs status",
+    "workflow:start": "node tools/workflow.mjs start-iteration",
+    "workflow:evaluate": "node tools/workflow.mjs evaluate",
+    "workflow:validate": "node tools/workflow.mjs validate",
+    "test:workflow": "node --test tools/tests/*.test.mjs",
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev -w server\" \"npm:dev -w client\"",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test": "npm test -w server && npm test -w client",
+    "test:integration": "npm run test:integration -w server",
+    "coverage": "npm run coverage -w server && npm run coverage -w client",
+    "build": "npm run build -w client",
+    "migrate": "npm run migrate -w server",
+    "seed:demo": "npm run seed:demo -w server",
+    "smoke": "npm run smoke -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "@eslint/js": "^9.17.0",
+    "globals": "^15.14.0",
+    "eslint-plugin-react": "^7.37.3",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2"
+  }
+}
