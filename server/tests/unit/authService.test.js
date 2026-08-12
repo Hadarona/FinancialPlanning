@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import bcrypt from "bcryptjs";
 import { createAuthService } from "../../src/services/authService.js";
 import { AppError } from "../../src/errors.js";
 
@@ -26,6 +27,31 @@ function makeBudgetService(overrides = {}) {
 }
 
 describe("authService.register", () => {
+  it("creates the user and default budget in the same transaction", async () => {
+    const queryable = { query: vi.fn() };
+    const withTransaction = vi.fn(async (work) => work(queryable));
+    const userRepo = makeUserRepo();
+    const budgetService = makeBudgetService();
+    const authService = createAuthService({
+      userRepo,
+      budgetService,
+      config: testConfig,
+      withTransaction,
+    });
+
+    const user = await authService.register({
+      email: "a@b.com",
+      password: "supersecret",
+    });
+
+    expect(withTransaction).toHaveBeenCalledTimes(1);
+    expect(userRepo.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "a@b.com" }),
+      queryable,
+    );
+    expect(budgetService.createDefaultBudget).toHaveBeenCalledWith(user.id, queryable);
+  });
+
   it("hashes the password and never returns it", async () => {
     const userRepo = makeUserRepo();
     const authService = createAuthService({
@@ -140,6 +166,22 @@ describe("authService.register", () => {
 });
 
 describe("authService.login", () => {
+  it("uses the configured bcrypt cost for the unknown-user timing hash", async () => {
+    const compare = vi.spyOn(bcrypt, "compare");
+    const authService = createAuthService({
+      userRepo: makeUserRepo({ findByEmail: vi.fn(async () => null) }),
+      budgetService: makeBudgetService(),
+      config: testConfig,
+    });
+
+    await expect(
+      authService.login({ email: "nobody@example.com", password: "whatever" }),
+    ).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
+
+    expect(bcrypt.getRounds(compare.mock.calls[0][1])).toBe(testConfig.bcryptRounds);
+    compare.mockRestore();
+  });
+
   it("logs in with correct credentials", async () => {
     const userRepo = makeUserRepo();
     const authService = createAuthService({

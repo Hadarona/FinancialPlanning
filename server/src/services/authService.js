@@ -5,34 +5,44 @@ import { AppError } from "../errors.js";
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 const SESSION_TTL = "24h";
 
-// A precomputed, valid-format bcrypt hash used only when no user is found,
-// so `login` always performs one real bcrypt compare — equalizing response
-// timing between "unknown email" and "wrong password" (D-AUTH-B3).
-const DUMMY_HASH = bcrypt.hashSync("no-account-with-this-email", 10);
+// A valid-format bcrypt hash used only when no user is found. It uses the
+// configured work factor so `login` performs a comparable bcrypt operation
+// for "unknown email" and "wrong password" (D-AUTH-B3).
+export function createAuthService({
+  userRepo,
+  budgetService,
+  config,
+  withTransaction = async (work) => work(),
+}) {
+  const dummyHash = bcrypt.hashSync("no-account-with-this-email", config.bcryptRounds);
 
-export function createAuthService({ userRepo, budgetService, config }) {
   async function register({ email, password }) {
     const passwordHash = await bcrypt.hash(password, config.bcryptRounds);
     let user;
     try {
-      user = await userRepo.createUser({ email, passwordHash });
+      user = await withTransaction(async (queryable) => {
+        const createdUser = queryable
+          ? await userRepo.createUser({ email, passwordHash }, queryable)
+          : await userRepo.createUser({ email, passwordHash });
+        if (queryable) {
+          await budgetService.createDefaultBudget(createdUser.id, queryable);
+        } else {
+          await budgetService.createDefaultBudget(createdUser.id);
+        }
+        return createdUser;
+      });
     } catch (err) {
       if (err?.code === POSTGRES_UNIQUE_VIOLATION) {
         throw new AppError("CONFLICT", "An account with that email already exists.");
       }
       throw err;
     }
-    // CR1-9: every account gets the default budget at registration. A
-    // failure here propagates (registration must not half-succeed
-    // silently); the defensive POST /budget path recovers the rare
-    // mid-failure anomaly (plan risk 6).
-    await budgetService.createDefaultBudget(user.id);
     return { id: user.id, email: user.email };
   }
 
   async function login({ email, password }) {
     const user = await userRepo.findByEmail(email);
-    const hashToCompare = user?.password_hash ?? DUMMY_HASH;
+    const hashToCompare = user?.password_hash ?? dummyHash;
     const passwordMatches = await bcrypt.compare(password, hashToCompare);
 
     if (!user || !passwordMatches) {

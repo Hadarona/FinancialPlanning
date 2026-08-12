@@ -5,8 +5,8 @@
  */
 export function createUserRepo(pool) {
   return {
-    async createUser({ email, passwordHash }) {
-      const result = await pool.query(
+    async createUser({ email, passwordHash }, queryable = pool) {
+      const result = await queryable.query(
         `INSERT INTO users (email, password_hash)
          VALUES ($1, $2)
          RETURNING id, email, created_at`,

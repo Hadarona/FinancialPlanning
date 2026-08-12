@@ -33,8 +33,11 @@ export function createBudgetRepo(pool) {
     /** Inserts the user's single budget. A duplicate user_id surfaces as a
      * pg unique-violation error (code 23505) for the service to translate —
      * the DB constraint is the concurrency arbiter. */
-    async createBudget({ userId, currencyCode = "USD", incomeMinor, categories }) {
-      const result = await pool.query(
+    async createBudget(
+      { userId, currencyCode = "USD", incomeMinor, categories },
+      queryable = pool,
+    ) {
+      const result = await queryable.query(
         `INSERT INTO budgets (user_id, currency_code, income_minor, categories)
          VALUES ($1, $2, $3, $4::jsonb)
          RETURNING ${RETURNING}`,

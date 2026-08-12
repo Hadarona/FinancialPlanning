@@ -303,6 +303,13 @@ describe("monthName / shortDateLabel", () => {
     expect(() => monthName("2026-7")).toThrow();
     expect(() => shortDateLabel("2026-07")).toThrow();
   });
+
+  it("rejects dates that are formatted correctly but do not exist", () => {
+    for (const invalidDate of ["2026-02-29", "2026-02-31", "2026-99-01", "2026-01-00"]) {
+      expect(() => shortDateLabel(invalidDate)).toThrow(`Invalid date: ${invalidDate}`);
+    }
+    expect(shortDateLabel("2028-02-29")).toBe("Feb 29");
+  });
 });
 
 describe("cashFlowSampleDates", () => {

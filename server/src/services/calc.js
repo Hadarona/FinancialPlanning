@@ -90,8 +90,12 @@ export function shortDateLabel(isoDate) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
     throw new Error(`Invalid date: ${isoDate}`);
   }
+  const month = isoDate.slice(0, 7);
   const monthNum = Number(isoDate.slice(5, 7));
   const day = Number(isoDate.slice(8, 10));
+  if (!MONTH_PATTERN.test(month) || day < 1 || day > daysInMonth(month)) {
+    throw new Error(`Invalid date: ${isoDate}`);
+  }
   return `${MONTH_NAMES[monthNum - 1].slice(0, 3)} ${day}`;
 }
 

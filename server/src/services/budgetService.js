@@ -34,13 +34,16 @@ export function createBudgetService({ budgetRepo, transactionRepo }) {
    * from the server-side constants — the client supplies nothing. A
    * concurrent duplicate is decided by the DB unique(user_id) constraint.
    */
-  async function createDefaultBudget(userId) {
+  async function createDefaultBudget(userId, queryable) {
     try {
-      const budgetRow = await budgetRepo.createBudget({
-        userId,
-        incomeMinor: DEFAULT_INCOME_MINOR,
-        categories: DEFAULT_CATEGORIES,
-      });
+      const budgetRow = await budgetRepo.createBudget(
+        {
+          userId,
+          incomeMinor: DEFAULT_INCOME_MINOR,
+          categories: DEFAULT_CATEGORIES,
+        },
+        queryable,
+      );
       return { budget: budgetPlanModel(budgetRow) };
     } catch (err) {
       if (err?.code === POSTGRES_UNIQUE_VIOLATION) {
@@ -71,6 +74,9 @@ export function createBudgetService({ budgetRepo, transactionRepo }) {
       incomeMinor: patch.incomeMinor ?? existing.incomeMinor,
       categories: mergedCategories,
     });
+    if (!budgetRow) {
+      throw new AppError("NOT_FOUND", "No budget yet.");
+    }
     return { budget: budgetPlanModel(budgetRow) };
   }
 

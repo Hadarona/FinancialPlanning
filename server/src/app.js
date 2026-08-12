@@ -39,7 +39,12 @@ export function createApp(config) {
   // budgetService is wired before authService: registration provisions the
   // default budget (CR1-9).
   const budgetService = createBudgetService({ budgetRepo, transactionRepo });
-  const authService = createAuthService({ userRepo, budgetService, config });
+  const authService = createAuthService({
+    userRepo,
+    budgetService,
+    config,
+    withTransaction: pool.withTransaction,
+  });
   const transactionService = createTransactionService({ budgetRepo, transactionRepo });
   const insightsService = createInsightsService({ budgetRepo, transactionRepo });
   const requireAuth = createRequireAuth({ authService, userRepo });

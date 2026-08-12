@@ -12,6 +12,25 @@ function isLocalHost(databaseUrl) {
   }
 }
 
+export async function runInTransaction(pool, beginStatement, work) {
+  const client = await pool.connect();
+  try {
+    await client.query(beginStatement);
+    const result = await work(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // The original error is the one worth surfacing.
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Creates a new connection pool scoped to `config`. Deliberately not a
  * module-level singleton: each server instance (real process or isolated
@@ -42,6 +61,13 @@ export function createPool(config) {
     ssl: isLocalHost(config.databaseUrl) ? undefined : { rejectUnauthorized: false },
   });
 
+  const beginTransaction =
+    config.dbSchema && config.dbSchema !== "public"
+      ? `BEGIN; SET LOCAL search_path TO "${config.dbSchema}"`
+      : "BEGIN";
+
+  pool.withTransaction = (work) => runInTransaction(pool, beginTransaction, work);
+
   if (config.dbSchema && config.dbSchema !== "public") {
     if (!SAFE_SCHEMA_NAME.test(config.dbSchema)) {
       throw new Error(`Invalid DB_SCHEMA: ${config.dbSchema}`);
@@ -50,11 +76,10 @@ export function createPool(config) {
     // Deliberately NO `public` fallback: if the isolated schema (or a table
     // in it) is missing, the query must fail loudly instead of silently
     // reading the real `public` data.
-    const beginScoped = `BEGIN; SET LOCAL search_path TO "${config.dbSchema}"`;
     pool.query = async function schemaScopedQuery(text, params) {
       const client = await pool.connect();
       try {
-        await client.query(beginScoped);
+        await client.query(beginTransaction);
         const result = await client.query(text, params);
         await client.query("COMMIT");
         return result;
