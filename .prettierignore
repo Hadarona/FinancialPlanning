@@ -1,0 +1,22 @@
+# Cycle-01 (DEV-SELFTEST-002): exclude only files the developer must not or
+# should not rewrite; all product source and tests remain format-checked.
+
+# Phase-owned workflow role reports and evidence — not product source.
+.workflow/
+
+# Orchestrator-owned workflow controller and its tests.
+tools/
+
+# Read-only product/design/workflow sources (CLAUDE.md ownership table).
+# The figma-kit export must stay byte-identical to the design tool's output.
+docs/design/
+docs/product/
+docs/workflow/
+Project_requirements_English.md
+
+# Workflow governance document — kept byte-stable.
+CLAUDE.md
+
+# Must remain byte-identical to docs/design/figma-kit/tokens/design-tokens.css
+# (D-FND-D1 verbatim-copy invariant).
+client/src/styles/tokens.css

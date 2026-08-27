@@ -1,0 +1,123 @@
+.summary-metrics {
+  display: flex;
+  margin: 0;
+}
+
+.summary-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
+}
+
+.summary-metric + .summary-metric {
+  border-left: 1px solid var(--color-border);
+}
+
+.summary-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.summary-metric-label-income {
+  color: var(--color-blue-700);
+}
+
+/* Near-black label text for AA at 14px (yellow-700 was 4.17:1 — D-DES-015);
+   the kit's yellow=planned semantic moves to the decorative marker dot. */
+.summary-metric-label-planned {
+  color: var(--color-text-primary);
+}
+
+.summary-metric-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+
+.summary-metric-marker-yellow {
+  background: var(--color-yellow-500);
+}
+
+.summary-metric-value {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* CR1-5: the income value is a real button (min 44px target) that inherits
+   the metric typography; hover/focus states make the affordance visible. */
+.summary-metric-edit-button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+  min-height: 44px;
+  min-width: 44px;
+  font: inherit;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .summary-metric-edit-button:hover {
+    background: var(--color-blue-50);
+  }
+}
+
+.summary-metric-edit-button:focus-visible {
+  outline: 2px solid var(--color-blue-500);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .summary-metric-value {
+    font-size: 28px;
+  }
+}
+
+.summary-metric-value-income {
+  color: var(--color-blue-500);
+}
+
+.summary-metric-value-available {
+  color: var(--color-green-600);
+}
+
+.summary-metric-value-negative {
+  color: var(--color-error);
+}
+
+.summary-metrics-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-size: 14px;
+  color: var(--color-coral-700);
+}
+
+/* 320px-class viewports: three cells share ~280px; slightly smaller values
+ * keep "12,500" from clipping (D-RESP-F1). */
+@media (max-width: 359px) {
+  .summary-metric-value {
+    font-size: 20px;
+  }
+}

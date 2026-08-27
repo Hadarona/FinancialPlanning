@@ -1,0 +1,172 @@
+.chart-figure {
+  position: relative;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.chart-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Accessible text summary — visible to everyone, not color-dependent. */
+.chart-caption {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  order: 1;
+}
+
+.chart-plot {
+  order: 0;
+}
+
+/* Axis + grid: recessive, never competing with the data marks. */
+.chart-gridline {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-axis-label,
+.chart-x-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  fill: var(--color-text-secondary);
+}
+
+.chart-mark {
+  cursor: default;
+}
+
+.chart-mark:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Line point markers appear on hover/focus only (figma-build-spec.md §6,
+   D-DES-011). Opacity keeps hit-testing and keyboard focusability — the
+   tabindex=0 tooltip targets stay in the DOM. */
+.chart-mark-hover {
+  opacity: 0;
+}
+
+.chart-mark-hover:hover,
+.chart-mark-hover:focus-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chart-mark-hover {
+    transition: opacity 160ms ease;
+  }
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, calc(-100% - 8px));
+  background: var(--color-text-primary);
+  color: var(--color-white);
+  font-size: 12px;
+  line-height: 1.4;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.chart-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-5);
+  order: 2;
+}
+
+.chart-legend-vertical {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.chart-legend-marker {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.chart-legend-marker-square {
+  border-radius: 3px;
+}
+
+.chart-legend-marker-dot {
+  border-radius: var(--radius-full);
+}
+
+/* Patterned series swatches (CR3): svg squares mirroring the bar fills.
+   Explicit sizing wins over the `.chart-figure svg { width: 100% }` plot
+   rule, which would otherwise inflate these tiny markers. */
+.chart-figure svg.chart-legend-marker-svg,
+.chart-legend-marker-svg {
+  display: block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.chart-legend-label {
+  min-width: 0;
+}
+
+.chart-legend-detail {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend:not(.chart-legend-vertical) .chart-legend-detail {
+  margin-left: var(--space-1);
+}
+
+/* Donut layout: container-driven (D-DES-007). The component measures its
+   card column and adds .donut-layout-row only when donut + legend fit side
+   by side; otherwise the legend stacks below. */
+.donut-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.donut-layout-row {
+  flex-direction: row;
+  justify-content: center;
+  gap: var(--space-6);
+}
+
+.donut-layout-row .chart-legend {
+  min-width: 180px;
+}
+
+/* The donut renders at its computed 128-200px attribute size — defeat the
+   `.chart-figure svg { width: 100% }` stretch and never flex-shrink it. */
+.donut-layout svg {
+  width: auto;
+  flex: none;
+}
