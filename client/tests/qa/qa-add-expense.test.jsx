@@ -15,10 +15,10 @@ const { firstDay, lastDay } = monthRange(MONTH);
 function baseEntries() {
   return [
     { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
-    { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+    { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
     {
       method: "GET",
-      path: `/budgets/${MONTH}/transactions`,
+      path: `/months/${MONTH}/transactions`,
       status: 200,
       json: emptyTransactions(),
     },
@@ -72,7 +72,7 @@ describe("qa-add-expense", () => {
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(mock.callsMatching("POST", `/budgets/${MONTH}/transactions`)).toHaveLength(0);
+    expect(mock.callsMatching("POST", `/months/${MONTH}/transactions`)).toHaveLength(0);
   });
 
   it("QA-CC-30b: Cancel closes with zero POSTs", async () => {
@@ -80,20 +80,20 @@ describe("qa-add-expense", () => {
     await fillValidExpense(user);
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(mock.callsMatching("POST", `/budgets/${MONTH}/transactions`)).toHaveLength(0);
+    expect(mock.callsMatching("POST", `/months/${MONTH}/transactions`)).toHaveLength(0);
   });
 
   it("QA-CC-31: a valid save posts the parsed payload and the budget re-renders the new actual", async () => {
     const { user, mock } = await openDialogInBudgetPage([
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 201,
         json: { transaction: { id: "t1" } },
       },
       {
         method: "GET",
-        path: `/budgets/${MONTH}`,
+        path: `/months/${MONTH}`,
         status: 200,
         json: kitBudgetAfterGroceriesAdd(4250),
       },
@@ -105,7 +105,7 @@ describe("qa-add-expense", () => {
     expect(await screen.findByText("Expense added")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    const postCalls = mock.callsMatching("POST", `/budgets/${MONTH}/transactions`);
+    const postCalls = mock.callsMatching("POST", `/months/${MONTH}/transactions`);
     expect(postCalls).toHaveLength(1);
     expect(postCalls[0].body).toMatchObject({
       categoryId: "groceries",
@@ -114,9 +114,11 @@ describe("qa-add-expense", () => {
     });
     expect(postCalls[0].body.clientRequestId).toMatch(/^[0-9a-f-]{36}$/);
 
-    // Budget refetch reflects the new actual — no manual reload needed.
+    // Budget refetch reflects the new actual in the row's edit-button label.
     expect(
-      await screen.findByRole("progressbar", { name: /Groceries/ }),
+      await screen.findByRole("button", {
+        name: /Groceries: .* spent of .* planned.*edit planned amount/,
+      }),
     ).toBeInTheDocument();
   });
 
@@ -149,14 +151,14 @@ describe("qa-add-expense", () => {
       await screen.findByText("Note must be at most 200 characters."),
     ).toBeInTheDocument();
 
-    expect(mock.callsMatching("POST", `/budgets/${MONTH}/transactions`)).toHaveLength(0);
+    expect(mock.callsMatching("POST", `/months/${MONTH}/transactions`)).toHaveLength(0);
   });
 
   it("QA-CC-33: a failed save keeps the dialog open with all values and an error alert, offering Retry", async () => {
     const { user } = await openDialogInBudgetPage([
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 500,
         json: {
           error: { code: "INTERNAL", message: "Something went wrong.", requestId: "r1" },
@@ -177,7 +179,7 @@ describe("qa-add-expense", () => {
     const { user, mock } = await openDialogInBudgetPage([
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 500,
         json: {
           error: { code: "INTERNAL", message: "Something went wrong.", requestId: "r1" },
@@ -185,13 +187,13 @@ describe("qa-add-expense", () => {
       },
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 201,
         json: { transaction: { id: "t1" } },
       },
       {
         method: "GET",
-        path: `/budgets/${MONTH}`,
+        path: `/months/${MONTH}`,
         status: 200,
         json: kitBudgetAfterGroceriesAdd(4250),
       },
@@ -203,7 +205,7 @@ describe("qa-add-expense", () => {
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Expense added")).toBeInTheDocument();
 
-    const postCalls = mock.callsMatching("POST", `/budgets/${MONTH}/transactions`);
+    const postCalls = mock.callsMatching("POST", `/months/${MONTH}/transactions`);
     expect(postCalls).toHaveLength(2);
     expect(postCalls[1].body.clientRequestId).toBe(postCalls[0].body.clientRequestId);
   });
@@ -212,14 +214,14 @@ describe("qa-add-expense", () => {
     const { user, mock } = await openDialogInBudgetPage([
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 201,
         json: { transaction: { id: "t1" } },
         delayMs: 60,
       },
       {
         method: "GET",
-        path: `/budgets/${MONTH}`,
+        path: `/months/${MONTH}`,
         status: 200,
         json: kitBudgetAfterGroceriesAdd(4250),
       },
@@ -231,7 +233,7 @@ describe("qa-add-expense", () => {
     await user.click(save);
 
     await screen.findByText("Expense added");
-    expect(mock.callsMatching("POST", `/budgets/${MONTH}/transactions`)).toHaveLength(1);
+    expect(mock.callsMatching("POST", `/months/${MONTH}/transactions`)).toHaveLength(1);
   });
 
   it("QA-CC-36: the date input's min/max equal the month's first/last day", async () => {
@@ -251,13 +253,13 @@ describe("qa-add-expense", () => {
       ...baseEntries(),
       {
         method: "POST",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 201,
         json: { transaction: { id: "t1" } },
       },
       {
         method: "GET",
-        path: `/budgets/${MONTH}`,
+        path: `/months/${MONTH}`,
         status: 200,
         json: kitBudgetAfterGroceriesAdd(4250),
       },

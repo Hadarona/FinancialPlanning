@@ -1,6 +1,6 @@
 // QA-owned client fixtures for the budget read model
-// (`GET /api/v1/budgets/:month"` shape: `{ budget: {...} }`) and its
-// matching transactions list (`GET /api/v1/budgets/:month/transactions`).
+// (`GET /api/v1/months/:month` shape: `{ budget: {...} }`) and its
+// matching transactions list (`GET /api/v1/months/:month/transactions`).
 // Every number here is picked independently of client/src so a hard-coded
 // component value would show up as a mismatch, not a coincidental match.
 
@@ -10,6 +10,8 @@ const BASE_CATEGORY_META = {
   transport: { name: "Transport", icon: "CarFront", color: "yellow", displayOrder: 3 },
   fun: { name: "Fun", icon: "PartyPopper", color: "coral", displayOrder: 4 },
   savings: { name: "Savings", icon: "PiggyBank", color: "blue", displayOrder: 5 },
+  subscriptions: { name: "Subscriptions", icon: "Repeat", color: "coral", displayOrder: 6 },
+  utilities: { name: "Utilities", icon: "Plug", color: "green", displayOrder: 7 },
 };
 
 function categoryProgress(plannedMinor, actualMinor) {
@@ -48,8 +50,8 @@ function buildBudget({ id, month, incomeMinor, plans }) {
   };
 }
 
-/** Kit reference numbers (roadmap §2.2): income 12,500 / planned 10,200 /
- * available 2,300. Housing: 2,520 spent of 4,000 planned -> 63%, "normal"
+/** Kit reference numbers: income 12,500 / planned 12,000 / available 500.
+ * Housing: 2,520 spent of 4,000 planned -> 63%, "normal"
  * (matches the exact screen-reader sentence check, D-BUD-F6). */
 export function kitBudget() {
   return buildBudget({
@@ -62,6 +64,8 @@ export function kitBudget() {
       transport: { plannedMinor: 80000, actualMinor: 0 },
       fun: { plannedMinor: 90000, actualMinor: 0 },
       savings: { plannedMinor: 300000, actualMinor: 0 },
+      subscriptions: { plannedMinor: 60000, actualMinor: 0 },
+      utilities: { plannedMinor: 120000, actualMinor: 0 },
     },
   });
 }
@@ -79,6 +83,8 @@ export function variantBudget() {
       transport: { plannedMinor: 60000, actualMinor: 15000 },
       fun: { plannedMinor: 75000, actualMinor: 5000 },
       savings: { plannedMinor: 245000, actualMinor: 0 },
+      subscriptions: { plannedMinor: 90000, actualMinor: 10000 },
+      utilities: { plannedMinor: 135000, actualMinor: 20000 },
     },
   });
 }
@@ -96,6 +102,8 @@ export function overspentBudget() {
       transport: { plannedMinor: 80000, actualMinor: 0 },
       fun: { plannedMinor: 90000, actualMinor: 0 },
       savings: { plannedMinor: 300000, actualMinor: 0 },
+      subscriptions: { plannedMinor: 60000, actualMinor: 0 },
+      utilities: { plannedMinor: 120000, actualMinor: 0 },
     },
   });
 }
@@ -113,6 +121,8 @@ export function unplannedBudget() {
       transport: { plannedMinor: 80000, actualMinor: 0 },
       fun: { plannedMinor: 0, actualMinor: 5000 },
       savings: { plannedMinor: 300000, actualMinor: 0 },
+      subscriptions: { plannedMinor: 60000, actualMinor: 0 },
+      utilities: { plannedMinor: 120000, actualMinor: 0 },
     },
   });
 }

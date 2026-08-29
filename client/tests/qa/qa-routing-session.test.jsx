@@ -21,16 +21,16 @@ describe("qa-routing-session", () => {
       await screen.findByRole("heading", { name: "Welcome back" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Budget")).not.toBeInTheDocument();
-    expect(mock.callsMatching("GET", /^\/budgets\//)).toHaveLength(0);
+    expect(mock.callsMatching("GET", /^\/months\//)).toHaveLength(0);
   });
 
   it("QA-CC-11: an authenticated visitor to /login is redirected to /budget", async () => {
     installFetchMock([
       { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+      { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 200,
         json: kitTransactions(),
       },
@@ -46,10 +46,10 @@ describe("qa-routing-session", () => {
   it("QA-CC-12: opening /budget directly restores the session and renders the budget data", async () => {
     installFetchMock([
       { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+      { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 200,
         json: kitTransactions(),
       },
@@ -64,7 +64,7 @@ describe("qa-routing-session", () => {
       { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}`,
+        path: `/months/${MONTH}`,
         status: 401,
         json: {
           error: {
@@ -87,10 +87,10 @@ describe("qa-routing-session", () => {
   it("QA-CC-14: logging out via the header menu clears the cache so the next budget visit refetches", async () => {
     const mock = installFetchMock([
       { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+      { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 200,
         json: kitTransactions(),
       },

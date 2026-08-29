@@ -18,10 +18,10 @@ const EXPENSE_ID = kitTransactions().transactions[0].id;
 function baseEntries() {
   return [
     { method: "GET", path: "/auth/me", status: 200, json: meResponse() },
-    { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+    { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
     {
       method: "GET",
-      path: `/budgets/${MONTH}/transactions`,
+      path: `/months/${MONTH}/transactions`,
       status: 200,
       json: kitTransactions(),
     },
@@ -46,13 +46,13 @@ describe("qa-delete-expense", () => {
     const { user, mock } = await openDeleteConfirm([
       {
         method: "DELETE",
-        path: `/budgets/${MONTH}/transactions/${EXPENSE_ID}`,
+        path: `/months/${MONTH}/transactions/${EXPENSE_ID}`,
         status: 204,
       },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+      { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
+        path: `/months/${MONTH}/transactions`,
         status: 200,
         json: emptyTransactions(),
       },
@@ -65,7 +65,7 @@ describe("qa-delete-expense", () => {
 
     expect(await screen.findByText("Expense deleted")).toBeInTheDocument();
     expect(
-      mock.callsMatching("DELETE", `/budgets/${MONTH}/transactions/${EXPENSE_ID}`),
+      mock.callsMatching("DELETE", `/months/${MONTH}/transactions/${EXPENSE_ID}`),
     ).toHaveLength(1);
     expect(screen.queryByText(/Rent/)).not.toBeInTheDocument();
   });
@@ -76,7 +76,7 @@ describe("qa-delete-expense", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
-      mock.callsMatching("DELETE", `/budgets/${MONTH}/transactions/${EXPENSE_ID}`),
+      mock.callsMatching("DELETE", `/months/${MONTH}/transactions/${EXPENSE_ID}`),
     ).toHaveLength(0);
     expect(
       screen.getByRole("button", { name: /Delete Housing 2,520 on Jul 10/ }),
@@ -87,7 +87,7 @@ describe("qa-delete-expense", () => {
     const { user } = await openDeleteConfirm([
       {
         method: "DELETE",
-        path: `/budgets/${MONTH}/transactions/${EXPENSE_ID}`,
+        path: `/months/${MONTH}/transactions/${EXPENSE_ID}`,
         status: 500,
         json: {
           error: { code: "INTERNAL", message: "Something went wrong.", requestId: "r1" },

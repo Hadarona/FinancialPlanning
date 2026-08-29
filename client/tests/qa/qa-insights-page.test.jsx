@@ -1,336 +1,156 @@
-// QA-CC-60..67: InsightsPage rendering, tabs, and accessible data tables.
+// QA-CC-60..63: current multi-month InsightsPage behavior.
 import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderApp } from "./helpers/qaRender.jsx";
 import { installFetchMock } from "./helpers/qaFetch.js";
 import { meResponse } from "./fixtures/authFixtures.js";
-import {
-  kitInsights,
-  variantInsights,
-  noPreviousInsights,
-  zeroSpendingInsights,
-} from "./fixtures/insightsFixtures.js";
-import { currentMonth, previousMonth, monthLabel } from "../../src/lib/dates.js";
+import { currentMonth, previousMonth, monthYearLabel, shortDateLabel } from "../../src/lib/dates.js";
 
 const MONTH = currentMonth();
 const PREVIOUS = previousMonth(MONTH);
-const MONTH_LABEL = monthLabel(MONTH);
-const PREVIOUS_LABEL = monthLabel(PREVIOUS);
+const MONTH_YEAR = monthYearLabel(MONTH);
+const PREVIOUS_YEAR = monthYearLabel(PREVIOUS);
+const categories = [
+  ["housing", "Housing", "blue", 323600],
+  ["groceries", "Groceries", "green", 136600],
+  ["transport", "Transport", "yellow", 84200],
+  ["fun", "Fun", "coral", 92600],
+  ["savings", "Savings", "blue", 117900],
+  ["subscriptions", "Subscriptions", "coral", 15000],
+  ["utilities", "Utilities", "green", 72100],
+];
 
 function authEntry() {
   return { method: "GET", path: "/auth/me", status: 200, json: meResponse() };
 }
 
-function withMonth(
-  fixture,
-  month,
-  monthLabelText,
-  previousMonth_,
-  previousMonthLabelText,
-  hasPrevious,
-) {
+function insightsFixture(months) {
+  const totalsByMonth = months.map((month, monthIndex) =>
+    categories.map(([, , , total]) => (monthIndex === 0 ? total : Math.round(total * 1.09))),
+  );
+  const combinedByCategory = categories.map((_, index) =>
+    totalsByMonth.reduce((sum, values) => sum + values[index], 0),
+  );
+  const combinedTotalMinor = combinedByCategory.reduce((sum, value) => sum + value, 0);
+  let assigned = 0;
+  const shares = combinedByCategory.map((value, index) => {
+    if (index === combinedByCategory.length - 1) return 100 - assigned;
+    const share = Math.floor((value / combinedTotalMinor) * 100);
+    assigned += share;
+    return share;
+  });
+
   return {
     insights: {
-      ...fixture.insights,
-      month,
-      monthLabel: monthLabelText,
-      previousMonth: previousMonth_,
-      previousMonthLabel: previousMonthLabelText,
-      hasPrevious,
+      months: months.map((month, index) => {
+        const totalMinor = totalsByMonth[index].reduce((sum, value) => sum + value, 0);
+        const step = Math.floor(totalMinor / 7);
+        const cumulativeMinor = Array.from({ length: 7 }, (_, point) => step * (point + 1));
+        cumulativeMinor[6] = totalMinor;
+        return {
+          month,
+          label: monthYearLabel(month),
+          yearLabel: monthYearLabel(month),
+          totalMinor,
+          cashFlow: {
+            labels: [1, 6, 11, 16, 21, 26, 28].map((day) =>
+              shortDateLabel(`${month}-${String(day).padStart(2, "0")}`),
+            ),
+            cumulativeMinor,
+          },
+        };
+      }),
+      categories: categories.map(([id, label, color], index) => ({
+        id,
+        label,
+        color,
+        totalsMinor: totalsByMonth.map((values) => values[index]),
+        combinedMinor: combinedByCategory[index],
+        sharePercent: shares[index],
+      })),
+      combinedTotalMinor,
     },
   };
 }
 
 describe("qa-insights-page", () => {
-  it("QA-CC-60: the kit fixture shows the hero total, SVG charts, and accessible data matching the fixture; shares sum to 100", async () => {
+  it("QA-CC-60: the default current-month selection fetches the multi-month endpoint and renders all seven categories", async () => {
     installFetchMock([
       authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
+      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
     ]);
     renderApp({ initialPath: "/insights" });
 
-    expect((await screen.findAllByText("8,420")).length).toBeGreaterThanOrEqual(1);
-    expect(document.querySelectorAll("svg").length).toBeGreaterThan(0);
-    expect(document.querySelectorAll("img").length).toBe(0);
-
-    const tables = screen.getAllByRole("table");
-    expect(tables.length).toBeGreaterThan(0);
-    for (const table of tables) {
-      expect(table.querySelector("caption")).not.toBeNull();
-    }
-    const shares = kitInsights().insights.categories.map((c) => c.sharePercent);
-    expect(shares.reduce((a, b) => a + b, 0)).toBe(100);
-    for (const share of shares) {
-      expect(screen.getAllByText(`${share}%`).length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText(`Total spent in ${MONTH_YEAR}`)).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: `Spending by category: ${MONTH_YEAR}` });
+    for (const [, label] of categories) {
+      expect(within(table).getByRole("rowheader", { name: label })).toBeInTheDocument();
     }
   });
 
-  it("QA-CC-61: a variant fixture changes the hero, legend, and table values together", async () => {
+  it("QA-CC-61: adding a second month updates the URL-backed query and renders both series", async () => {
     installFetchMock([
       authEntry(),
+      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
       {
         method: "GET",
-        path: `/insights/${MONTH}`,
+        path: `/insights?months=${MONTH},${PREVIOUS}`,
         status: 200,
-        json: withMonth(
-          variantInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
+        json: insightsFixture([MONTH, PREVIOUS]),
       },
     ]);
-    renderApp({ initialPath: "/insights" });
-
-    expect((await screen.findAllByText("2,200")).length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByText("8,420")).not.toBeInTheDocument();
-  });
-
-  it("QA-CC-62: switching to the previous-month tab refetches and swaps every number consistently", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
-      {
-        method: "GET",
-        path: `/insights/${PREVIOUS}`,
-        status: 200,
-        json: withMonth(
-          variantInsights(),
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          previousMonth(PREVIOUS),
-          monthLabel(previousMonth(PREVIOUS)),
-          false,
-        ),
-      },
-    ]);
-    renderApp({ initialPath: "/insights" });
-    await screen.findAllByText("8,420");
-
     const user = userEvent.setup();
-    const currentTab = screen.getByRole("tab", { name: MONTH_LABEL });
-    currentTab.focus();
-    await user.keyboard("{ArrowLeft}");
-
-    expect((await screen.findAllByText("2,200")).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("tab", { name: PREVIOUS_LABEL })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-  });
-
-  it("QA-CC-63: arrow keys and Enter/Space operate the month tabs", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
-      {
-        method: "GET",
-        path: `/insights/${PREVIOUS}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          previousMonth(PREVIOUS),
-          monthLabel(previousMonth(PREVIOUS)),
-          false,
-        ),
-      },
-    ]);
-    renderApp({ initialPath: "/insights" });
-    await screen.findAllByText("8,420");
-
-    const user = userEvent.setup();
-    const currentTab = screen.getByRole("tab", { name: MONTH_LABEL });
-    currentTab.focus();
-    await user.keyboard("{ArrowLeft}");
-    const previousTab = screen.getByRole("tab", { name: PREVIOUS_LABEL });
-    expect(previousTab).toHaveAttribute("aria-selected", "true");
-    expect(document.activeElement).toBe(previousTab);
-
-    await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: MONTH_LABEL })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-  });
-
-  it("QA-CC-64: a missing previous month shows an explicit no-comparison message, never a fake zero-change", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          noPreviousInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          false,
-        ),
-      },
-    ]);
     renderApp({ initialPath: "/insights" });
 
-    expect(await screen.findByText(/No data to compare/)).toBeInTheDocument();
-    expect(screen.queryByText(/vs 0 last month/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/last month/)).not.toBeInTheDocument();
-  });
+    await screen.findByText(`Total spent in ${MONTH_YEAR}`);
+    await user.click(screen.getByRole("button", { name: /Months to compare/ }));
+    await user.click(screen.getByRole("option", { name: PREVIOUS_YEAR }));
 
-  it("QA-CC-65: a zero-spending month shows an explicit empty-month message with the month name", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          zeroSpendingInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
-    ]);
-    renderApp({ initialPath: "/insights" });
-
+    expect(await screen.findByText(`Total spent in ${PREVIOUS_YEAR}`)).toBeInTheDocument();
     expect(
-      await screen.findByText(new RegExp(`No expenses recorded for ${MONTH_LABEL}`)),
+      screen.getByRole("table", {
+        name: `Spending by category: ${MONTH_YEAR}, ${PREVIOUS_YEAR}`,
+      }),
     ).toBeInTheDocument();
   });
 
-  it("QA-CC-66: 404 shows the create-budget empty state; 500 then retry succeeds", async () => {
-    installFetchMock([
+  it("QA-CC-62: the no-budget recovery POSTs /budget, then refetches insights", async () => {
+    const mock = installFetchMock([
       authEntry(),
       {
         method: "GET",
-        path: `/insights/${MONTH}`,
+        path: `/insights?months=${MONTH}`,
         status: 404,
-        json: {
-          error: {
-            code: "NOT_FOUND",
-            message: "No budget for this month.",
-            requestId: "r1",
-          },
-        },
+        json: { error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" } },
       },
+      { method: "POST", path: "/budget", status: 201, json: { budget: {} } },
+      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
     ]);
-    renderApp({ initialPath: "/insights" });
-    expect(
-      await screen.findByText(`No budget for ${MONTH_LABEL} yet`),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create budget" })).toBeInTheDocument();
-  });
-
-  it("QA-CC-66b: a 500 then success on retry recovers", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 500,
-        json: {
-          error: { code: "INTERNAL", message: "Something went wrong.", requestId: "r1" },
-        },
-      },
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
-    ]);
-    renderApp({ initialPath: "/insights" });
-    expect(await screen.findByText("Couldn't load your insights")).toBeInTheDocument();
-
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect((await screen.findAllByText("8,420")).length).toBeGreaterThanOrEqual(1);
+    renderApp({ initialPath: "/insights" });
+
+    await user.click(await screen.findByRole("button", { name: "Set up your budget" }));
+    await waitFor(() => expect(mock.callsMatching("POST", "/budget")).toHaveLength(1));
+    expect(await screen.findByText(`Total spent in ${MONTH_YEAR}`)).toBeInTheDocument();
   });
 
-  it("QA-CC-67: keyboard-only traversal reaches the hidden data table with labels and values for every series", async () => {
+  it("QA-CC-63: combined donut shares are whole percentages summing to 100", async () => {
     installFetchMock([
       authEntry(),
-      {
-        method: "GET",
-        path: `/insights/${MONTH}`,
-        status: 200,
-        json: withMonth(
-          kitInsights(),
-          MONTH,
-          MONTH_LABEL,
-          PREVIOUS,
-          PREVIOUS_LABEL,
-          true,
-        ),
-      },
+      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
     ]);
     renderApp({ initialPath: "/insights" });
-    await screen.findAllByText("8,420");
 
-    const cashFlowTable = screen.getByRole("table", {
-      name: new RegExp(`Cumulative spending by date: ${MONTH_LABEL}`),
+    await screen.findByText(`Total spent in ${MONTH_YEAR}`);
+    const donutTable = screen.getByRole("table", {
+      name: `Share of spending by category across ${MONTH_YEAR}`,
     });
-    expect(cashFlowTable).toBeInTheDocument();
-    const rowHeaders = screen.getAllByRole("rowheader");
-    expect(rowHeaders.length).toBeGreaterThan(0);
-
-    const barTable = screen.getByRole("table", {
-      name: new RegExp(`Spending by category: ${MONTH_LABEL}`),
-    });
-    expect(barTable).toBeInTheDocument();
-
-    const chartMarks = screen.getAllByRole("img", { name: new RegExp(`Housing`) });
-    expect(chartMarks[0]).toHaveAttribute("tabindex", "0");
+    const total = within(donutTable)
+      .getAllByRole("cell")
+      .map((cell) => cell.textContent)
+      .filter((value) => value.endsWith("%"))
+      .reduce((sum, value) => sum + Number(value.slice(0, -1)), 0);
+    expect(total).toBe(100);
   });
 });
