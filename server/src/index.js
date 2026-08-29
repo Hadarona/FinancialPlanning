@@ -1,6 +1,7 @@
 import { loadConfig } from "./config.js";
 import { createApp } from "./app.js";
 
+// CI path-filter smoke test: server-only change.
 const config = loadConfig();
 const app = createApp(config);
 const server = app.listen(config.port, () => {
