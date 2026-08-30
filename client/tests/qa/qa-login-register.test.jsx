@@ -18,10 +18,10 @@ const MONTH = currentMonth();
 
 function budgetShellEntries() {
   return [
-    { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
+    { method: "GET", path: `/months/${MONTH}`, status: 200, json: kitBudget() },
     {
       method: "GET",
-      path: `/budgets/${MONTH}/transactions`,
+      path: `/months/${MONTH}/transactions`,
       status: 200,
       json: kitTransactions(),
     },
@@ -44,7 +44,7 @@ describe("qa-login-register", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     await waitFor(() => {
-      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+      expect(mock.callsMatching("GET", `/months/${MONTH}`).length).toBeGreaterThan(0);
     });
     const loginCalls = mock.callsMatching("POST", "/auth/login");
     expect(loginCalls).toHaveLength(1);
@@ -137,7 +137,7 @@ describe("qa-login-register", () => {
     // completion — including navigation and `setSubmitting(false)` — while
     // the environment is still alive, so nothing is left pending at teardown.
     await waitFor(() => {
-      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+      expect(mock.callsMatching("GET", `/months/${MONTH}`).length).toBeGreaterThan(0);
     });
     expect(mock.callsMatching("POST", "/auth/login")).toHaveLength(1);
   });
@@ -179,7 +179,7 @@ describe("qa-login-register", () => {
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => {
-      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+      expect(mock.callsMatching("GET", `/months/${MONTH}`).length).toBeGreaterThan(0);
     });
     expect(mock.callsMatching("POST", "/auth/register")).toHaveLength(1);
   });
@@ -242,7 +242,7 @@ describe("qa-login-register", () => {
     // instrumentation. Waiting for the post-login budget fetch guarantees
     // the promise has resolved and handleSubmit has fully completed first.
     await waitFor(() => {
-      expect(mock.callsMatching("GET", `/budgets/${MONTH}`).length).toBeGreaterThan(0);
+      expect(mock.callsMatching("GET", `/months/${MONTH}`).length).toBeGreaterThan(0);
     });
   });
 });

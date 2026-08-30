@@ -1,13 +1,12 @@
-// QA-CC-50..57: BudgetFormPage create/edit behavior.
+// QA-CC-50..53: in-place budget editing and no-budget recovery behavior.
 import { describe, it, expect } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderApp } from "./helpers/qaRender.jsx";
 import { installFetchMock } from "./helpers/qaFetch.js";
 import { meResponse } from "./fixtures/authFixtures.js";
-import { kitBudget } from "./fixtures/budgetFixtures.js";
+import { kitBudget, emptyTransactions } from "./fixtures/budgetFixtures.js";
 import { currentMonth } from "../../src/lib/dates.js";
-import { DEFAULT_CATEGORIES } from "../../src/lib/categories.js";
 
 const MONTH = currentMonth();
 
@@ -15,213 +14,146 @@ function authEntry() {
   return { method: "GET", path: "/auth/me", status: 200, json: meResponse() };
 }
 
-describe("qa-budget-form", () => {
-  it("QA-CC-50: typing income/plan values updates the live planned/available preview every keystroke", async () => {
-    installFetchMock([authEntry()]);
+function monthEntries(budget = kitBudget()) {
+  return [
+    { method: "GET", path: `/months/${MONTH}`, status: 200, json: budget },
+    {
+      method: "GET",
+      path: `/months/${MONTH}/transactions`,
+      status: 200,
+      json: emptyTransactions(),
+    },
+  ];
+}
+
+function withIncome(incomeMinor) {
+  const { budget } = kitBudget();
+  return {
+    budget: {
+      ...budget,
+      incomeMinor,
+      availableMinor: incomeMinor - budget.plannedMinor,
+    },
+  };
+}
+
+function withHousingPlan(plannedMinor) {
+  const { budget } = kitBudget();
+  const categories = budget.categories.map((category) =>
+    category.id === "housing"
+      ? {
+          ...category,
+          plannedMinor,
+          progressPercent: Math.round((category.actualMinor / plannedMinor) * 100),
+        }
+      : category,
+  );
+  const totalPlannedMinor = categories.reduce(
+    (total, category) => total + category.plannedMinor,
+    0,
+  );
+  return {
+    budget: {
+      ...budget,
+      categories,
+      plannedMinor: totalPlannedMinor,
+      availableMinor: budget.incomeMinor - totalPlannedMinor,
+    },
+  };
+}
+
+describe("qa-budget-flow", () => {
+  it("QA-CC-50: editing income through the live dialog PATCHes integer minor units and refreshes the summary", async () => {
+    const updatedBudget = withIncome(1500000);
+    const mock = installFetchMock([
+      authEntry(),
+      ...monthEntries(),
+      { method: "PATCH", path: "/budget", status: 200, json: updatedBudget },
+      ...monthEntries(updatedBudget),
+    ]);
     const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
+    renderApp();
 
-    await user.clear(screen.getByLabelText("Income"));
-    await user.type(screen.getByLabelText("Income"), "1000");
-    await user.clear(screen.getByLabelText("Housing"));
-    await user.type(screen.getByLabelText("Housing"), "300");
+    await user.click(await screen.findByRole("button", { name: "Edit income, current value 12,500" }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit income" });
+    const income = screen.getByLabelText("Income");
+    expect(income).toHaveValue("12500");
 
-    // Planned = 300 (housing) + defaults for the other four (1500+800+900+3000)=6200 -> 6500.
-    await waitFor(() => {
-      expect(document.querySelector(".plan-totals").textContent).toContain(
-        "Planned 6,500",
-      );
+    await user.clear(income);
+    await user.type(income, "15000");
+    expect(dialog).toHaveTextContent("Available 3,000");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(1));
+    expect(mock.callsMatching("PATCH", "/budget")[0].body).toEqual({ incomeMinor: 1500000 });
+    expect(await screen.findByText("Income updated")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit income, current value 15,000" })).toBeInTheDocument();
+  });
+
+  it("QA-CC-51: editing one category plan PATCHes only that category and refreshes its row", async () => {
+    const updatedBudget = withHousingPlan(450000);
+    const mock = installFetchMock([
+      authEntry(),
+      ...monthEntries(),
+      { method: "PATCH", path: "/budget", status: 200, json: updatedBudget },
+      ...monthEntries(updatedBudget),
+    ]);
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(
+      await screen.findByRole("button", { name: /Housing: 2,520 spent of 4,000 planned, 63%, edit planned amount/ }),
+    );
+    await screen.findByRole("dialog", { name: "Edit Housing plan" });
+    const plannedAmount = screen.getByLabelText("Planned amount");
+    await user.clear(plannedAmount);
+    await user.type(plannedAmount, "4500");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(1));
+    expect(mock.callsMatching("PATCH", "/budget")[0].body).toEqual({
+      categories: [{ id: "housing", plannedMinor: 450000 }],
     });
-    expect(document.querySelector(".plan-totals").textContent).toContain(
-      "Available -5,500",
-    );
+    expect(await screen.findByText("Housing plan updated")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Housing: 2,520 spent of 4,500 planned, 56%, edit planned amount/ })).toBeInTheDocument();
   });
 
-  it("QA-CC-51: over-allocating plans beyond income shows a warning but keeps Save enabled", async () => {
-    installFetchMock([authEntry()]);
+  it("QA-CC-52: invalid dialog input posts nothing, and Cancel closes the dialog without a change", async () => {
+    const mock = installFetchMock([authEntry(), ...monthEntries()]);
     const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
+    renderApp();
 
-    await user.clear(screen.getByLabelText("Income"));
-    await user.type(screen.getByLabelText("Income"), "1");
+    await user.click(await screen.findByRole("button", { name: "Edit income, current value 12,500" }));
+    const income = screen.getByLabelText("Income");
+    await user.clear(income);
+    await user.type(income, "invalid");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(
-      await screen.findByText("You've planned more than your income."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save budget" })).toBeEnabled();
+    expect(await screen.findByText("Enter a valid amount.")).toBeInTheDocument();
+    expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog", { name: "Edit income" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit income, current value 12,500" })).toBeInTheDocument();
   });
 
-  it("QA-CC-52: a valid create posts month + integer incomeMinor + exactly five {id,plannedMinor} entries", async () => {
+  it("QA-CC-53: the no-budget recovery action POSTs /budget and renders the refreshed month", async () => {
     const mock = installFetchMock([
       authEntry(),
-      { method: "POST", path: "/budgets", status: 201, json: kitBudget() },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
       {
         method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
-        status: 200,
-        json: { transactions: [], total: 0, limit: 50, offset: 0 },
+        path: `/months/${MONTH}`,
+        status: 404,
+        json: { error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" } },
       },
+      { method: "POST", path: "/budget", status: 201, json: kitBudget() },
+      ...monthEntries(),
     ]);
     const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
+    renderApp();
 
-    await user.click(screen.getByRole("button", { name: "Save budget" }));
-
-    await waitFor(() => expect(mock.callsMatching("POST", "/budgets")).toHaveLength(1));
-    const body = mock.callsMatching("POST", "/budgets")[0].body;
-    expect(body.month).toBe(MONTH);
-    expect(Number.isInteger(body.incomeMinor)).toBe(true);
-    expect(body.categories).toHaveLength(5);
-    expect(new Set(body.categories.map((c) => Object.keys(c).sort().join(",")))).toEqual(
-      new Set(["id,plannedMinor"]),
-    );
-    expect(new Set(body.categories.map((c) => c.id))).toEqual(
-      new Set(DEFAULT_CATEGORIES.map((c) => c.id)),
-    );
-    await screen.findByRole("heading", { name: "Budget" });
-  });
-
-  it("QA-CC-53: a 409 on create shows a recovery link to the existing month's budget", async () => {
-    installFetchMock([
-      authEntry(),
-      {
-        method: "POST",
-        path: "/budgets",
-        status: 409,
-        json: {
-          error: {
-            code: "CONFLICT",
-            message: "You already have a budget for this month.",
-            requestId: "r1",
-          },
-        },
-      },
-    ]);
-    const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
-    await user.click(screen.getByRole("button", { name: "Save budget" }));
-
-    const link = await screen.findByRole("link", { name: "View existing budget" });
-    expect(link).toHaveAttribute("href", `/budget?month=${MONTH}`);
-  });
-
-  it("QA-CC-54: invalid money text in income/plan fields shows field errors and posts nothing", async () => {
-    const mock = installFetchMock([authEntry()]);
-    const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
-
-    await user.clear(screen.getByLabelText("Income"));
-    await user.type(screen.getByLabelText("Income"), "abc");
-    await user.click(screen.getByRole("button", { name: "Save budget" }));
-
-    expect(await screen.findByText("Enter a valid income.")).toBeInTheDocument();
-    expect(mock.callsMatching("POST", "/budgets")).toHaveLength(0);
-  });
-
-  it("QA-CC-55: edit mode prefills from the loaded budget, saves via PATCH, and renders updated numbers", async () => {
-    const mock = installFetchMock([
-      authEntry(),
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
-      {
-        method: "PATCH",
-        path: `/budgets/${MONTH}`,
-        status: 200,
-        json: {
-          budget: {
-            ...kitBudget().budget,
-            incomeMinor: 1500000,
-            availableMinor: 1500000 - 1020000,
-          },
-        },
-      },
-      // BudgetPage's refetch-on-mount after navigating back must see the
-      // saved income, not the original prefill snapshot.
-      {
-        method: "GET",
-        path: `/budgets/${MONTH}`,
-        status: 200,
-        json: {
-          budget: {
-            ...kitBudget().budget,
-            incomeMinor: 1500000,
-            availableMinor: 1500000 - 1020000,
-          },
-        },
-      },
-      {
-        method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
-        status: 200,
-        json: { transactions: [], total: 0, limit: 50, offset: 0 },
-      },
-    ]);
-    const user = userEvent.setup();
-    renderApp({ initialPath: `/budget/${MONTH}/edit` });
-    await screen.findByRole("heading", { name: "Edit budget" });
-
-    expect(await screen.findByLabelText("Income")).toHaveValue("12500");
-    expect(screen.getByLabelText("Housing")).toHaveValue("4000");
-
-    await user.clear(screen.getByLabelText("Income"));
-    await user.type(screen.getByLabelText("Income"), "15000");
-    await user.click(screen.getByRole("button", { name: "Save budget" }));
-
-    await waitFor(() =>
-      expect(mock.callsMatching("PATCH", `/budgets/${MONTH}`)).toHaveLength(1),
-    );
-    expect(mock.callsMatching("PATCH", `/budgets/${MONTH}`)[0].body.incomeMinor).toBe(
-      1500000,
-    );
-    expect(await screen.findByText("15,000")).toBeInTheDocument();
-  });
-
-  it("QA-CC-56: navigating away from a dirty form blocks, Stay preserves values, and a saved form proceeds unprompted", async () => {
-    installFetchMock([
-      authEntry(),
-      { method: "POST", path: "/budgets", status: 201, json: kitBudget() },
-      { method: "GET", path: `/budgets/${MONTH}`, status: 200, json: kitBudget() },
-      {
-        method: "GET",
-        path: `/budgets/${MONTH}/transactions`,
-        status: 200,
-        json: { transactions: [], total: 0, limit: 50, offset: 0 },
-      },
-    ]);
-    const user = userEvent.setup();
-    const { router } = renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
-
-    await user.clear(screen.getByLabelText("Income"));
-    await user.type(screen.getByLabelText("Income"), "5000");
-
-    router.navigate(`/budget?month=${MONTH}`);
-    expect(await screen.findByText("Discard unsaved changes?")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Keep editing" }));
-    expect(screen.queryByText("Discard unsaved changes?")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Income")).toHaveValue("5000");
-
-    await user.click(screen.getByRole("button", { name: "Save budget" }));
-    await screen.findByRole("heading", { name: "Budget" });
-  });
-
-  it("QA-CC-57: the form always shows exactly the five fixed category rows with no add/remove control", async () => {
-    installFetchMock([authEntry()]);
-    renderApp({ initialPath: `/budget/new?month=${MONTH}` });
-    await screen.findByRole("heading", { name: "Create budget" });
-
-    for (const category of DEFAULT_CATEGORIES) {
-      expect(screen.getByLabelText(category.name)).toBeInTheDocument();
-    }
-    expect(
-      screen.queryByRole("button", { name: /add category/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Set up your budget" }));
+    await waitFor(() => expect(mock.callsMatching("POST", "/budget")).toHaveLength(1));
+    expect(await screen.findByText("12,500")).toBeInTheDocument();
+    expect(await screen.findByText("Budget created")).toBeInTheDocument();
   });
 });

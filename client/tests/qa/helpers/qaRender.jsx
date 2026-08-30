@@ -8,7 +8,6 @@ import { LoginPage } from "../../../src/pages/LoginPage.jsx";
 import { RegisterPage } from "../../../src/pages/RegisterPage.jsx";
 import { NotFoundPage } from "../../../src/pages/NotFoundPage.jsx";
 import { BudgetPage } from "../../../src/features/budget/BudgetPage.jsx";
-import { BudgetFormPage } from "../../../src/features/budget/BudgetFormPage.jsx";
 import { InsightsPage } from "../../../src/features/insights/InsightsPage.jsx";
 
 /** The real route tree (mirrors src/app/router.jsx) minus lazy-loading, so
@@ -26,8 +25,6 @@ export const DEFAULT_QA_ROUTES = [
     element: <ProtectedRoute />,
     children: [
       { path: "/budget", element: <BudgetPage /> },
-      { path: "/budget/new", element: <BudgetFormPage mode="create" /> },
-      { path: "/budget/:month/edit", element: <BudgetFormPage mode="edit" /> },
       { path: "/insights", element: <InsightsPage /> },
     ],
   },
