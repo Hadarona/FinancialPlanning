@@ -81,6 +81,14 @@ test("personal budgeting journey: plans, expenses, Excel preview, duplicate prot
   await page.setViewportSize({ width: 360, height: 780 });
   await page.getByRole("button", { name: "Switch to Hebrew", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator(".insights-charts .chart-plot > svg")).toHaveCount(3);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath("insights-hebrew-mobile.png"),
+    fullPage: true,
+  });
   await page.getByRole("link", { name: "החודש שלי", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "הוספת הוצאה", exact: true }),

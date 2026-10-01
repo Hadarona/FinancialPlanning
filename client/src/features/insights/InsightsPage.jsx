@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { t, categoryName } from "../../lib/locale.js";
+import { t, categoryName, language } from "../../lib/locale.js";
 import { monthYearLabel, monthLabel } from "../../lib/dates.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../../components/ui/AppHeader.jsx";
@@ -150,6 +150,14 @@ export function InsightsPage() {
         ...m,
         label: monthLabel(m.month),
         yearLabel: monthYearLabel(m.month),
+        cashFlow: {
+          ...m.cashFlow,
+          labels: m.cashFlow.labels.map((label) =>
+            language === "he"
+              ? `${label.split(" ").at(-1)} ${monthLabel(m.month)}`
+              : label,
+          ),
+        },
       })),
       categories: insightsQuery.data.insights.categories.map((c) => ({
         ...c,
