@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Budget Together</string>
+    <string name="server">Server</string>
+    <string name="connect_title">Your budget, together</string>
+    <string name="connect_help">Enter the secure address of your budgeting server. You only need to do this once on each phone.</string>
+    <string name="server_hint">https://your-server.ts.net</string>
+    <string name="connect">Connect</string>
+    <string name="invalid_url">Enter an HTTPS address without a path, password or query.</string>
+    <string name="offline">We cannot reach your budget. Check your connection and that your server is running.</string>
+    <string name="retry">Try again</string>
+    <string name="change_server">Changing the server signs you out of the current server.</string>
+</resources>

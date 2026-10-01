@@ -1,3 +1,5 @@
+import { t } from "../../lib/locale.js";
+import { currentMonth } from "../../lib/dates.js";
 import { useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Dialog } from "../../components/ui/Dialog.jsx";
@@ -15,7 +17,15 @@ import "./EditBudgetDialogs.css";
  * month's spending against the new plan, Cancel/Save. Reuses the proven
  * Dialog focus contract (trap, Esc, initial focus, focus return).
  */
-export function EditCategoryPlanDialog({ open, category, onClose, onSaved }) {
+export function EditCategoryPlanDialog({
+  open,
+  category,
+  onClose,
+  onSaved,
+  month,
+  revision,
+}) {
+  const [effectiveMonth, setEffectiveMonth] = useState(month ?? currentMonth());
   const [amount, setAmount] = useState("");
   const [fieldError, setFieldError] = useState("");
   const [formError, setFormError] = useState("");
@@ -24,10 +34,11 @@ export function EditCategoryPlanDialog({ open, category, onClose, onSaved }) {
   useEffect(() => {
     if (open && category) {
       setAmount(minorToInputValue(category.plannedMinor));
+      setEffectiveMonth(month ?? currentMonth());
       setFieldError("");
       setFormError("");
     }
-  }, [open, category]);
+  }, [open, category, month]);
 
   if (!category) {
     return null;
@@ -48,6 +59,8 @@ export function EditCategoryPlanDialog({ open, category, onClose, onSaved }) {
     setFormError("");
     try {
       await patchMutation.mutateAsync({
+        effectiveMonth,
+        revision,
         categories: [{ id: category.id, plannedMinor: parsedMinor }],
       });
       onSaved(category);
@@ -67,6 +80,15 @@ export function EditCategoryPlanDialog({ open, category, onClose, onSaved }) {
       title={copy.budget.editCategoryTitle(category.name)}
     >
       <form className="edit-budget-form" onSubmit={handleSubmit} noValidate>
+        <label>
+          {t("From this month onward", "מהחודש הזה והלאה")}
+          <input
+            type="month"
+            required
+            value={effectiveMonth}
+            onChange={(e) => setEffectiveMonth(e.target.value)}
+          />
+        </label>
         <TextInput
           label={copy.budget.plannedAmountLabel}
           inputMode="decimal"

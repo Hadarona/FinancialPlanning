@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
 import pg from "pg";
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -22,7 +22,11 @@ export async function migrate({ databaseUrl, schema = "public" } = {}) {
   }
   const client = new pg.Client({
     connectionString: databaseUrl,
-    ssl: isLocalHost(databaseUrl) ? undefined : { rejectUnauthorized: false },
+    ssl:
+      isLocalHost(databaseUrl) ||
+      new URL(databaseUrl).searchParams.get("sslmode") === "disable"
+        ? undefined
+        : { rejectUnauthorized: true },
   });
   await client.connect();
   try {
@@ -81,7 +85,11 @@ export async function dropSchema({ databaseUrl, schema }) {
   }
   const client = new pg.Client({
     connectionString: databaseUrl,
-    ssl: isLocalHost(databaseUrl) ? undefined : { rejectUnauthorized: false },
+    ssl:
+      isLocalHost(databaseUrl) ||
+      new URL(databaseUrl).searchParams.get("sslmode") === "disable"
+        ? undefined
+        : { rejectUnauthorized: true },
   });
   await client.connect();
   try {
@@ -91,7 +99,8 @@ export async function dropSchema({ databaseUrl, schema }) {
   }
 }
 
-const isMainModule = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isMainModule =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMainModule) {
   // Deferred import: loadConfig() must only run for the real CLI invocation,

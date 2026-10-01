@@ -269,13 +269,13 @@ describe("QA-SI: auth http", () => {
     const session = createSession(ctx.baseUrl);
     const month = "2026-07";
     const calls = [
-      ["GET", `/budgets/${month}`],
-      ["POST", "/budgets"],
-      ["PATCH", `/budgets/${month}`],
-      ["GET", `/budgets/${month}/transactions`],
-      ["POST", `/budgets/${month}/transactions`],
-      ["DELETE", `/budgets/${month}/transactions/${randomUUID()}`],
-      ["GET", `/insights/${month}`],
+      ["GET", `/months/${month}`],
+      ["POST", "/budget"],
+      ["PATCH", "/budget"],
+      ["GET", `/months/${month}/transactions`],
+      ["POST", `/months/${month}/transactions`],
+      ["DELETE", `/months/${month}/transactions/${randomUUID()}`],
+      ["GET", `/insights?months=${month}`],
     ];
     for (const [method, path] of calls) {
       const res = await session.request(path, {

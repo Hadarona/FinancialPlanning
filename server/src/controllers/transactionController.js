@@ -3,7 +3,7 @@ export function createTransactionController({ transactionService }) {
     async create(req, res, next) {
       try {
         const { transaction, existed } = await transactionService.createTransaction(
-          req.user.id,
+          req.budgetOwnerId ?? req.user.id,
           req.params.month,
           req.body,
         );
@@ -18,7 +18,7 @@ export function createTransactionController({ transactionService }) {
     async remove(req, res, next) {
       try {
         await transactionService.deleteTransaction(
-          req.user.id,
+          req.budgetOwnerId ?? req.user.id,
           req.params.month,
           req.params.id,
         );
@@ -31,7 +31,7 @@ export function createTransactionController({ transactionService }) {
     async list(req, res, next) {
       try {
         const result = await transactionService.listTransactions(
-          req.user.id,
+          req.budgetOwnerId ?? req.user.id,
           req.params.month,
           req.validatedQuery,
         );

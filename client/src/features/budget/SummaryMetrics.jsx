@@ -18,6 +18,7 @@ export function SummaryMetrics({
   plannedMinor,
   availableMinor,
   onEditIncome,
+  readOnly = false,
 }) {
   const overAllocated = availableMinor < 0;
 
@@ -33,6 +34,7 @@ export function SummaryMetrics({
               type="button"
               className="summary-metric-edit-button"
               aria-label={copy.budget.editIncomeAria(formatMoney(incomeMinor))}
+              disabled={readOnly}
               onClick={onEditIncome}
             >
               {formatMoney(incomeMinor)}

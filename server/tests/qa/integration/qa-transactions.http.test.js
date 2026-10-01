@@ -31,11 +31,11 @@ describe("QA-SI: transactions http", () => {
   }
 
   async function seedBudget(session, month = "2026-07") {
-    const res = await session.request("/budgets", {
-      method: "POST",
+    const res = await session.request("/budget", {
+      method: "PATCH",
       body: kitBudgetPayload(month),
     });
-    return mustJson(res, 201);
+    return mustJson(res, 200);
   }
 
   it(
@@ -43,9 +43,9 @@ describe("QA-SI: transactions http", () => {
     async () => {
       const session = await freshUserSession();
       await seedBudget(session, "2026-07");
-      const before = await mustJson(await session.request("/budgets/2026-07"), 200);
+      const before = await mustJson(await session.request("/months/2026-07"), 200);
 
-      const createRes = await session.request("/budgets/2026-07/transactions", {
+      const createRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({
           month: "2026-07",
@@ -66,7 +66,7 @@ describe("QA-SI: transactions http", () => {
       expect(transaction.occurredOn).toBe("2026-07-10");
       expect(transaction.note).toBe("weekly shop");
 
-      const after = await mustJson(await session.request("/budgets/2026-07"), 200);
+      const after = await mustJson(await session.request("/months/2026-07"), 200);
       const groceriesBefore = before.budget.categories.find((c) => c.id === "groceries");
       const groceriesAfter = after.budget.categories.find((c) => c.id === "groceries");
       expect(groceriesAfter.actualMinor).toBe(groceriesBefore.actualMinor + 4250);
@@ -76,7 +76,7 @@ describe("QA-SI: transactions http", () => {
       );
       expect(groceriesAfter.progressPercent).toBe(expectedProgress);
 
-      const listRes = await session.request("/budgets/2026-07/transactions");
+      const listRes = await session.request("/months/2026-07/transactions");
       const listBody = await mustJson(listRes, 200);
       expect(listBody.total).toBe(1);
       expect(listBody.transactions).toHaveLength(1);
@@ -89,21 +89,21 @@ describe("QA-SI: transactions http", () => {
     async () => {
       const session = await freshUserSession();
       await seedBudget(session, "2026-07");
-      const snapshot = await mustJson(await session.request("/budgets/2026-07"), 200);
+      const snapshot = await mustJson(await session.request("/months/2026-07"), 200);
 
-      const createRes = await session.request("/budgets/2026-07/transactions", {
+      const createRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", amountMinor: 5000 }),
       });
       const { transaction } = await mustJson(createRes, 201);
 
       const deleteRes = await session.request(
-        `/budgets/2026-07/transactions/${transaction.id}`,
+        `/months/2026-07/transactions/${transaction.id}`,
         { method: "DELETE" },
       );
       expect(deleteRes.status).toBe(204);
 
-      const after = await mustJson(await session.request("/budgets/2026-07"), 200);
+      const after = await mustJson(await session.request("/months/2026-07"), 200);
       expect(after).toEqual(snapshot);
     },
     SLOW_TEST_TIMEOUT,
@@ -116,7 +116,7 @@ describe("QA-SI: transactions http", () => {
       await seedBudget(session, "2026-07");
       let expectedTotal = 0;
       for (let i = 0; i < 10; i += 1) {
-        await session.request("/budgets/2026-07/transactions", {
+        await session.request("/months/2026-07/transactions", {
           method: "POST",
           body: expensePayload({
             month: "2026-07",
@@ -127,7 +127,7 @@ describe("QA-SI: transactions http", () => {
         expectedTotal += 10;
       }
       for (let i = 0; i < 3; i += 1) {
-        await session.request("/budgets/2026-07/transactions", {
+        await session.request("/months/2026-07/transactions", {
           method: "POST",
           body: expensePayload({
             month: "2026-07",
@@ -137,7 +137,7 @@ describe("QA-SI: transactions http", () => {
         });
         expectedTotal += 3333;
       }
-      const bigRes = await session.request("/budgets/2026-07/transactions", {
+      const bigRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({
           month: "2026-07",
@@ -149,7 +149,7 @@ describe("QA-SI: transactions http", () => {
       expectedTotal += 99999999;
 
       expect(expectedTotal).toBe(100 + 9999 + 99999999);
-      const body = await mustJson(await session.request("/budgets/2026-07"), 200);
+      const body = await mustJson(await session.request("/months/2026-07"), 200);
       const housing = body.budget.categories.find((c) => c.id === "housing");
       expect(housing.actualMinor).toBe(expectedTotal);
       expect(Number.isInteger(housing.actualMinor)).toBe(true);
@@ -173,20 +173,20 @@ describe("QA-SI: transactions http", () => {
         [{ note: "n".repeat(201) }, "note"],
       ];
       for (const [overrides] of cases) {
-        const res = await session.request("/budgets/2026-07/transactions", {
+        const res = await session.request("/months/2026-07/transactions", {
           method: "POST",
           body: expensePayload({ month: "2026-07", ...overrides }),
         });
         expect(res.status).toBe(400);
       }
-      const unknownKeyRes = await session.request("/budgets/2026-07/transactions", {
+      const unknownKeyRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: { ...expensePayload({ month: "2026-07" }), unknownKey: 1 },
       });
       expect(unknownKeyRes.status).toBe(400);
 
       const listBody = await mustJson(
-        await session.request("/budgets/2026-07/transactions"),
+        await session.request("/months/2026-07/transactions"),
         200,
       );
       expect(listBody.total).toBe(0);
@@ -200,19 +200,19 @@ describe("QA-SI: transactions http", () => {
       const session = await freshUserSession();
       await seedBudget(session, "2026-07");
 
-      const firstDay = await session.request("/budgets/2026-07/transactions", {
+      const firstDay = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", occurredOn: "2026-07-01" }),
       });
       expect(firstDay.status).toBe(201);
-      const lastDay = await session.request("/budgets/2026-07/transactions", {
+      const lastDay = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", occurredOn: "2026-07-31" }),
       });
       expect(lastDay.status).toBe(201);
 
       for (const occurredOn of ["2026-06-30", "2026-08-01", "2026-07-32"]) {
-        const res = await session.request("/budgets/2026-07/transactions", {
+        const res = await session.request("/months/2026-07/transactions", {
           method: "POST",
           body: expensePayload({ month: "2026-07", occurredOn }),
         });
@@ -232,13 +232,13 @@ describe("QA-SI: transactions http", () => {
       const clientRequestId = randomUUID();
       const body = expensePayload({ month: "2026-07", clientRequestId });
 
-      const firstRes = await session.request("/budgets/2026-07/transactions", {
+      const firstRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body,
       });
       const firstBody = await mustJson(firstRes, 201);
 
-      const secondRes = await session.request("/budgets/2026-07/transactions", {
+      const secondRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body,
       });
@@ -246,7 +246,7 @@ describe("QA-SI: transactions http", () => {
       expect(secondBody.transaction.id).toBe(firstBody.transaction.id);
 
       const listBody = await mustJson(
-        await session.request("/budgets/2026-07/transactions"),
+        await session.request("/months/2026-07/transactions"),
         200,
       );
       expect(listBody.total).toBe(1);
@@ -267,8 +267,8 @@ describe("QA-SI: transactions http", () => {
       });
 
       const [resA, resB] = await Promise.all([
-        session.request("/budgets/2026-07/transactions", { method: "POST", body }),
-        session.request("/budgets/2026-07/transactions", { method: "POST", body }),
+        session.request("/months/2026-07/transactions", { method: "POST", body }),
+        session.request("/months/2026-07/transactions", { method: "POST", body }),
       ]);
       const statuses = [resA.status, resB.status].sort();
       expect(statuses[0]).toBeLessThan(300);
@@ -278,7 +278,7 @@ describe("QA-SI: transactions http", () => {
       expect(bodyA.transaction.id).toBe(bodyB.transaction.id);
 
       const listBody = await mustJson(
-        await session.request("/budgets/2026-07/transactions"),
+        await session.request("/months/2026-07/transactions"),
         200,
       );
       expect(listBody.total).toBe(1);
@@ -299,13 +299,13 @@ describe("QA-SI: transactions http", () => {
         "2026-07-20",
       ];
       for (const occurredOn of dates) {
-        await session.request("/budgets/2026-07/transactions", {
+        await session.request("/months/2026-07/transactions", {
           method: "POST",
           body: expensePayload({ month: "2026-07", occurredOn }),
         });
       }
       const full = await mustJson(
-        await session.request("/budgets/2026-07/transactions?limit=200&offset=0"),
+        await session.request("/months/2026-07/transactions?limit=200&offset=0"),
         200,
       );
       expect(full.total).toBe(5);
@@ -317,15 +317,15 @@ describe("QA-SI: transactions http", () => {
       expect(full.transactions.map((t) => t.id)).toEqual(expectedOrder.map((t) => t.id));
 
       const window1 = await mustJson(
-        await session.request("/budgets/2026-07/transactions?limit=2&offset=0"),
+        await session.request("/months/2026-07/transactions?limit=2&offset=0"),
         200,
       );
       const window2 = await mustJson(
-        await session.request("/budgets/2026-07/transactions?limit=2&offset=2"),
+        await session.request("/months/2026-07/transactions?limit=2&offset=2"),
         200,
       );
       const window3 = await mustJson(
-        await session.request("/budgets/2026-07/transactions?limit=2&offset=4"),
+        await session.request("/months/2026-07/transactions?limit=2&offset=4"),
         200,
       );
       expect(window1.total).toBe(5);
@@ -338,11 +338,11 @@ describe("QA-SI: transactions http", () => {
       ];
       expect(partitioned.map((t) => t.id)).toEqual(full.transactions.map((t) => t.id));
 
-      const tooLarge = await session.request("/budgets/2026-07/transactions?limit=201");
+      const tooLarge = await session.request("/months/2026-07/transactions?limit=201");
       expect(tooLarge.status).toBe(400);
 
       const defaults = await mustJson(
-        await session.request("/budgets/2026-07/transactions"),
+        await session.request("/months/2026-07/transactions"),
         200,
       );
       expect(defaults.limit).toBe(50);
@@ -358,12 +358,12 @@ describe("QA-SI: transactions http", () => {
       await seedBudget(session, "2026-07");
 
       const missingRes = await session.request(
-        `/budgets/2026-07/transactions/${randomUUID()}`,
+        `/months/2026-07/transactions/${randomUUID()}`,
         { method: "DELETE" },
       );
       const missingBody = await mustJson(missingRes, 404);
 
-      const malformedRes = await session.request("/budgets/2026-07/transactions/abc", {
+      const malformedRes = await session.request("/months/2026-07/transactions/abc", {
         method: "DELETE",
       });
       const malformedBody = await mustJson(malformedRes, 404);
@@ -380,28 +380,28 @@ describe("QA-SI: transactions http", () => {
     async () => {
       const userA = await freshUserSession();
       await seedBudget(userA, "2026-07");
-      const createRes = await userA.request("/budgets/2026-07/transactions", {
+      const createRes = await userA.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07" }),
       });
       const { transaction } = await mustJson(createRes, 201);
 
       const userB = await freshUserSession();
-      const createAsB = await userB.request("/budgets/2026-07/transactions", {
+      const createAsB = await userB.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07" }),
       });
-      expect(createAsB.status).toBe(404);
+      expect(createAsB.status).toBe(201); // Own recurring budget; never writes user A's data.
 
       await seedBudget(userB, "2026-07");
       const deleteAsB = await userB.request(
-        `/budgets/2026-07/transactions/${transaction.id}`,
+        `/months/2026-07/transactions/${transaction.id}`,
         { method: "DELETE" },
       );
       expect(deleteAsB.status).toBe(404);
 
       const listAsA = await mustJson(
-        await userA.request("/budgets/2026-07/transactions"),
+        await userA.request("/months/2026-07/transactions"),
         200,
       );
       expect(listAsA.transactions.some((t) => t.id === transaction.id)).toBe(true);
@@ -410,15 +410,15 @@ describe("QA-SI: transactions http", () => {
   );
 
   it(
-    "QA-SI-50: an expense for a month with no budget is rejected as not found",
+    "QA-SI-50: the recurring budget supports months without prior expenses",
     async () => {
       const session = await freshUserSession();
-      const res = await session.request("/budgets/2026-05/transactions", {
+      const res = await session.request("/months/2026-05/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-05" }),
       });
-      const body = await mustJson(res, 404);
-      expect(body.error.code).toBe("NOT_FOUND");
+      const body = await mustJson(res, 201);
+      expect(body.transaction.amountMinor).toBe(4250);
     },
     SLOW_TEST_TIMEOUT,
   );
@@ -429,7 +429,7 @@ describe("QA-SI: transactions http", () => {
       const session = await freshUserSession();
       await seedBudget(session, "2026-07");
       const marker = `QA-NOTE-${randomUUID().slice(0, 8)}`;
-      await session.request("/budgets/2026-07/transactions", {
+      await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", amountMinor: 123456, note: marker }),
       });

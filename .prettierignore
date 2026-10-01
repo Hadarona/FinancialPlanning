@@ -20,3 +20,8 @@ CLAUDE.md
 # Must remain byte-identical to docs/design/figma-kit/tokens/design-tokens.css
 # (D-FND-D1 verbatim-copy invariant).
 client/src/styles/tokens.css
+
+android/.gradle/
+android/**/build/
+server-test-results.json
+client-test-results.json

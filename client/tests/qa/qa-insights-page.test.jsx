@@ -5,7 +5,12 @@ import userEvent from "@testing-library/user-event";
 import { renderApp } from "./helpers/qaRender.jsx";
 import { installFetchMock } from "./helpers/qaFetch.js";
 import { meResponse } from "./fixtures/authFixtures.js";
-import { currentMonth, previousMonth, monthYearLabel, shortDateLabel } from "../../src/lib/dates.js";
+import {
+  currentMonth,
+  previousMonth,
+  monthYearLabel,
+  shortDateLabel,
+} from "../../src/lib/dates.js";
 
 const MONTH = currentMonth();
 const PREVIOUS = previousMonth(MONTH);
@@ -27,7 +32,9 @@ function authEntry() {
 
 function insightsFixture(months) {
   const totalsByMonth = months.map((month, monthIndex) =>
-    categories.map(([, , , total]) => (monthIndex === 0 ? total : Math.round(total * 1.09))),
+    categories.map(([, , , total]) =>
+      monthIndex === 0 ? total : Math.round(total * 1.09),
+    ),
   );
   const combinedByCategory = categories.map((_, index) =>
     totalsByMonth.reduce((sum, values) => sum + values[index], 0),
@@ -46,7 +53,10 @@ function insightsFixture(months) {
       months: months.map((month, index) => {
         const totalMinor = totalsByMonth[index].reduce((sum, value) => sum + value, 0);
         const step = Math.floor(totalMinor / 7);
-        const cumulativeMinor = Array.from({ length: 7 }, (_, point) => step * (point + 1));
+        const cumulativeMinor = Array.from(
+          { length: 7 },
+          (_, point) => step * (point + 1),
+        );
         cumulativeMinor[6] = totalMinor;
         return {
           month,
@@ -78,12 +88,19 @@ describe("qa-insights-page", () => {
   it("QA-CC-60: the default current-month selection fetches the multi-month endpoint and renders all seven categories", async () => {
     installFetchMock([
       authEntry(),
-      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
+      {
+        method: "GET",
+        path: `/insights?months=${MONTH}`,
+        status: 200,
+        json: insightsFixture([MONTH]),
+      },
     ]);
     renderApp({ initialPath: "/insights" });
 
     expect(await screen.findByText(`Total spent in ${MONTH_YEAR}`)).toBeInTheDocument();
-    const table = screen.getByRole("table", { name: `Spending by category: ${MONTH_YEAR}` });
+    const table = screen.getByRole("table", {
+      name: `Spending by category: ${MONTH_YEAR}`,
+    });
     for (const [, label] of categories) {
       expect(within(table).getByRole("rowheader", { name: label })).toBeInTheDocument();
     }
@@ -92,7 +109,12 @@ describe("qa-insights-page", () => {
   it("QA-CC-61: adding a second month updates the URL-backed query and renders both series", async () => {
     installFetchMock([
       authEntry(),
-      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
+      {
+        method: "GET",
+        path: `/insights?months=${MONTH}`,
+        status: 200,
+        json: insightsFixture([MONTH]),
+      },
       {
         method: "GET",
         path: `/insights?months=${MONTH},${PREVIOUS}`,
@@ -107,7 +129,9 @@ describe("qa-insights-page", () => {
     await user.click(screen.getByRole("button", { name: /Months to compare/ }));
     await user.click(screen.getByRole("option", { name: PREVIOUS_YEAR }));
 
-    expect(await screen.findByText(`Total spent in ${PREVIOUS_YEAR}`)).toBeInTheDocument();
+    expect(
+      await screen.findByText(`Total spent in ${PREVIOUS_YEAR}`),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("table", {
         name: `Spending by category: ${MONTH_YEAR}, ${PREVIOUS_YEAR}`,
@@ -122,10 +146,17 @@ describe("qa-insights-page", () => {
         method: "GET",
         path: `/insights?months=${MONTH}`,
         status: 404,
-        json: { error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" } },
+        json: {
+          error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" },
+        },
       },
       { method: "POST", path: "/budget", status: 201, json: { budget: {} } },
-      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
+      {
+        method: "GET",
+        path: `/insights?months=${MONTH}`,
+        status: 200,
+        json: insightsFixture([MONTH]),
+      },
     ]);
     const user = userEvent.setup();
     renderApp({ initialPath: "/insights" });
@@ -138,7 +169,12 @@ describe("qa-insights-page", () => {
   it("QA-CC-63: combined donut shares are whole percentages summing to 100", async () => {
     installFetchMock([
       authEntry(),
-      { method: "GET", path: `/insights?months=${MONTH}`, status: 200, json: insightsFixture([MONTH]) },
+      {
+        method: "GET",
+        path: `/insights?months=${MONTH}`,
+        status: 200,
+        json: insightsFixture([MONTH]),
+      },
     ]);
     renderApp({ initialPath: "/insights" });
 

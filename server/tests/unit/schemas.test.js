@@ -52,7 +52,7 @@ describe("loginSchema", () => {
     const result = loginSchema.safeParse({
       email: "a@b.com",
       password: "anything",
-      rememberMe: true,
+      unknownSetting: true,
     });
     expect(result.success).toBe(false);
   });
@@ -79,23 +79,28 @@ describe("emptyBodySchema (POST /budget takes no body, CR1-2)", () => {
   });
 });
 
-describe("patchBudgetSchema (seven fixed categories, CR2-3)", () => {
+describe("patchBudgetSchema (editable categories and effective month)", () => {
   it("accepts income only, categories only, or both", () => {
-    expect(patchBudgetSchema.safeParse({ incomeMinor: 1250000 }).success).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({ effectiveMonth: "2026-07", incomeMinor: 1250000 })
+        .success,
+    ).toBe(true);
     expect(
       patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
         categories: [{ id: "subscriptions", plannedMinor: 70000 }],
       }).success,
     ).toBe(true);
     expect(
       patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
         incomeMinor: 1300000,
         categories: [{ id: "utilities", plannedMinor: 90000 }],
       }).success,
     ).toBe(true);
   });
 
-  it("accepts all seven unique categories and rejects an eighth/duplicate", () => {
+  it("accepts unique categories and rejects duplicates", () => {
     const seven = [
       "housing",
       "groceries",
@@ -105,14 +110,19 @@ describe("patchBudgetSchema (seven fixed categories, CR2-3)", () => {
       "subscriptions",
       "utilities",
     ].map((id) => ({ id, plannedMinor: 1000 }));
-    expect(patchBudgetSchema.safeParse({ categories: seven }).success).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({ effectiveMonth: "2026-07", categories: seven })
+        .success,
+    ).toBe(true);
     expect(
       patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
         categories: [...seven, { id: "housing", plannedMinor: 1 }],
       }).success,
     ).toBe(false);
     expect(
       patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
         categories: [
           { id: "housing", plannedMinor: 1 },
           { id: "housing", plannedMinor: 2 },
@@ -121,13 +131,20 @@ describe("patchBudgetSchema (seven fixed categories, CR2-3)", () => {
     ).toBe(false);
   });
 
-  it("rejects unknown category ids, empty patches, and unknown keys", () => {
+  it("rejects malformed category ids, empty patches, and unknown keys", () => {
     expect(
-      patchBudgetSchema.safeParse({ categories: [{ id: "pets", plannedMinor: 1 }] })
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        categories: [{ id: "invalid id!", plannedMinor: 1 }],
+      }).success,
+    ).toBe(false);
+    expect(patchBudgetSchema.safeParse({ effectiveMonth: "2026-07" }).success).toBe(
+      false,
+    );
+    expect(
+      patchBudgetSchema.safeParse({ effectiveMonth: "2026-07", month: "2026-07" })
         .success,
     ).toBe(false);
-    expect(patchBudgetSchema.safeParse({}).success).toBe(false);
-    expect(patchBudgetSchema.safeParse({ month: "2026-07" }).success).toBe(false);
   });
 });
 

@@ -4,12 +4,16 @@ import { validate } from "../middleware/validate.js";
 import { createBudgetController } from "../controllers/budgetController.js";
 
 /** Mounted at /budget — the user's single recurring budget (CR-001). */
-export function createBudgetRoutes({ budgetService, requireAuth }) {
+export function createBudgetRoutes({
+  budgetService,
+  requireAuth,
+  provisionAuth = requireAuth,
+}) {
   const router = Router();
   const controller = createBudgetController({ budgetService });
 
   router.get("/", requireAuth, controller.getBudget);
-  router.post("/", requireAuth, validate(emptyBodySchema), controller.createBudget);
+  router.post("/", provisionAuth, validate(emptyBodySchema), controller.createBudget);
   router.patch("/", requireAuth, validate(patchBudgetSchema), controller.patchBudget);
 
   return router;

@@ -13,6 +13,9 @@ export const KIT_PLANS = {
   transport: 80000,
   fun: 90000,
   savings: 300000,
+  subscriptions: 60000,
+  utilities: 120000,
+  "one-off": 0,
 };
 export const KIT_PLANNED_MINOR = Object.values(KIT_PLANS).reduce((a, b) => a + b, 0);
 export const KIT_AVAILABLE_MINOR = KIT_INCOME_MINOR - KIT_PLANNED_MINOR;
@@ -31,7 +34,7 @@ export function kitBudgetPayload(
   { incomeMinor = KIT_INCOME_MINOR, plans = {} } = {},
 ) {
   return {
-    month,
+    effectiveMonth: month,
     incomeMinor,
     categories: kitCategoriesPayload(plans),
   };

@@ -14,6 +14,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   LOG_DIR: z.string().min(1).default(path.join(repoRoot, "logs")),
+  COOKIE_SECURE: z.enum(["true", "false"]).optional(),
   CORS_ORIGIN: z.string().min(1).default("http://localhost:5173"),
   DB_SCHEMA: z.string().min(1).default("public"),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(10),
@@ -49,6 +50,10 @@ function loadConfig(rawEnv = process.env) {
     port: env.PORT,
     nodeEnv: env.NODE_ENV,
     isProduction: env.NODE_ENV === "production",
+    cookieSecure:
+      env.COOKIE_SECURE === undefined
+        ? env.NODE_ENV === "production"
+        : env.COOKIE_SECURE === "true",
     isTest: env.NODE_ENV === "test",
     logDir: env.LOG_DIR,
     corsOrigin: env.CORS_ORIGIN,

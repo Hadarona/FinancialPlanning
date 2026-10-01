@@ -73,11 +73,11 @@ export function donutSegments(values) {
  * `[{ x, y }]` with x from 0 to `width` and y measured from the top
  * (`height` = zero line, 0 = axis max). A single point centers on x.
  */
-export function linePoints(values, { max, width, height }) {
+export function linePoints(values, { max, min = 0, width, height }) {
   const safeMax = max > 0 ? max : 1;
   return values.map((value, index) => ({
     x: values.length > 1 ? (index / (values.length - 1)) * width : width / 2,
-    y: height - (Math.min(value, safeMax) / safeMax) * height,
+    y: height - ((Math.min(value, safeMax) - min) / (safeMax - min)) * height,
   }));
 }
 

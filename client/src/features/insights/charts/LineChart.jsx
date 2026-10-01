@@ -55,8 +55,29 @@ export function LineChart({ months }) {
 
   const allValues = months.flatMap((entry) => entry.cashFlow.cumulativeMinor);
   const scale = axisScale(Math.max(0, ...allValues));
+  const minimum = Math.min(0, ...allValues);
+  const axisMinimum = minimum < 0 ? -axisScale(-minimum).max : 0;
+  const ticks =
+    axisMinimum < 0
+      ? [
+          ...axisScale(-axisMinimum)
+            .ticks.filter((v) => v > 0)
+            .map((v) => -v)
+            .reverse(),
+          ...scale.ticks,
+        ]
+      : scale.ticks;
+  const yFor = (value) =>
+    MARGIN.top +
+    PLOT_HEIGHT -
+    ((value - axisMinimum) / (scale.max - axisMinimum)) * PLOT_HEIGHT;
 
-  const plotOptions = { max: scale.max, width: plotWidth, height: PLOT_HEIGHT };
+  const plotOptions = {
+    max: scale.max,
+    min: axisMinimum,
+    width: plotWidth,
+    height: PLOT_HEIGHT,
+  };
   const seriesPoints = months.map((entry) =>
     linePoints(entry.cashFlow.cumulativeMinor, plotOptions),
   );
@@ -86,7 +107,7 @@ export function LineChart({ months }) {
     return seriesPoints[slotIndex].map((point, index) => {
       const text = `${entry.cashFlow.labels[index]} — ${entry.yearLabel}: ${formatMoney(
         entry.cashFlow.cumulativeMinor[index],
-      )} USD`;
+      )} ILS`;
       return (
         <circle
           key={`${entry.month}-${entry.cashFlow.labels[index]}`}
@@ -116,8 +137,8 @@ export function LineChart({ months }) {
           role="presentation"
           focusable="false"
         >
-          {scale.ticks.map((tick) => {
-            const y = MARGIN.top + PLOT_HEIGHT - (tick / scale.max) * PLOT_HEIGHT;
+          {ticks.map((tick) => {
+            const y = yFor(tick);
             return (
               <g key={tick}>
                 <line

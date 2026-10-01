@@ -14,3 +14,16 @@ Thumbs.db
 # Runtime-only workflow evidence that can be large.
 .workflow/**/evidence/*.webm
 .workflow/**/evidence/*.trace.zip
+
+# Android local SDK, credentials and generated files
+android/.gradle/
+android/**/build/
+android/local.properties
+*.keystore
+*.jks
+*-test-results.json
+
+test-results/
+playwright-report/
+
+backups/

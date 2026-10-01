@@ -4,7 +4,7 @@ import {
   registerSchema,
   loginSchema,
   monthSchema,
-  createBudgetSchema,
+  emptyBodySchema,
   patchBudgetSchema,
   createTransactionSchema,
   listTransactionsQuerySchema,
@@ -75,88 +75,94 @@ describe("QA-SU-24: monthSchema", () => {
 });
 
 describe("QA-SU-25..28: budget body schemas", () => {
-  it("QA-SU-25: createBudgetSchema rejects 4 categories, 6 categories, a duplicate id, and an unknown id", () => {
-    const base = { month: "2026-07", incomeMinor: 1250000 };
-    const fourCategories = kitCategoriesPayload().slice(0, 4);
+  it("QA-SU-25: budget creation is default-only; dated edits accept custom categories", () => {
+    expect(emptyBodySchema.safeParse({}).success).toBe(true);
+    expect(emptyBodySchema.safeParse({ incomeMinor: 1 }).success).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ ...base, categories: fourCategories }).success,
-    ).toBe(false);
-
-    const sixCategories = [...kitCategoriesPayload(), { id: "housing", plannedMinor: 1 }];
-    expect(
-      createBudgetSchema.safeParse({ ...base, categories: sixCategories }).success,
-    ).toBe(false);
-
-    const duplicateId = kitCategoriesPayload().slice(0, 4);
-    duplicateId.push({ id: duplicateId[0].id, plannedMinor: 1 });
-    expect(
-      createBudgetSchema.safeParse({ ...base, categories: duplicateId }).success,
-    ).toBe(false);
-
-    const unknownId = kitCategoriesPayload().slice(0, 4);
-    unknownId.push({ id: "phones", plannedMinor: 1 });
-    expect(createBudgetSchema.safeParse({ ...base, categories: unknownId }).success).toBe(
-      false,
-    );
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        categories: [{ id: "pets", name: "Pets", plannedMinor: 0 }],
+      }).success,
+    ).toBe(true);
+    expect(patchBudgetSchema.safeParse({ incomeMinor: 1 }).success).toBe(false);
   });
 
   it("QA-SU-26: plannedMinor rejects negative/fractional/string, accepts 0", () => {
-    const base = { month: "2026-07", incomeMinor: 1250000 };
+    const base = { effectiveMonth: "2026-07", incomeMinor: 1250000 };
     function withHousingPlanned(plannedMinor) {
       return kitCategoriesPayload().map((category) =>
         category.id === "housing" ? { ...category, plannedMinor } : category,
       );
     }
     expect(
-      createBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(-1) })
+      patchBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(-1) })
         .success,
     ).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(100.5) })
+      patchBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(100.5) })
         .success,
     ).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ ...base, categories: withHousingPlanned("100") })
+      patchBudgetSchema.safeParse({ ...base, categories: withHousingPlanned("100") })
         .success,
     ).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(0) })
-        .success,
+      patchBudgetSchema.safeParse({ ...base, categories: withHousingPlanned(0) }).success,
     ).toBe(true);
   });
 
   it("QA-SU-27: incomeMinor rejects negative/fractional, accepts 0", () => {
     const categories = kitCategoriesPayload();
     expect(
-      createBudgetSchema.safeParse({ month: "2026-07", incomeMinor: -1, categories })
-        .success,
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        incomeMinor: -1,
+        categories,
+      }).success,
     ).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ month: "2026-07", incomeMinor: 0.5, categories })
-        .success,
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        incomeMinor: 0.5,
+        categories,
+      }).success,
     ).toBe(false);
     expect(
-      createBudgetSchema.safeParse({ month: "2026-07", incomeMinor: 0, categories })
-        .success,
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        incomeMinor: 0,
+        categories,
+      }).success,
     ).toBe(true);
   });
 
   it("QA-SU-28: patchBudgetSchema rejects an empty body; allows income-only or a category subset; rejects 6/duplicate categories", () => {
     expect(patchBudgetSchema.safeParse({}).success).toBe(false);
-    expect(patchBudgetSchema.safeParse({ incomeMinor: 100 }).success).toBe(true);
     expect(
-      patchBudgetSchema.safeParse({ categories: [{ id: "housing", plannedMinor: 1 }] })
+      patchBudgetSchema.safeParse({ effectiveMonth: "2026-07", incomeMinor: 100 })
         .success,
     ).toBe(true);
+    expect(
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        categories: [{ id: "housing", plannedMinor: 1 }],
+      }).success,
+    ).toBe(true);
     const sixCategories = [...kitCategoriesPayload(), { id: "housing", plannedMinor: 1 }];
-    expect(patchBudgetSchema.safeParse({ categories: sixCategories }).success).toBe(
-      false,
-    );
+    expect(
+      patchBudgetSchema.safeParse({
+        effectiveMonth: "2026-07",
+        categories: sixCategories,
+      }).success,
+    ).toBe(false);
     const duplicateId = [
       { id: "housing", plannedMinor: 1 },
       { id: "housing", plannedMinor: 2 },
     ];
-    expect(patchBudgetSchema.safeParse({ categories: duplicateId }).success).toBe(false);
+    expect(
+      patchBudgetSchema.safeParse({ effectiveMonth: "2026-07", categories: duplicateId })
+        .success,
+    ).toBe(false);
   });
 });
 

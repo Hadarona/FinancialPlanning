@@ -35,16 +35,16 @@ describe("QA-SU: calc.js — summarizeBudget", () => {
   it("QA-SU-01: kit row with empty actuals recomputes planned/available/actual", () => {
     const result = summarizeBudget(kitBudgetRow(), {});
     expect(result.plannedMinor).toBe(KIT_PLANNED_MINOR);
-    expect(result.plannedMinor).toBe(1020000);
+    expect(result.plannedMinor).toBe(1200000);
     expect(result.availableMinor).toBe(KIT_AVAILABLE_MINOR);
-    expect(result.availableMinor).toBe(230000);
+    expect(result.availableMinor).toBe(50000);
     expect(result.actualMinor).toBe(0);
   });
 
   it("QA-SU-02: over-allocated income preserves a negative availableMinor", () => {
     const result = summarizeBudget(kitBudgetRow({ incomeMinor: 100000 }), {});
-    expect(result.plannedMinor).toBe(1020000);
-    expect(result.availableMinor).toBe(-920000);
+    expect(result.plannedMinor).toBe(1200000);
+    expect(result.availableMinor).toBe(-1100000);
   });
 
   it("QA-SU-03: progress is actual/planned, never planned/income", () => {
@@ -109,7 +109,7 @@ describe("QA-SU: calc.js — summarizeBudget", () => {
     const result = summarizeBudget(kitBudgetRow({ categories: reversed }), {});
     const orders = result.categories.map((category) => category.displayOrder);
     expect(orders).toEqual([...orders].sort((a, b) => a - b));
-    expect(orders).toEqual([1, 2, 3, 4, 5]);
+    expect(orders).toEqual([1, 2, 3, 4, 5, 6, 7, 99]);
   });
 
   it("QA-SU-08: actuals map with extra/missing keys — missing defaults to 0, aggregate ignores extras", () => {

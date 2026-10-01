@@ -189,7 +189,11 @@ describe("BudgetPage", () => {
     await user.type(input, "13000");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(apiClient.patch).toHaveBeenCalledWith("/budget", { incomeMinor: 1300000 });
+    expect(apiClient.patch).toHaveBeenCalledWith("/budget", {
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
+      revision: undefined,
+      incomeMinor: 1300000,
+    });
     expect(dialog).not.toBeInTheDocument();
     expect(await screen.findByText("Income updated")).toBeInTheDocument();
   });
@@ -214,6 +218,8 @@ describe("BudgetPage", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(apiClient.patch).toHaveBeenCalledWith("/budget", {
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
+      revision: undefined,
       categories: [{ id: "utilities", plannedMinor: 90000 }],
     });
     expect(await screen.findByText("Utilities plan updated")).toBeInTheDocument();
@@ -372,7 +378,9 @@ describe("BudgetPage", () => {
     const user = userEvent.setup();
 
     // Category icon → dialog with that category already selected.
-    await user.click(await screen.findByRole("button", { name: "Add Transport expense" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Add Transport expense" }),
+    );
     const dialog = await screen.findByRole("dialog", { name: "Add expense" });
     expect(within(dialog).getByRole("combobox")).toHaveValue("transport");
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));

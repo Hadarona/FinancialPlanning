@@ -64,6 +64,15 @@ export const DEFAULT_CATEGORIES = [
   },
 ];
 
+DEFAULT_CATEGORIES.push({
+  id: "one-off",
+  name: "One-off expenses",
+  icon: "Sparkles",
+  color: "coral",
+  displayOrder: 99,
+  plannedMinor: 0,
+});
+
 export const DEFAULT_CATEGORY_IDS = DEFAULT_CATEGORIES.map((category) => category.id);
 
 /** Default income (minor units) for auto-provisioned budgets: registration

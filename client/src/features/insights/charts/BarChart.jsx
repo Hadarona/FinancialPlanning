@@ -49,6 +49,22 @@ export function BarChart({ months, categories }) {
 
   const allValues = categories.flatMap((category) => category.totalsMinor);
   const scale = axisScale(Math.max(0, ...allValues));
+  const minimum = Math.min(0, ...allValues);
+  const axisMinimum = minimum < 0 ? -axisScale(-minimum).max : 0;
+  const ticks =
+    axisMinimum < 0
+      ? [
+          ...axisScale(-axisMinimum)
+            .ticks.filter((v) => v > 0)
+            .map((v) => -v)
+            .reverse(),
+          ...scale.ticks,
+        ]
+      : scale.ticks;
+  const yFor = (value) =>
+    MARGIN.top +
+    PLOT_HEIGHT -
+    ((value - axisMinimum) / (scale.max - axisMinimum)) * PLOT_HEIGHT;
 
   // Bars are computed from the measured width: never below 6px; the group
   // keeps a little side padding when space allows.
@@ -67,8 +83,8 @@ export function BarChart({ months, categories }) {
       groupStart +
       (groupWidth - groupContentWidth) / 2 +
       slotIndex * (barWidth + BAR_GAP);
-    const barHeight = (value / scale.max) * PLOT_HEIGHT;
-    const yTop = MARGIN.top + PLOT_HEIGHT - barHeight;
+    const barHeight = Math.abs(yFor(value) - yFor(0));
+    const yTop = Math.min(yFor(value), yFor(0));
     return { x, yTop, barHeight };
   }
 
@@ -131,8 +147,8 @@ export function BarChart({ months, categories }) {
             </pattern>
           </defs>
 
-          {scale.ticks.map((tick) => {
-            const y = MARGIN.top + PLOT_HEIGHT - (tick / scale.max) * PLOT_HEIGHT;
+          {ticks.map((tick) => {
+            const y = yFor(tick);
             return (
               <g key={tick}>
                 <line
@@ -162,7 +178,7 @@ export function BarChart({ months, categories }) {
                 {months.map((monthEntry, slotIndex) => {
                   const value = category.totalsMinor[slotIndex] ?? 0;
                   const geometry = barGeometry(value, slotIndex, groupIndex);
-                  const text = `${category.label} — ${monthEntry.yearLabel}: ${formatMoney(value)} USD`;
+                  const text = `${category.label} — ${monthEntry.yearLabel}: ${formatMoney(value)} ILS`;
                   return (
                     <path
                       key={monthEntry.month}

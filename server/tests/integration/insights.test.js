@@ -34,6 +34,7 @@ const SEVEN_IDS = [
   "savings",
   "subscriptions",
   "utilities",
+  "one-off",
 ];
 
 function uniqueEmail(prefix) {
@@ -129,10 +130,10 @@ describe("GET /insights?months= (CR-001 multi-month comparison)", () => {
     // Categories in display order (seven), totals aligned with months.
     expect(insights.categories.map((category) => category.id)).toEqual(SEVEN_IDS);
     expect(insights.categories.map((category) => category.totalsMinor[0])).toEqual([
-      323600, 136600, 84200, 92600, 117900, 15000, 72100,
+      323600, 136600, 84200, 92600, 117900, 15000, 72100, 0,
     ]);
     expect(insights.categories.map((category) => category.totalsMinor[1])).toEqual([
-      350000, 155000, 90000, 100000, 128000, 15000, 80000,
+      350000, 155000, 90000, 100000, 128000, 15000, 80000, 0,
     ]);
     for (const category of insights.categories) {
       expect(category.combinedMinor).toBe(

@@ -165,16 +165,16 @@ describe("QA-SI: error contract / security / logging http", () => {
       })();
 
       const monthRes = await session.request(
-        `/budgets/${encodeURIComponent("2026-07'--")}`,
+        `/months/${encodeURIComponent("2026-07'--")}`,
       );
       expect(monthRes.status).toBe(400);
 
-      await session.request("/budgets", {
-        method: "POST",
+      await session.request("/budget", {
+        method: "PATCH",
         body: kitBudgetPayload("2026-07"),
       });
       const injectionNote = "'; DROP TABLE transactions; --";
-      const txRes = await session.request("/budgets/2026-07/transactions", {
+      const txRes = await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", note: injectionNote }),
       });
@@ -182,7 +182,7 @@ describe("QA-SI: error contract / security / logging http", () => {
       expect(txBody.transaction.note).toBe(injectionNote);
 
       const deleteRes = await session.request(
-        `/budgets/2026-07/transactions/${encodeURIComponent("1 OR 1=1")}`,
+        `/months/2026-07/transactions/${encodeURIComponent("1 OR 1=1")}`,
         { method: "DELETE" },
       );
       expect(deleteRes.status).toBe(404);
@@ -190,12 +190,12 @@ describe("QA-SI: error contract / security / logging http", () => {
       // The schema survives: a fresh register + budget + expense still works.
       const survivorSession = createSession(ctx.baseUrl);
       await registerUser(survivorSession);
-      const survivorBudget = await survivorSession.request("/budgets", {
-        method: "POST",
+      const survivorBudget = await survivorSession.request("/budget", {
+        method: "PATCH",
         body: kitBudgetPayload("2026-08"),
       });
-      expect(survivorBudget.status).toBe(201);
-      const survivorTx = await survivorSession.request("/budgets/2026-08/transactions", {
+      expect(survivorBudget.status).toBe(200);
+      const survivorTx = await survivorSession.request("/months/2026-08/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-08" }),
       });
@@ -216,16 +216,16 @@ describe("QA-SI: error contract / security / logging http", () => {
         method: "POST",
         body: { email, password },
       });
-      await session.request("/budgets", {
-        method: "POST",
+      await session.request("/budget", {
+        method: "PATCH",
         body: kitBudgetPayload("2026-07"),
       });
-      await session.request("/budgets/2026-07/transactions", {
+      await session.request("/months/2026-07/transactions", {
         method: "POST",
         body: expensePayload({ month: "2026-07", amountMinor: 654321, note: marker }),
       });
       await fetch(`${ctx.baseUrl}/__test/error`); // the deliberate error entry
-      await session.request("/budgets/2026-99"); // a 400
+      await session.request("/months/2026-99"); // a 400
 
       const requestEntries = await ctx.readLogEntries("requests.log");
       expect(requestEntries.length).toBeGreaterThanOrEqual(5);
@@ -265,20 +265,17 @@ describe("QA-SI: error contract / security / logging http", () => {
         await expectErrorEnvelope(badRegister, { status: 400, code: "VALIDATION_ERROR" });
 
         const anonymous = createSession(dedicatedCtx.baseUrl);
-        const unauth = await anonymous.request("/budgets/2026-07");
+        const unauth = await anonymous.request("/months/2026-07");
         await expectErrorEnvelope(unauth, { status: 401, code: "UNAUTHENTICATED" });
 
-        const missing = await session.request("/budgets/2026-05");
+        const missing = await session.request("/not-a-route");
         await expectErrorEnvelope(missing, { status: 404, code: "NOT_FOUND" });
 
-        await session.request("/budgets", {
-          method: "POST",
+        await session.request("/budget", {
+          method: "PATCH",
           body: kitBudgetPayload("2026-07"),
         });
-        const conflict = await session.request("/budgets", {
-          method: "POST",
-          body: kitBudgetPayload("2026-07"),
-        });
+        const conflict = await session.request("/budget", { method: "POST" });
         await expectErrorEnvelope(conflict, { status: 409, code: "CONFLICT" });
 
         const oversized = await fetch(`${dedicatedCtx.baseUrl}/auth/register`, {

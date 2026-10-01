@@ -14,6 +14,7 @@ export function createApiRouter({
   insightsService,
   requireAuth,
   authRateLimit,
+  budgetAccess,
 }) {
   const router = Router();
   router.use(healthRoutes);
@@ -21,14 +22,25 @@ export function createApiRouter({
     "/auth",
     createAuthRoutes({ authService, config, requireAuth, authRateLimit }),
   );
-  router.use("/insights", createInsightsRoutes({ insightsService, requireAuth }));
-  router.use("/budget", createBudgetRoutes({ budgetService, requireAuth }));
+  const budgetAuth = budgetAccess ? [requireAuth, budgetAccess] : requireAuth;
+  router.use(
+    "/insights",
+    createInsightsRoutes({ insightsService, requireAuth: budgetAuth }),
+  );
+  router.use(
+    "/budget",
+    createBudgetRoutes({
+      budgetService,
+      requireAuth: budgetAuth,
+      provisionAuth: requireAuth,
+    }),
+  );
   // Nested transaction routes stay mounted BEFORE /months so the
   // mergeParams router wins on the shared prefix.
   router.use(
     "/months/:month/transactions",
-    createTransactionRoutes({ transactionService, requireAuth }),
+    createTransactionRoutes({ transactionService, requireAuth: budgetAuth }),
   );
-  router.use("/months", createMonthRoutes({ budgetService, requireAuth }));
+  router.use("/months", createMonthRoutes({ budgetService, requireAuth: budgetAuth }));
   return router;
 }

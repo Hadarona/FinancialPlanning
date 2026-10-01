@@ -1,3 +1,7 @@
+import { createBudgetAccess } from "./middleware/budgetAccess.js";
+import { createSharingRoutes } from "./routes/sharingRoutes.js";
+import { createImportRoutes } from "./routes/importRoutes.js";
+import { AppError } from "./errors.js";
 import path from "node:path";
 import express from "express";
 import helmet from "helmet";
@@ -52,6 +56,7 @@ export function createApp(config) {
   app.locals.config = config;
   app.locals.pool = pool;
 
+  const budgetAccess = createBudgetAccess(pool);
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(
@@ -70,6 +75,17 @@ export function createApp(config) {
   // requestId comes before the body parser so even a request rejected while
   // parsing (413 oversized / malformed JSON) is correlated by an id.
   app.use(requestId);
+  app.use((req, res, next) => {
+    const origin = req.get("Origin");
+    if (
+      !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+      origin &&
+      !allowedOrigins.includes(origin)
+    )
+      return next(new AppError("FORBIDDEN", "Request origin is not allowed."));
+    next();
+  });
+  app.use("/api/v1/imports/commit", express.json({ limit: "512kb" }));
   app.use(express.json({ limit: "32kb" }));
   app.use(cookieParser());
   app.use(createHttpLogger(loggers.requestLogger));
@@ -82,6 +98,11 @@ export function createApp(config) {
   }
 
   app.use(
+    "/api/v1/imports",
+    createImportRoutes({ pool, requireAuth, budgetAccess, budgetRepo }),
+  );
+  app.use("/api/v1/sharing", createSharingRoutes({ pool, requireAuth, budgetAccess }));
+  app.use(
     "/api/v1",
     createApiRouter({
       config,
@@ -91,6 +112,7 @@ export function createApp(config) {
       insightsService,
       requireAuth,
       authRateLimit: createAuthRateLimit(config),
+      budgetAccess,
     }),
   );
 

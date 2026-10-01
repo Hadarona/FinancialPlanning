@@ -1,3 +1,5 @@
+import { t, categoryName } from "../../lib/locale.js";
+import { monthYearLabel, monthLabel } from "../../lib/dates.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppHeader } from "../../components/ui/AppHeader.jsx";
 import { MonthMultiSelect } from "../../components/ui/MonthMultiSelect.jsx";
@@ -59,7 +61,14 @@ function InsightsHero({ insights }) {
             <span className="insights-hero-month-label">
               {copy.insights.totalLabel(entry.yearLabel)}
             </span>
-            <span className="insights-hero-total">{formatMoney(entry.totalMinor)}</span>
+            <span className="insights-hero-total">₪{formatMoney(entry.totalMinor)}</span>
+            {entry.incomeMinor !== undefined && (
+              <span className="insights-hero-month-label">
+                {t("Income remaining", "נותר מההכנסה")}: ₪
+                {formatMoney(entry.remainingMinor)} · {t("Planned", "מתוכנן")}: ₪
+                {formatMoney(entry.plannedMinor)}
+              </span>
+            )}
           </p>
         ))}
       </div>
@@ -82,7 +91,11 @@ export function InsightsPage() {
   // The URL is the selection state (shareable, back/forward friendly);
   // absent or invalid params mean the CR3-1 default: the current month.
   const selectedMonths = parseMonthsParam(searchParams.get("months")) ?? [currentMonth()];
-  const monthOptions = lastMonths(MONTH_OPTION_COUNT);
+  const monthOptions = [
+    ...new Set([...selectedMonths, ...lastMonths(MONTH_OPTION_COUNT)]),
+  ]
+    .sort()
+    .reverse();
 
   const insightsQuery = useInsightsQuery(selectedMonths);
   const createBudgetMutation = useCreateBudgetMutation();
@@ -129,7 +142,18 @@ export function InsightsPage() {
       );
     }
 
-    const { insights } = insightsQuery.data;
+    const insights = {
+      ...insightsQuery.data.insights,
+      months: insightsQuery.data.insights.months.map((m) => ({
+        ...m,
+        label: monthLabel(m.month),
+        yearLabel: monthYearLabel(m.month),
+      })),
+      categories: insightsQuery.data.insights.categories.map((c) => ({
+        ...c,
+        label: categoryName({ name: c.label }),
+      })),
+    };
     const monthsPhrase = insights.months.map((entry) => entry.yearLabel).join(", ");
     return (
       <>
@@ -141,6 +165,12 @@ export function InsightsPage() {
           </Card>
           <Card className="insights-card insights-card-donut">
             <h2 className="insights-card-title">{copy.insights.donutChartTitle}</h2>
+            <p className="chart-note">
+              {t(
+                "Shares show positive net spending. Refunds are included in totals and trends.",
+                "החלוקה מציגה הוצאות נטו חיוביות. החזרים כלולים בסכומים ובמגמות.",
+              )}
+            </p>
             <DonutChart
               categories={insights.categories}
               totalMinor={insights.combinedTotalMinor}
@@ -176,6 +206,17 @@ export function InsightsPage() {
           selected={selectedMonths}
           onChange={handleSelectionChange}
         />
+        <label className="specific-month">
+          {t("View any month", "צפייה בחודש מסוים")}
+          <input
+            type="month"
+            value={selectedMonths[0]}
+            onChange={(e) => {
+              if (MONTH_PATTERN.test(e.target.value))
+                handleSelectionChange([e.target.value]);
+            }}
+          />
+        </label>
         <div className="insights-panel">{renderContent()}</div>
       </main>
     </div>

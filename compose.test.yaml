@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: budget_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U test -d budget_test]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  tests:
+    build:
+      context: .
+      target: test
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://test:test@db:5432/budget_test?sslmode=disable
+      JWT_SECRET: isolated-docker-test-secret
+      NODE_ENV: test
+    volumes:
+      - ./server/coverage:/app/server/coverage
+      - ./client/coverage:/app/client/coverage
+    command: [sh, -c, "npm run coverage && npm run build"]

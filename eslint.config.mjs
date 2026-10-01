@@ -10,6 +10,8 @@ export default [
       "**/node_modules/**",
       "**/dist/**",
       "**/coverage/**",
+      "android/**/build/**",
+      "android/.gradle/**",
       ".workflow/**",
       "docs/**",
       "logs/**",
@@ -17,7 +19,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ["server/**/*.{js,mjs}", "tools/**/*.mjs", "*.mjs"],
+    files: ["server/**/*.{js,mjs}", "tools/**/*.mjs", "e2e/**/*.mjs", "*.mjs"],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: "module",
@@ -53,5 +55,6 @@ export default [
       "react/prop-types": "off",
     },
   },
+  { files: ["e2e/**/*.mjs"], languageOptions: { globals: { ...globals.browser } } },
   prettierConfig,
 ];

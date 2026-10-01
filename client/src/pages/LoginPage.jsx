@@ -1,3 +1,6 @@
+import { LanguageSwitch } from "../components/ui/LanguageSwitch.jsx";
+import { t } from "../lib/locale.js";
+import "../styles/workspace.css";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail } from "lucide-react";
@@ -15,12 +18,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function validate({ email, password }) {
   const errors = {};
   if (!email.trim()) {
-    errors.email = "Enter your email.";
+    errors.email = t("Enter your email.", "יש להזין כתובת אימייל.");
   } else if (!EMAIL_PATTERN.test(email.trim())) {
-    errors.email = "Enter a valid email address.";
+    errors.email = t("Enter a valid email address.", "יש להזין כתובת אימייל תקינה.");
   }
   if (!password) {
-    errors.password = "Enter your password.";
+    errors.password = t("Enter your password.", "יש להזין את הסיסמה.");
   }
   return errors;
 }
@@ -31,6 +34,7 @@ export function LoginPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get("reason") === "session-expired";
+  const [rememberMe, setRememberMe] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -51,7 +55,7 @@ export function LoginPage() {
 
     setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
+      await login({ email: email.trim(), password, rememberMe });
       const redirectTo = location.state?.from?.pathname ?? "/budget";
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -66,6 +70,7 @@ export function LoginPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
+        <LanguageSwitch />
         <img src="/logo.svg" alt="" width={80} height={80} className="auth-logo" />
         <h1 className="auth-title">{copy.login.title}</h1>
         {sessionExpired ? (
@@ -90,6 +95,14 @@ export function LoginPage() {
             onChange={(event) => setPassword(event.target.value)}
             error={fieldErrors.password}
           />
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            {t("Remember me for 90 days", "זכור אותי למשך 90 יום")}
+          </label>
           {formError ? (
             <p role="alert" className="auth-form-error">
               {formError}
