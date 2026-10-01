@@ -8,6 +8,7 @@
 }
 
 .chart-figure svg {
+  direction: ltr;
   display: block;
   width: 100%;
   height: auto;
