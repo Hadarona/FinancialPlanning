@@ -1,3 +1,4 @@
+import { t } from "../../../lib/locale.js";
 import { useId, useRef, useState } from "react";
 import { formatMoney } from "../../../lib/money.js";
 import { axisScale, compactAxisLabel, barTopRoundedPath } from "./chartMath.js";
@@ -114,6 +115,14 @@ export function BarChart({ months, categories }) {
 
   return (
     <figure className="chart-figure" ref={figureRef}>
+      {width > measuredWidth && (
+        <p className="chart-note">
+          {t(
+            "Swipe or scroll sideways to see all categories.",
+            "החליקו או גללו הצידה כדי לראות את כל הקטגוריות.",
+          )}
+        </p>
+      )}
       <div className="chart-plot chart-plot-scroll" ref={containerRef}>
         <svg
           style={{ minWidth: width }}

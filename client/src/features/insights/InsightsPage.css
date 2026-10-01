@@ -114,10 +114,8 @@
   color: var(--color-text-primary);
 }
 
-/* Donut + cash-flow share a row only when each column keeps >=150px
- * (kit responsive rule: 2×150px + 12px gap + 40px page padding = 352px);
- * below that they stack. */
-@media (min-width: 360px) {
+/* Keep charts full-width on phones so axes and legends remain readable. */
+@media (min-width: 700px) {
   .insights-charts {
     grid-template-columns: repeat(2, minmax(150px, 1fr));
   }
