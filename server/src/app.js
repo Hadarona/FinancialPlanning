@@ -89,7 +89,7 @@ export function createApp(config) {
   app.use(express.json({ limit: "32kb" }));
   app.use(cookieParser());
   app.use(createHttpLogger(loggers.requestLogger));
-  app.use(createGeneralRateLimit(config));
+  app.use("/api", createGeneralRateLimit(config));
 
   if (config.nodeEnv === "test") {
     app.get("/api/v1/__test/error", () => {

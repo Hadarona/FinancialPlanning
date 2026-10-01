@@ -1,3 +1,4 @@
+import { t } from "../../../lib/locale.js";
 import { useRef, useState } from "react";
 import { formatMoney } from "../../../lib/money.js";
 import { axisScale, compactAxisLabel, linePoints, xLabelIndexes } from "./chartMath.js";
@@ -30,7 +31,7 @@ function positionLabels(months) {
   if (months.length === 1) {
     return months[0].cashFlow.labels;
   }
-  return ["1", "6", "11", "16", "21", "26", "End"];
+  return ["1", "6", "11", "16", "21", "26", t("End", "סוף")];
 }
 
 /**

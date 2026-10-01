@@ -143,3 +143,39 @@ test("shared viewer cannot change a budget, and revoked access stops reads", asy
   ).toBe(404);
   await context.close();
 });
+
+test("remembered login and comparison of three historical months using the controls", async ({
+  page,
+}) => {
+  const email = `remember-${Date.now()}@example.test`;
+  await register(page, email);
+  await page.request.post("/api/v1/auth/logout");
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await expect(page.getByLabel("Remember me for 90 days")).toBeChecked();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/budget/);
+  const cookie = (await page.context().cookies()).find((c) => c.name === "bb_session");
+  expect(cookie.httpOnly).toBe(true);
+  expect(cookie.expires - Date.now() / 1000).toBeGreaterThan(89 * 86400);
+  await page.getByRole("link", { name: "Insights", exact: true }).click();
+  await page.getByLabel("Choose any month").fill("2020-01");
+  await page.getByRole("button", { name: "View month", exact: true }).click();
+  await expect(
+    page.getByText("Total spent in January 2020", { exact: true }),
+  ).toBeVisible();
+  for (const month of ["2021-03", "2022-05"]) {
+    await page.getByLabel("Choose any month").fill(month);
+    await page.getByRole("button", { name: "Add to comparison", exact: true }).click();
+  }
+  await expect(page.locator(".insights-hero-total")).toHaveCount(3);
+  await expect(
+    page.getByText("Total spent in March 2021", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Total spent in May 2022", { exact: true })).toBeVisible();
+  await page.getByLabel("Choose any month").fill("2019-01");
+  await expect(
+    page.getByRole("button", { name: "Add to comparison", exact: true }),
+  ).toBeDisabled();
+});

@@ -295,3 +295,34 @@ html[dir="rtl"] .expense-item {
   margin-top: 6px;
   text-align: start;
 }
+
+.specific-month {
+  flex-wrap: wrap;
+  align-items: end;
+}
+.specific-month label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.specific-month button {
+  min-height: 44px;
+  border: 1px solid #b8c8c1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: white;
+  color: #185d46;
+  cursor: pointer;
+  font: inherit;
+}
+.specific-month button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.budget-switcher select {
+  max-width: calc(100% - 70px);
+  min-width: 0;
+}
+.workspace-card {
+  overflow-wrap: anywhere;
+}

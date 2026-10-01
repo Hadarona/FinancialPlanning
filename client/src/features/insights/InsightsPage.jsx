@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { t, categoryName } from "../../lib/locale.js";
 import { monthYearLabel, monthLabel } from "../../lib/dates.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -85,6 +86,7 @@ function InsightsHero({ insights }) {
 
 export function InsightsPage() {
   const { logout } = useAuth();
+  const [customMonth, setCustomMonth] = useState(currentMonth());
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -206,17 +208,32 @@ export function InsightsPage() {
           selected={selectedMonths}
           onChange={handleSelectionChange}
         />
-        <label className="specific-month">
-          {t("View any month", "צפייה בחודש מסוים")}
-          <input
-            type="month"
-            value={selectedMonths[0]}
-            onChange={(e) => {
-              if (MONTH_PATTERN.test(e.target.value))
-                handleSelectionChange([e.target.value]);
-            }}
-          />
-        </label>
+        <div className="specific-month">
+          <label>
+            {t("Choose any month", "בחירת חודש כלשהו")}
+            <input
+              type="month"
+              value={customMonth}
+              onChange={(e) => setCustomMonth(e.target.value)}
+            />
+          </label>
+          <button
+            disabled={!MONTH_PATTERN.test(customMonth)}
+            onClick={() => handleSelectionChange([customMonth])}
+          >
+            {t("View month", "צפייה בחודש")}
+          </button>
+          <button
+            disabled={
+              !MONTH_PATTERN.test(customMonth) ||
+              selectedMonths.length >= 3 ||
+              selectedMonths.includes(customMonth)
+            }
+            onClick={() => handleSelectionChange([...selectedMonths, customMonth])}
+          >
+            {t("Add to comparison", "הוספה להשוואה")}
+          </button>
+        </div>
         <div className="insights-panel">{renderContent()}</div>
       </main>
     </div>

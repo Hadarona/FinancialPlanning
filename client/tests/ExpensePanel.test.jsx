@@ -112,4 +112,27 @@ describe("ExpensePanel", () => {
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /recent expenses/i })).toBeInTheDocument();
   });
+  it("loads older expense pages and can return to the first page", async () => {
+    apiClient.get.mockImplementation((path) =>
+      Promise.resolve({
+        transactions: path.includes("offset=50")
+          ? [{ ...TRANSACTIONS[0], id: "older", note: "Older expense" }]
+          : TRANSACTIONS,
+        total: 51,
+        limit: 50,
+        offset: path.includes("offset=50") ? 50 : 0,
+      }),
+    );
+    const user = userEvent.setup();
+    renderPanel();
+    await screen.findByText("Weekly shop");
+    await user.click(screen.getByRole("button", { name: "Next", exact: true }));
+    expect(await screen.findByText("Older expense")).toBeVisible();
+    expect(apiClient.get).toHaveBeenCalledWith(
+      "/months/2026-07/transactions?offset=50&limit=50",
+    );
+    expect(screen.getByRole("button", { name: "Next", exact: true })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Previous", exact: true }));
+    expect(await screen.findByText("Weekly shop")).toBeVisible();
+  });
 });
