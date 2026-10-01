@@ -109,12 +109,14 @@ export function DonutChart({ categories, totalMinor, monthsLabel }) {
 
         <Legend
           className="chart-legend-vertical"
-          items={categories.map((category) => ({
-            label: category.label,
-            detail: `${category.sharePercent}%`,
-            color: categoryChartColor(category),
-            marker: "dot",
-          }))}
+          items={categories
+            .filter((category) => category.combinedMinor > 0)
+            .map((category) => ({
+              label: category.label,
+              detail: `${category.sharePercent}%`,
+              color: categoryChartColor(category),
+              marker: "dot",
+            }))}
         />
       </div>
 

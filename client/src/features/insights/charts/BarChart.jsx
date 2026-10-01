@@ -16,7 +16,7 @@ const MARGIN = { top: 12, right: 8, bottom: 28, left: 48 };
 const PLOT_HEIGHT = 200;
 // Rotated labels descend below the axis by sin(35°) × label width; the
 // longest category ("Subscriptions") needs ~48px beyond the base margin.
-const ROTATED_LABEL_EXTRA = 40;
+const ROTATED_LABEL_EXTRA = 70;
 const BAR_GAP = 2; // surface gap between the bars of a group
 const MIN_BAR_WIDTH = 6;
 const MAX_BAR_WIDTH = 24;
@@ -36,14 +36,18 @@ export function BarChart({ months, categories }) {
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const patternBaseId = useId();
-  const width = useMeasuredWidth(containerRef);
+  const measuredWidth = useMeasuredWidth(containerRef);
+  const width = Math.max(
+    measuredWidth,
+    categories.length * 48 + MARGIN.left + MARGIN.right,
+  );
 
   const seriesCount = months.length;
   const plotWidth = Math.max(120, width - MARGIN.left - MARGIN.right);
   const groupWidth = plotWidth / categories.length;
   // Compact alternative below ~56px per label: rotate the category labels
   // so full words stay legible at small widths (D-INS-D5).
-  const rotateLabels = groupWidth < 56;
+  const rotateLabels = groupWidth < 110;
   const height =
     MARGIN.top + PLOT_HEIGHT + MARGIN.bottom + (rotateLabels ? ROTATED_LABEL_EXTRA : 0);
 
@@ -110,8 +114,9 @@ export function BarChart({ months, categories }) {
 
   return (
     <figure className="chart-figure" ref={figureRef}>
-      <div className="chart-plot" ref={containerRef}>
+      <div className="chart-plot chart-plot-scroll" ref={containerRef}>
         <svg
+          style={{ minWidth: width }}
           width={width}
           height={height}
           viewBox={`0 0 ${width} ${height}`}
@@ -205,7 +210,10 @@ export function BarChart({ months, categories }) {
                   textAnchor={rotateLabels ? "end" : "middle"}
                   transform={rotateLabels ? `rotate(-35 ${labelX} ${labelY})` : undefined}
                 >
-                  {category.label}
+                  {category.label.length > 18
+                    ? category.label.slice(0, 17) + "…"
+                    : category.label}
+                  <title>{category.label}</title>
                 </text>
               </g>
             );
