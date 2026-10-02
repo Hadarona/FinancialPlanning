@@ -179,6 +179,34 @@ describe("Import review", () => {
   beforeEach(() => {
     uploadWorkbook.mockResolvedValue({ previewId: "p1", rows, issues: [] });
   });
+  it("leaves manual matches unchecked even on select-all and requires individual selection", async () => {
+    uploadWorkbook.mockResolvedValueOnce({
+      previewId: "p1",
+      issues: [],
+      rows: [
+        {
+          ...rows[0],
+          manualMatches: [{ id: "manual-1", note: "Lunch entered yesterday" }],
+        },
+        rows[1],
+      ],
+    });
+    apiClient.post.mockResolvedValueOnce({ imported: 1, duplicates: 0 });
+    const user = await openPreview();
+    expect(screen.getByText("Possible duplicate")).toBeVisible();
+    expect(screen.getByText("Lunch entered yesterday")).toBeVisible();
+    expect(screen.getByLabelText("Import row 5")).not.toBeChecked();
+    await user.click(screen.getByLabelText("Select all new transactions"));
+    await user.click(screen.getByLabelText("Select all new transactions"));
+    expect(screen.getByLabelText("Import row 5")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Confirm import" })).toBeDisabled();
+    await user.click(screen.getByLabelText("Import row 5"));
+    await user.click(screen.getByRole("button", { name: "Confirm import" }));
+    expect(apiClient.post).toHaveBeenCalledWith("/imports/commit", {
+      previewId: "p1",
+      rows: [{ index: 0, categoryId: "one-off", allowManualMatch: true }],
+    });
+  });
   it("requires a preview, excludes duplicates, maps categories and imports only selected rows", async () => {
     apiClient.post.mockResolvedValueOnce({ imported: 1, duplicates: 0 });
     const user = await openPreview();

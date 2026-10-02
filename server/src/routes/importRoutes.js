@@ -19,6 +19,7 @@ const commitSchema = z
           .object({
             index: z.number().int().nonnegative(),
             categoryId: z.string().min(1).max(50),
+            allowManualMatch: z.boolean().optional(),
           })
           .strict(),
       )
@@ -47,9 +48,28 @@ export function createImportRoutes({ pool, requireAuth, budgetAccess, budgetRepo
         [req.budgetOwnerId, parsed.rows.map((r) => r.importKey)],
       );
       const duplicates = new Set(existing.rows.map((r) => r.import_key));
+      const manual = await pool.query(
+        `SELECT id, occurred_on::text AS date, amount_minor, note
+         FROM transactions WHERE user_id=$1 AND import_key IS NULL
+         AND occurred_on=ANY($2::date[]) ORDER BY created_at, id`,
+        [
+          req.budgetOwnerId,
+          parsed.rows.map((r) => r.metadata.purchaseDate ?? r.occurredOn),
+        ],
+      );
+      const manualByDateAndAmount = new Map();
+      for (const expense of manual.rows) {
+        const key = `${expense.date}:${expense.amount_minor}`;
+        if (!manualByDateAndAmount.has(key)) manualByDateAndAmount.set(key, []);
+        manualByDateAndAmount.get(key).push({ id: expense.id, note: expense.note });
+      }
       const rows = parsed.rows.map((row) => ({
         ...row,
         duplicate: duplicates.has(row.importKey),
+        manualMatches:
+          manualByDateAndAmount.get(
+            `${row.metadata.purchaseDate ?? row.occurredOn}:${row.amountMinor}`,
+          ) ?? [],
       }));
       await pool.query(
         "DELETE FROM import_previews WHERE expires_at<now() OR user_id=$1",
@@ -114,6 +134,28 @@ export function createImportRoutes({ pool, requireAuth, budgetAccess, budgetRepo
         for (const selected of req.body.rows) {
           const row = preview.rows[0].rows[selected.index];
           if (!row) throw new AppError("VALIDATION_ERROR", "Invalid preview row.");
+          // Recheck at confirmation: a household member may have added an
+          // expense since the preview. Only an explicitly reviewed match may
+          // be imported anyway; previously unseen matches are safely skipped.
+          const manual = await db.query(
+            `SELECT id FROM transactions WHERE user_id=$1 AND import_key IS NULL
+             AND occurred_on=$2 AND amount_minor=$3`,
+            [
+              req.budgetOwnerId,
+              row.metadata.purchaseDate ?? row.occurredOn,
+              row.amountMinor,
+            ],
+          );
+          if (
+            manual.rows.some(
+              (expense) =>
+                !selected.allowManualMatch ||
+                !row.manualMatches?.some((match) => match.id === expense.id),
+            )
+          ) {
+            duplicates++;
+            continue;
+          }
           const month = row.occurredOn.slice(0, 7);
           if (!versions.has(month))
             versions.set(

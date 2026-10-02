@@ -36,7 +36,11 @@ export function ImportPage() {
       const data = await uploadWorkbook(file, basis);
       setPreview(data);
       setPage(0);
-      setSelected(Object.fromEntries(data.rows.map((r) => [r.index, !r.duplicate])));
+      setSelected(
+        Object.fromEntries(
+          data.rows.map((r) => [r.index, !r.duplicate && !r.manualMatches?.length]),
+        ),
+      );
       setMapping(
         Object.fromEntries(data.rows.map((r) => [r.metadata.sourceCategory, "one-off"])),
       );
@@ -55,6 +59,7 @@ export function ImportPage() {
         .map((r) => ({
           index: r.index,
           categoryId: mapping[r.metadata.sourceCategory] || "one-off",
+          ...(r.manualMatches?.length ? { allowManualMatch: true } : {}),
         }));
       const data = await apiClient.post("/imports/commit", {
         previewId: preview.previewId,
@@ -147,6 +152,14 @@ export function ImportPage() {
               {preview.rows.filter((r) => r.duplicate).length}{" "}
               {t("already imported", "כבר יובאו")}
             </p>
+            {preview.rows.some((r) => !r.duplicate && r.manualMatches?.length) && (
+              <p className="notice">
+                {t(
+                  "Possible duplicates match a manual expense's exact amount and purchase date. They are unchecked. Select a row only if it is a separate purchase; your existing expenses will stay unchanged.",
+                  "כפילויות אפשריות תואמות בדיוק לסכום ולתאריך העסקה של הוצאה שהוזנה ידנית. הן לא מסומנות לייבוא. סמנו שורה רק אם זו רכישה נפרדת; ההוצאות הקיימות לא ישתנו.",
+                )}
+              </p>
+            )}
             {preview.issues.length > 0 && (
               <details className="notice">
                 <summary>
@@ -192,15 +205,15 @@ export function ImportPage() {
               <label className="check">
                 <input
                   type="checkbox"
-                  checked={
-                    chosen.length === preview.rows.filter((r) => !r.duplicate).length
-                  }
+                  checked={preview.rows
+                    .filter((r) => !r.duplicate && !r.manualMatches?.length)
+                    .every((r) => selected[r.index])}
                   onChange={(e) =>
                     setSelected(
                       Object.fromEntries(
                         preview.rows.map((r) => [
                           r.index,
-                          e.target.checked && !r.duplicate,
+                          e.target.checked && !r.duplicate && !r.manualMatches?.length,
                         ]),
                       ),
                     )
@@ -233,6 +246,18 @@ export function ImportPage() {
                           }
                         />
                         {r.duplicate && t("Duplicate", "כפילות")}
+                        {!r.duplicate && !!r.manualMatches?.length && (
+                          <div>
+                            <strong>{t("Possible duplicate", "כפילות אפשרית")}</strong>
+                            <ul>
+                              {r.manualMatches.map((match) => (
+                                <li key={match.id} dir="auto">
+                                  {match.note || t("Manual expense", "הוצאה ידנית")}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </td>
                       <td>{r.occurredOn}</td>
                       <td dir="auto">{r.note}</td>

@@ -15,6 +15,8 @@ export default [
       ".workflow/**",
       "docs/**",
       "logs/**",
+      "playwright-report/**",
+      "test-results/**",
     ],
   },
   js.configs.recommended,

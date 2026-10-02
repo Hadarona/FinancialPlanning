@@ -49,6 +49,14 @@ test("personal budgeting journey: plans, expenses, Excel preview, duplicate prot
   ]);
   sheet.addRow(["12/07/2026", "Coffee shop", "Dining", 42.5, "ILS", "10/08/2026"]);
   sheet.addRow(["13/07/2026", "Refund", "Dining", -4.13, "ILS", "10/08/2026"]);
+  sheet.addRow([
+    "15/07/2026",
+    "Day trip from statement",
+    "Dining",
+    125.5,
+    "ILS",
+    "10/08/2026",
+  ]);
   const buffer = Buffer.from(await book.xlsx.writeBuffer());
   await page.getByRole("link", { name: "Import", exact: true }).click();
   await page.getByLabel("Excel statement (.xlsx, up to 5 MB)").setInputFiles({
@@ -58,6 +66,9 @@ test("personal budgeting journey: plans, expenses, Excel preview, duplicate prot
   });
   await page.getByRole("button", { name: "Preview transactions" }).click();
   await expect(page.getByRole("heading", { name: "Review & categorize" })).toBeVisible();
+  await expect(page.getByText("Possible duplicate", { exact: true })).toBeVisible();
+  await expect(page.getByText("Family day out", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Import row 4", { exact: true })).not.toBeChecked();
   await page
     .getByRole("combobox", { name: "Dining", exact: true })
     .selectOption({ label: "Family trips" });

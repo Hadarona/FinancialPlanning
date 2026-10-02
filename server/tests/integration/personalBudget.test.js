@@ -213,6 +213,132 @@ describe("Personal budgeting journeys", () => {
       (await (await owner.client.request("/months/2026-08")).json()).budget.actualMinor,
     ).toBe(1534);
   });
+  it("flags exact manual matches within the selected budget and permits reviewed separate purchases", async () => {
+    const owner = await account(),
+      other = await account();
+    const add = async (client, amountMinor, occurredOn) => {
+      const response = await send(client, "/months/2026-08/transactions", {
+        categoryId: "groceries",
+        amountMinor,
+        occurredOn,
+        note: "Manually entered lunch",
+      });
+      expect(response.status).toBe(201);
+    };
+    await add(owner.client, 1234, "2026-08-01");
+    await add(owner.client, 300, "2026-08-02");
+    await add(other.client, 700, "2026-08-01");
+    const w = new ExcelJS.Workbook(),
+      sheet = w.addWorksheet("Transactions");
+    sheet.addRow(["Date", "Merchant", "Amount", "Currency"]);
+    sheet.addRow(["01-08-2026", "Different description", 12.34, "ILS"]);
+    sheet.addRow(["02-08-2026", "Different date", 12.34, "ILS"]);
+    sheet.addRow(["01-08-2026", "Different amount", 3, "ILS"]);
+    sheet.addRow(["01-08-2026", "Other budget", 7, "ILS"]);
+    sheet.addRow(["01-08-2026", "Refund", -12.34, "ILS"]);
+    const bytes = Buffer.from(await w.xlsx.writeBuffer());
+    const preview = await (
+      await owner.client.request("/imports/preview", {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        body: bytes,
+      })
+    ).json();
+    expect(preview.rows.map((r) => r.manualMatches.length)).toEqual([1, 0, 0, 0, 0]);
+    expect(preview.rows[0].manualMatches[0].note).toBe("Manually entered lunch");
+    const body = {
+      previewId: preview.previewId,
+      rows: preview.rows.map((r) => ({ index: r.index, categoryId: "one-off" })),
+    };
+    expect(await (await send(owner.client, "/imports/commit", body)).json()).toEqual({
+      imported: 4,
+      duplicates: 1,
+    });
+    expect(
+      await (
+        await send(owner.client, "/imports/commit", {
+          previewId: preview.previewId,
+          rows: [{ index: 0, categoryId: "one-off", allowManualMatch: true }],
+        })
+      ).json(),
+    ).toEqual({ imported: 1, duplicates: 0 });
+    expect(
+      await (
+        await send(owner.client, "/imports/commit", {
+          previewId: preview.previewId,
+          rows: [{ index: 0, categoryId: "one-off", allowManualMatch: true }],
+        })
+      ).json(),
+    ).toEqual({ imported: 0, duplicates: 1 });
+  });
+  it("rechecks manual matches added after preview, including shared-budget entries", async () => {
+    const owner = await account(),
+      editor = await account();
+    const budgetId = (await (await owner.client.request("/budget")).json()).budget.id;
+    const headers = { "X-Budget-Id": budgetId };
+    const { token } = await (
+      await send(owner.client, "/sharing/invite", { email: editor.email, role: "editor" })
+    ).json();
+    await send(editor.client, "/sharing/accept", { token });
+    const w = new ExcelJS.Workbook(),
+      sheet = w.addWorksheet("Transactions");
+    sheet.addRow(["Date", "Merchant", "Amount", "Currency"]);
+    sheet.addRow(["01-08-2026", "Shop", 12.34, "ILS"]);
+    const bytes = Buffer.from(await w.xlsx.writeBuffer());
+    const preview = await (
+      await editor.client.request("/imports/preview", {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        body: bytes,
+      })
+    ).json();
+    expect(preview.rows[0].manualMatches).toEqual([]);
+    expect(
+      (
+        await send(owner.client, "/months/2026-08/transactions", {
+          categoryId: "groceries",
+          amountMinor: 1234,
+          occurredOn: "2026-08-01",
+        })
+      ).status,
+    ).toBe(201);
+    expect(
+      await (
+        await send(
+          editor.client,
+          "/imports/commit",
+          {
+            previewId: preview.previewId,
+            rows: [{ index: 0, categoryId: "one-off", allowManualMatch: true }],
+          },
+          "POST",
+          headers,
+        )
+      ).json(),
+    ).toEqual({ imported: 0, duplicates: 1 });
+    const refreshed = await (
+      await editor.client.request("/imports/preview", {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        body: bytes,
+      })
+    ).json();
+    expect(refreshed.rows[0].manualMatches).toHaveLength(1);
+    expect(
+      (await (await owner.client.request("/months/2026-08")).json()).budget.actualMinor,
+    ).toBe(1234);
+  });
   it("keeps future category expenses visible when a scheduled plan is replaced", async () => {
     const { client } = await account();
     expect(
