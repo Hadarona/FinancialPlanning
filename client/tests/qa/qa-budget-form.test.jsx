@@ -74,7 +74,9 @@ describe("qa-budget-flow", () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.click(await screen.findByRole("button", { name: "Edit income, current value 12,500" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Edit income, current value 12,500" }),
+    );
     const dialog = await screen.findByRole("dialog", { name: "Edit income" });
     const income = screen.getByLabelText("Income");
     expect(income).toHaveValue("12500");
@@ -85,9 +87,14 @@ describe("qa-budget-flow", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(1));
-    expect(mock.callsMatching("PATCH", "/budget")[0].body).toEqual({ incomeMinor: 1500000 });
+    expect(mock.callsMatching("PATCH", "/budget")[0].body).toEqual({
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
+      incomeMinor: 1500000,
+    });
     expect(await screen.findByText("Income updated")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Edit income, current value 15,000" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Edit income, current value 15,000" }),
+    ).toBeInTheDocument();
   });
 
   it("QA-CC-51: editing one category plan PATCHes only that category and refreshes its row", async () => {
@@ -102,7 +109,9 @@ describe("qa-budget-flow", () => {
     renderApp();
 
     await user.click(
-      await screen.findByRole("button", { name: /Housing: 2,520 spent of 4,000 planned, 63%, edit planned amount/ }),
+      await screen.findByRole("button", {
+        name: /Housing: 2,520 spent of 4,000 planned, 63%, edit planned amount/,
+      }),
     );
     await screen.findByRole("dialog", { name: "Edit Housing plan" });
     const plannedAmount = screen.getByLabelText("Planned amount");
@@ -112,10 +121,15 @@ describe("qa-budget-flow", () => {
 
     await waitFor(() => expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(1));
     expect(mock.callsMatching("PATCH", "/budget")[0].body).toEqual({
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
       categories: [{ id: "housing", plannedMinor: 450000 }],
     });
     expect(await screen.findByText("Housing plan updated")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Housing: 2,520 spent of 4,500 planned, 56%, edit planned amount/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Housing: 2,520 spent of 4,500 planned, 56%, edit planned amount/,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("QA-CC-52: invalid dialog input posts nothing, and Cancel closes the dialog without a change", async () => {
@@ -123,7 +137,9 @@ describe("qa-budget-flow", () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.click(await screen.findByRole("button", { name: "Edit income, current value 12,500" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Edit income, current value 12,500" }),
+    );
     const income = screen.getByLabelText("Income");
     await user.clear(income);
     await user.type(income, "invalid");
@@ -133,7 +149,9 @@ describe("qa-budget-flow", () => {
     expect(mock.callsMatching("PATCH", "/budget")).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog", { name: "Edit income" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Edit income, current value 12,500" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Edit income, current value 12,500" }),
+    ).toBeInTheDocument();
   });
 
   it("QA-CC-53: the no-budget recovery action POSTs /budget and renders the refreshed month", async () => {
@@ -143,7 +161,9 @@ describe("qa-budget-flow", () => {
         method: "GET",
         path: `/months/${MONTH}`,
         status: 404,
-        json: { error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" } },
+        json: {
+          error: { code: "NOT_FOUND", message: "No budget yet.", requestId: "r1" },
+        },
       },
       { method: "POST", path: "/budget", status: 201, json: kitBudget() },
       ...monthEntries(),

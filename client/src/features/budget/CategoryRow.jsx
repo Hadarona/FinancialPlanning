@@ -1,3 +1,4 @@
+import { t } from "../../lib/locale.js";
 import { TriangleAlert } from "lucide-react";
 import { ProgressBar } from "../../components/ui/ProgressBar.jsx";
 import { categoryIcon } from "../../lib/icons.js";
@@ -34,7 +35,7 @@ export function categoryProgressText(category) {
  * siblings, never nested). The visuals stay identical; hover and
  * :focus-visible states signal the interactive treatments (D-DES-013).
  */
-export function CategoryRow({ category, onEdit, onAddExpense }) {
+export function CategoryRow({ category, onEdit, onAddExpense, readOnly = false }) {
   const Icon = categoryIcon(category.icon);
   const isOverspent = category.state === "overspent";
   const isUnplanned = category.state === "unplanned";
@@ -47,6 +48,7 @@ export function CategoryRow({ category, onEdit, onAddExpense }) {
           type="button"
           className={`category-row-icon category-row-icon-${category.color}`}
           aria-label={copy.budget.addExpenseForAria(category.name)}
+          disabled={readOnly || category.archived}
           onClick={() => onAddExpense(category)}
         >
           {Icon ? <Icon size={24} aria-hidden="true" /> : null}
@@ -55,28 +57,34 @@ export function CategoryRow({ category, onEdit, onAddExpense }) {
           type="button"
           className="category-row-edit"
           aria-label={`${progressText}, ${copy.budget.editPlanAria}`}
+          disabled={readOnly || category.id === "one-off"}
           onClick={() => onEdit(category)}
         >
           <span className="category-row-body" aria-hidden="true">
-          <span className="category-row-top">
-            <span className="category-row-name">{category.name}</span>
-            {isOverspent || isUnplanned ? (
-              <span className="category-row-flag">
-                <TriangleAlert size={14} />
-                {isOverspent ? copy.budget.overPlanLabel : copy.budget.unplannedLabel}
+            <span className="category-row-top">
+              <span className="category-row-name">{category.name}</span>
+              {isOverspent || isUnplanned ? (
+                <span className="category-row-flag">
+                  <TriangleAlert size={14} />
+                  {isOverspent ? copy.budget.overPlanLabel : copy.budget.unplannedLabel}
+                </span>
+              ) : null}
+              <span className="category-row-amount">
+                {formatMoney(category.plannedMinor)}
               </span>
-            ) : null}
-            <span className="category-row-amount">
-              {formatMoney(category.plannedMinor)}
+            </span>
+            <ProgressBar
+              percent={category.progressPercent}
+              color={category.color}
+              label={progressText}
+              decorative
+            />
+            <span className="category-row-detail">
+              {t("Spent", "הוצאות")}: ₪{formatMoney(category.actualMinor)} ·{" "}
+              {t("Remaining", "נותר")}: ₪
+              {formatMoney(category.plannedMinor - category.actualMinor)}
             </span>
           </span>
-          <ProgressBar
-            percent={category.progressPercent}
-            color={category.color}
-            label={progressText}
-            decorative
-          />
-        </span>
         </button>
       </div>
     </li>

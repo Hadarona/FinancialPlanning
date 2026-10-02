@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { DEFAULT_CATEGORY_IDS } from "../domain/categories.js";
 
 export const registerSchema = z
   .object({
@@ -14,7 +13,8 @@ export const registerSchema = z
 export const loginSchema = z
   .object({
     email: z.string().trim().toLowerCase().email("Enter a valid email address."),
-    password: z.string().min(1, "Enter your password."),
+    password: z.string().min(1, "Enter your password.").max(72),
+    rememberMe: z.boolean().optional(),
   })
   .strict();
 
@@ -29,13 +29,14 @@ export const monthParamsSchema = z.object({ month: monthSchema });
  * client — names/icons/colors/order are server constants (decision #7). */
 const plannedCategorySchema = z
   .object({
-    id: z.enum(DEFAULT_CATEGORY_IDS, {
-      errorMap: () => ({ message: "Unknown category." }),
-    }),
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,49}$/),
+    name: z.string().trim().min(1).max(60).optional(),
+    archived: z.boolean().optional(),
     plannedMinor: z
       .number({ invalid_type_error: "Enter a planned amount." })
       .int("Planned amounts must be whole cents.")
-      .min(0, "Planned amounts cannot be negative."),
+      .min(0, "Planned amounts cannot be negative.")
+      .max(100000000000),
   })
   .strict();
 
@@ -56,15 +57,18 @@ export const emptyBodySchema = z.object({}).strict().optional();
 /** Budget update body: income and/or a subset of category plans. */
 export const patchBudgetSchema = z
   .object({
+    effectiveMonth: monthSchema,
+    revision: z.number().int().nonnegative().optional(),
     incomeMinor: z
       .number({ invalid_type_error: "Enter your income." })
       .int("Income must be whole cents.")
       .min(0, "Income cannot be negative.")
+      .max(100000000000)
       .optional(),
     categories: z
       .array(plannedCategorySchema)
       .min(1, "Provide at least one category plan.")
-      .max(7, "There are only seven categories.")
+      .max(50, "Use at most 50 categories.")
       .superRefine(requireUniqueIds)
       .optional(),
   })
@@ -109,7 +113,8 @@ export const createTransactionSchema = z
     amountMinor: z
       .number({ invalid_type_error: "Enter an amount." })
       .int("Amount must be a whole number of cents.")
-      .positive("Amount must be greater than zero."),
+      .positive("Amount must be greater than zero.")
+      .max(100000000000),
     occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a date as YYYY-MM-DD."),
     note: z
       .string()

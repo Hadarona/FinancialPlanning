@@ -1,3 +1,5 @@
+import { SettingsPage } from "../features/settings/SettingsPage.jsx";
+import { ImportPage } from "../features/import/ImportPage.jsx";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage.jsx";
@@ -48,6 +50,8 @@ export const router = createBrowserRouter([
       // CR1-8: the create/edit form flow is superseded by in-place popups;
       // /budget/new and /budget/:month/edit fall through to the "*" route.
       { path: "/budget", element: <BudgetPage /> },
+      { path: "/settings", element: <SettingsPage /> },
+      { path: "/import", element: <ImportPage /> },
       {
         path: "/insights",
         element: (

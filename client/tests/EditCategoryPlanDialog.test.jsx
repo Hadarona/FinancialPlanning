@@ -92,6 +92,8 @@ describe("EditCategoryPlanDialog (CR1-6/CR1-10)", () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
     expect(apiClient.patch).toHaveBeenCalledWith("/budget", {
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
+      revision: undefined,
       categories: [{ id: "utilities", plannedMinor: 90000 }],
     });
     expect(onSaved.mock.calls[0][0].name).toBe("Utilities");

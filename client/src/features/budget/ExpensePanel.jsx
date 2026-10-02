@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { t } from "../../lib/locale.js";
 import { Trash2 } from "lucide-react";
 import { IconButton } from "../../components/ui/IconButton.jsx";
 import { Skeleton } from "../../components/ui/Skeleton.jsx";
@@ -12,8 +14,9 @@ import "./ExpensePanel.css";
  * Recent-expenses history for the loaded month (roadmap: add, list, delete).
  * Each delete button's accessible name identifies the exact transaction.
  */
-export function ExpensePanel({ month, categories, onDeleteRequest }) {
-  const transactionsQuery = useTransactionsQuery(month);
+export function ExpensePanel({ month, categories, onDeleteRequest, readOnly = false }) {
+  const [offset, setOffset] = useState(0);
+  const transactionsQuery = useTransactionsQuery(month, offset);
   const categoriesById = Object.fromEntries(
     categories.map((category) => [category.id, category]),
   );
@@ -73,7 +76,11 @@ export function ExpensePanel({ month, categories, onDeleteRequest }) {
               </span>
               <IconButton
                 icon={Trash2}
-                label={`Delete ${categoryName} ${formatMoney(transaction.amountMinor)} on ${shortDateLabel(transaction.occurredOn)}`}
+                disabled={readOnly}
+                label={t(
+                  `Delete ${categoryName} ${formatMoney(transaction.amountMinor)} on ${shortDateLabel(transaction.occurredOn)}`,
+                  `מחיקת ${categoryName} ${formatMoney(transaction.amountMinor)} בתאריך ${shortDateLabel(transaction.occurredOn)}`,
+                )}
                 onClick={() => onDeleteRequest(transaction)}
               />
             </li>
@@ -87,6 +94,32 @@ export function ExpensePanel({ month, categories, onDeleteRequest }) {
     <section className="expense-panel" aria-label={copy.expense.historyTitle}>
       <h2 className="expense-panel-title">{copy.expense.historyTitle}</h2>
       {renderBody()}
+      {(offset > 0 || transactionsQuery.data?.total > 50) && (
+        <nav
+          aria-label={t("Expense pages", "עמודי הוצאות")}
+          className="expense-pagination"
+        >
+          <button
+            disabled={offset === 0}
+            onClick={() => setOffset(Math.max(0, offset - 50))}
+          >
+            {t("Previous", "הקודם")}
+          </button>
+          <span>
+            {Math.floor(offset / 50) + 1} /{" "}
+            {Math.max(1, Math.ceil((transactionsQuery.data?.total ?? offset + 1) / 50))}
+          </span>
+          <button
+            disabled={
+              transactionsQuery.isLoading ||
+              offset + 50 >= (transactionsQuery.data?.total ?? 0)
+            }
+            onClick={() => setOffset(offset + 50)}
+          >
+            {t("Next", "הבא")}
+          </button>
+        </nav>
+      )}
     </section>
   );
 }

@@ -52,9 +52,9 @@ export function createAuthService({
     return { id: user.id, email: user.email };
   }
 
-  function signSession(user) {
+  function signSession(user, rememberMe = false) {
     return jwt.sign({ sub: user.id, email: user.email }, config.jwtSecret, {
-      expiresIn: SESSION_TTL,
+      expiresIn: rememberMe ? "90d" : SESSION_TTL,
     });
   }
 

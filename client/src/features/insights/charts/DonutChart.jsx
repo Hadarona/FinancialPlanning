@@ -46,7 +46,9 @@ export function DonutChart({ categories, totalMinor, monthsLabel }) {
   const strokeWidth = size * 0.24;
   const circumference = 2 * Math.PI * radius;
 
-  const segments = donutSegments(categories.map((category) => category.combinedMinor));
+  const segments = donutSegments(
+    categories.map((category) => Math.max(0, category.combinedMinor)),
+  );
   const hasData = segments.length > 0;
 
   const caption = hasData
@@ -82,7 +84,7 @@ export function DonutChart({ categories, totalMinor, monthsLabel }) {
             const length = segment.fraction * circumference;
             // Shorten each visible segment by the gap unless it is alone.
             const gap = segments.length > 1 ? SEGMENT_GAP : 0;
-            const text = `${category.label} — ${monthsLabel}: ${formatMoney(category.combinedMinor)} USD (${category.sharePercent}%)`;
+            const text = `${category.label} — ${monthsLabel}: ${formatMoney(category.combinedMinor)} ILS (${category.sharePercent}%)`;
             return (
               <circle
                 key={category.id}
@@ -107,12 +109,14 @@ export function DonutChart({ categories, totalMinor, monthsLabel }) {
 
         <Legend
           className="chart-legend-vertical"
-          items={categories.map((category) => ({
-            label: category.label,
-            detail: `${category.sharePercent}%`,
-            color: categoryChartColor(category),
-            marker: "dot",
-          }))}
+          items={categories
+            .filter((category) => category.combinedMinor > 0)
+            .map((category) => ({
+              label: category.label,
+              detail: `${category.sharePercent}%`,
+              color: categoryChartColor(category),
+              marker: "dot",
+            }))}
         />
       </div>
 

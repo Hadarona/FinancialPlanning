@@ -34,4 +34,11 @@ async function shutdown(signal) {
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
+// Local supervisors on Windows cannot deliver POSIX SIGTERM. IPC is only
+// available to the parent process that explicitly launched this server with it.
+if (process.connected)
+  process.on("message", (message) => {
+    if (message === "shutdown") shutdown("IPC");
+  });
+
 export { server };

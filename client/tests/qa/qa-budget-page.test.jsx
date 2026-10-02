@@ -86,8 +86,12 @@ describe("qa-budget-page", () => {
 
     await screen.findByText("12,500");
     // The row edit button carries the complete accessible progress sentence.
-    expect(screen.getByRole("button", { name: /63%, edit planned amount/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /32%, edit planned amount/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /63%, edit planned amount/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /32%, edit planned amount/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("QA-CC-23: overspent and unplanned rows are flagged as text, not color alone", async () => {
@@ -104,7 +108,9 @@ describe("qa-budget-page", () => {
     renderApp({ initialPath: "/budget" });
     await screen.findByText("12,500");
     expect(screen.getByText("over plan")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /133%, over plan, edit planned amount/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /133%, over plan, edit planned amount/ }),
+    ).toBeInTheDocument();
   });
 
   it("QA-CC-23b: an unplanned category is flagged as text", async () => {

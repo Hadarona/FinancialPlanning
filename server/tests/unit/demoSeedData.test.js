@@ -78,9 +78,9 @@ describe("demo seed expense data (D-DES-012)", () => {
     }
   });
 
-  it("uses only ids from the fixed seven-category set", () => {
+  it("uses only ids from the default category set", () => {
     const validIds = new Set(DEFAULT_CATEGORY_IDS);
-    expect(validIds.size).toBe(7);
+    expect(validIds.size).toBe(8);
     for (const expense of [...CURRENT_MONTH_EXPENSES, ...PREVIOUS_MONTH_EXPENSES]) {
       expect(validIds.has(expense.categoryId)).toBe(true);
     }

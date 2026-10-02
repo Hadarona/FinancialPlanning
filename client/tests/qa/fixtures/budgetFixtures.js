@@ -10,7 +10,12 @@ const BASE_CATEGORY_META = {
   transport: { name: "Transport", icon: "CarFront", color: "yellow", displayOrder: 3 },
   fun: { name: "Fun", icon: "PartyPopper", color: "coral", displayOrder: 4 },
   savings: { name: "Savings", icon: "PiggyBank", color: "blue", displayOrder: 5 },
-  subscriptions: { name: "Subscriptions", icon: "Repeat", color: "coral", displayOrder: 6 },
+  subscriptions: {
+    name: "Subscriptions",
+    icon: "Repeat",
+    color: "coral",
+    displayOrder: 6,
+  },
   utilities: { name: "Utilities", icon: "Plug", color: "green", displayOrder: 7 },
 };
 

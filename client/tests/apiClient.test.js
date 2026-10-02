@@ -40,7 +40,7 @@ describe("apiClient (fetch wrapper)", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/v1/months/2026-07");
     expect(init.credentials).toBe("include");
-    expect(init.headers).toBeUndefined();
+    expect(init.headers).toEqual({});
     expect(init.body).toBeUndefined();
   });
 

@@ -1,10 +1,11 @@
+import { t } from "../../lib/locale.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { EllipsisVertical } from "lucide-react";
 import { IconButton } from "./IconButton.jsx";
 import "./Menu.css";
 
 /** A minimal popover menu. `items` is `[{ label, onSelect?, disabled? }]`. */
-export function Menu({ items, triggerLabel = "More options" }) {
+export function Menu({ items, triggerLabel = t("More options", "אפשרויות נוספות") }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const containerRef = useRef(null);

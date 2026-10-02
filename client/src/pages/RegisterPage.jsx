@@ -1,3 +1,6 @@
+import { t } from "../lib/locale.js";
+import { LanguageSwitch } from "../components/ui/LanguageSwitch.jsx";
+import "../styles/workspace.css";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail } from "lucide-react";
@@ -16,14 +19,17 @@ const MIN_PASSWORD_LENGTH = 8;
 function validate({ email, password }) {
   const errors = {};
   if (!email.trim()) {
-    errors.email = "Enter your email.";
+    errors.email = t("Enter your email.", "יש להזין כתובת אימייל.");
   } else if (!EMAIL_PATTERN.test(email.trim())) {
-    errors.email = "Enter a valid email address.";
+    errors.email = t("Enter a valid email address.", "יש להזין כתובת אימייל תקינה.");
   }
   if (!password) {
-    errors.password = "Enter a password.";
+    errors.password = t("Enter a password.", "יש להזין סיסמה.");
   } else if (password.length < MIN_PASSWORD_LENGTH) {
-    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    errors.password = t(
+      `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+      `הסיסמה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים.`,
+    );
   }
   return errors;
 }
@@ -65,6 +71,7 @@ export function RegisterPage() {
   return (
     <main className="auth-page">
       <div className="auth-card">
+        <LanguageSwitch />
         <img src="/logo.svg" alt="" width={80} height={80} className="auth-logo" />
         <h1 className="auth-title">{copy.register.title}</h1>
         <form className="auth-form" onSubmit={handleSubmit} noValidate>

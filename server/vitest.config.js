@@ -2,10 +2,12 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    maxWorkers: 2,
+    testTimeout: 15000,
     environment: "node",
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary"],
       exclude: [
         "src/db/migrations/**",
         "src/db/migrate.js",
@@ -16,10 +18,10 @@ export default defineConfig({
         "vitest.config.js",
       ],
       thresholds: {
-        lines: 70,
-        statements: 70,
-        functions: 70,
-        branches: 60,
+        lines: 80,
+        statements: 80,
+        functions: 80,
+        branches: 80,
       },
     },
   },

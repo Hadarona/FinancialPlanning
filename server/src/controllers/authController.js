@@ -4,12 +4,12 @@ import { SESSION_COOKIE_NAME } from "../middleware/auth.js";
 const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export function createAuthController({ authService, config }) {
-  function setSessionCookie(res, token) {
+  function setSessionCookie(res, token, rememberMe = false) {
     res.cookie(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: config.isProduction,
-      maxAge: SESSION_MAX_AGE_MS,
+      secure: config.cookieSecure ?? config.isProduction,
+      maxAge: rememberMe ? 90 * SESSION_MAX_AGE_MS : SESSION_MAX_AGE_MS,
       path: "/",
     });
   }
@@ -18,8 +18,8 @@ export function createAuthController({ authService, config }) {
     async register(req, res, next) {
       try {
         const user = await authService.register(req.body);
-        const token = authService.signSession(user);
-        setSessionCookie(res, token);
+        const token = authService.signSession(user, req.body.rememberMe === true);
+        setSessionCookie(res, token, req.body.rememberMe === true);
         res.status(201).json({ user });
       } catch (err) {
         next(err);
@@ -29,8 +29,8 @@ export function createAuthController({ authService, config }) {
     async login(req, res, next) {
       try {
         const user = await authService.login(req.body);
-        const token = authService.signSession(user);
-        setSessionCookie(res, token);
+        const token = authService.signSession(user, req.body.rememberMe === true);
+        setSessionCookie(res, token, req.body.rememberMe === true);
         res.status(200).json({ user });
       } catch (err) {
         next(err);

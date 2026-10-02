@@ -68,7 +68,7 @@ describe("auth journey", () => {
     const { budget } = await budgetRes.json();
     expect(budget.incomeMinor).toBe(1250000);
     expect(budget.plannedMinor).toBe(1200000);
-    expect(budget.categories).toHaveLength(7);
+    expect(budget.categories).toHaveLength(8);
   }, 30000);
 
   it("rejects a duplicate registration with 409 and does not create a second user", async () => {

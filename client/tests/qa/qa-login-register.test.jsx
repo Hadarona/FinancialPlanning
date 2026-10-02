@@ -50,6 +50,7 @@ describe("qa-login-register", () => {
     expect(loginCalls).toHaveLength(1);
     expect(loginCalls[0].body).toEqual({
       email: "qa-user@example.com",
+      rememberMe: true,
       password: "supersecret1",
     });
   });

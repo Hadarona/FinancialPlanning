@@ -174,6 +174,7 @@ export function summarizeBudget(budgetRow, actualsByCategory = {}) {
         actualMinor,
       );
       return {
+        archived: category.archived ?? false,
         id: category.id,
         name: category.name,
         icon: category.icon,
@@ -193,6 +194,8 @@ export function summarizeBudget(budgetRow, actualsByCategory = {}) {
   const actualMinor = categories.reduce((sum, category) => sum + category.actualMinor, 0);
 
   return {
+    revision: budgetRow.revision,
+    effectiveMonth: budgetRow.effectiveMonth,
     id: budgetRow.id,
     currencyCode: budgetRow.currencyCode,
     incomeMinor: budgetRow.incomeMinor,
@@ -221,7 +224,8 @@ export function monthReadModel(budgetRow, month, actualsByCategory = {}) {
 export function budgetPlanModel(budgetRow) {
   const categories = [...budgetRow.categories]
     .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(({ id, name, icon, color, displayOrder, plannedMinor }) => ({
+    .map(({ id, name, icon, color, displayOrder, plannedMinor, archived }) => ({
+      archived: archived ?? false,
       id,
       name,
       icon,
@@ -234,6 +238,8 @@ export function budgetPlanModel(budgetRow) {
     0,
   );
   return {
+    revision: budgetRow.revision,
+    effectiveMonth: budgetRow.effectiveMonth,
     id: budgetRow.id,
     currencyCode: budgetRow.currencyCode,
     incomeMinor: budgetRow.incomeMinor,

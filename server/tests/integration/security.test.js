@@ -267,7 +267,7 @@ describe("security hardening (Stage H / D-SEC-*)", () => {
 
       const foreignPatch = await foreign.client.request("/budget", {
         method: "PATCH",
-        body: JSON.stringify({ incomeMinor: 999900 }),
+        body: JSON.stringify({ effectiveMonth: "2026-01", incomeMinor: 999900 }),
       });
       expect(foreignPatch.status).toBe(200);
 

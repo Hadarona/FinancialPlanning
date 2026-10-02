@@ -58,7 +58,11 @@ export function createPool(config) {
   const pool = new Pool({
     connectionString: config.databaseUrl,
     max: 5,
-    ssl: isLocalHost(config.databaseUrl) ? undefined : { rejectUnauthorized: false },
+    ssl:
+      isLocalHost(config.databaseUrl) ||
+      new URL(config.databaseUrl).searchParams.get("sslmode") === "disable"
+        ? undefined
+        : { rejectUnauthorized: true },
   });
 
   const beginTransaction =

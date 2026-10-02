@@ -58,7 +58,7 @@ describe("graceful shutdown", () => {
         // DATABASE_URL / JWT_SECRET come from the repo-root .env via
         // config.js; nothing here queries the database.
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe", "ipc"],
     });
     let stdout = "";
     child.stdout.on("data", (chunk) => {
@@ -76,7 +76,8 @@ describe("graceful shutdown", () => {
     try {
       await waitForHealth(port);
 
-      child.kill("SIGTERM");
+      if (process.platform === "win32") child.send("shutdown");
+      else child.kill("SIGTERM");
       const { code, signal } = await exited;
 
       // Clean exit, not a signal kill.

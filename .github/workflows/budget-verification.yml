@@ -1,0 +1,78 @@
+name: Budget Docker and Android verification
+on:
+  push:
+    branches: [main, feat/personal-budget-mobile]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: budget-verification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - name: Test application inside Docker with coverage gates
+        run: docker compose -p budget-tests -f compose.test.yaml up --build --abort-on-container-exit --exit-code-from tests
+      - name: Collect coverage reports
+        if: always()
+        run: |
+          docker compose -p budget-tests -f compose.test.yaml cp tests:/app/server/coverage ./server/coverage
+          docker compose -p budget-tests -f compose.test.yaml cp tests:/app/client/coverage ./client/coverage
+      - name: Start production Docker application
+        env:
+          POSTGRES_PASSWORD: isolated-browser-test-password
+          JWT_SECRET: isolated-ci-browser-signing-secret
+          APP_ORIGIN: http://127.0.0.1:4000
+          COOKIE_SECURE: "false"
+        run: docker compose up --build --wait
+      - run: npx playwright install --with-deps chromium
+      - name: Browser journeys against Docker
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-coverage-and-browser-reports
+          path: |
+            server/coverage/
+            client/coverage/
+            playwright-report/
+            test-results/
+      - name: Docker logs
+        if: failure()
+        run: docker compose -p budget-tests -f compose.test.yaml logs --no-color
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x android/gradlew
+      - name: Android unit tests, lint and installable APK
+        run: cd android && ./gradlew testDebugUnitTest lintDebug assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-apk-and-test-reports
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/reports/

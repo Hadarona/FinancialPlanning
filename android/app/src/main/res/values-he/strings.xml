@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">תקציב ביחד</string>
+    <string name="server">שרת</string>
+    <string name="connect_title">התקציב שלכם, ביחד</string>
+    <string name="connect_help">הזינו את הכתובת המאובטחת של שרת התקציב. צריך לעשות זאת פעם אחת בכל טלפון.</string>
+    <string name="server_hint">https://your-server.ts.net</string>
+    <string name="connect">התחברות</string>
+    <string name="invalid_url">יש להזין כתובת HTTPS ללא נתיב, סיסמה או פרמטרים.</string>
+    <string name="offline">לא ניתן להתחבר לתקציב. בדקו את החיבור ואת זמינות השרת.</string>
+    <string name="retry">ניסיון נוסף</string>
+    <string name="change_server">שינוי השרת יוציא אתכם מהחשבון בשרת הנוכחי.</string>
+</resources>

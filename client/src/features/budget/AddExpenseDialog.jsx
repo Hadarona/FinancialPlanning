@@ -1,3 +1,4 @@
+import { t } from "../../lib/locale.js";
 import { useEffect, useId, useRef, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Dialog } from "../../components/ui/Dialog.jsx";
@@ -23,21 +24,27 @@ function validateForm({ amount, categoryId, occurredOn, note, month }) {
   const errors = {};
   const amountMinor = parseMoneyToMinor(amount);
   if (amountMinor === null) {
-    errors.amount = "Enter a valid amount.";
+    errors.amount = t("Enter a valid amount.", "יש להזין סכום תקין.");
   } else if (amountMinor <= 0) {
-    errors.amount = "Amount must be greater than zero.";
+    errors.amount = t("Amount must be greater than zero.", "הסכום חייב להיות גדול מאפס.");
   }
   if (!categoryId) {
-    errors.categoryId = "Choose a category.";
+    errors.categoryId = t("Choose a category.", "יש לבחור קטגוריה.");
   }
   const { firstDay, lastDay } = monthRange(month);
   if (!occurredOn) {
-    errors.occurredOn = "Enter a date.";
+    errors.occurredOn = t("Enter a date.", "יש להזין תאריך.");
   } else if (occurredOn < firstDay || occurredOn > lastDay) {
-    errors.occurredOn = `Date must be within ${monthLabel(month)}.`;
+    errors.occurredOn = t(
+      `Date must be within ${monthLabel(month)}.`,
+      `התאריך חייב להיות בחודש ${monthLabel(month)}.`,
+    );
   }
   if (note.length > NOTE_MAX) {
-    errors.note = `Note must be at most ${NOTE_MAX} characters.`;
+    errors.note = t(
+      `Note must be at most ${NOTE_MAX} characters.`,
+      `ההערה יכולה להכיל עד ${NOTE_MAX} תווים.`,
+    );
   }
   return { errors, amountMinor };
 }

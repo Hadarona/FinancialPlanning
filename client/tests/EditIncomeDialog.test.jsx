@@ -103,7 +103,11 @@ describe("EditIncomeDialog (CR1-5/CR1-10)", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
-    expect(apiClient.patch).toHaveBeenCalledWith("/budget", { incomeMinor: 1300055 });
+    expect(apiClient.patch).toHaveBeenCalledWith("/budget", {
+      effectiveMonth: expect.stringMatching(/^\d{4}-\d{2}$/),
+      revision: undefined,
+      incomeMinor: 1300055,
+    });
   });
 
   it("rejects malformed and negative input client-side without calling the API", async () => {

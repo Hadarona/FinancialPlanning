@@ -1,3 +1,5 @@
+import { useBudgetRole } from "../../api/useBudgetRole.js";
+import { t, categoryName } from "../../lib/locale.js";
 import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -35,6 +37,7 @@ function BudgetSkeleton() {
 
 export function BudgetPage() {
   const { logout } = useAuth();
+  const readOnly = useBudgetRole() === "viewer";
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const requestedMonth = searchParams.get("month");
@@ -99,30 +102,41 @@ export function BudgetPage() {
       );
     }
 
-    const { budget } = monthQuery.data;
+    const budget = {
+      ...monthQuery.data.budget,
+      categories: monthQuery.data.budget.categories.map((c) => ({
+        ...c,
+        name: categoryName(c),
+      })),
+    };
     return (
       <>
         <SummaryMetrics
           incomeMinor={budget.incomeMinor}
           plannedMinor={budget.plannedMinor}
           availableMinor={budget.availableMinor}
+          readOnly={readOnly}
           onEditIncome={() => setEditIncomeOpen(true)}
         />
         <ul className="budget-category-list">
-          {budget.categories.map((category) => (
-            <CategoryRow
-              key={category.id}
-              category={category}
-              onEdit={(selected) => setEditCategory(selected)}
-              onAddExpense={(selected) => {
-                setAddPrefillCategoryId(selected.id);
-                setAddOpen(true);
-              }}
-            />
-          ))}
+          {budget.categories
+            .filter((c) => !c.archived || c.actualMinor !== 0)
+            .map((category) => (
+              <CategoryRow
+                key={category.id}
+                category={category}
+                readOnly={readOnly}
+                onEdit={(selected) => setEditCategory(selected)}
+                onAddExpense={(selected) => {
+                  setAddPrefillCategoryId(selected.id);
+                  setAddOpen(true);
+                }}
+              />
+            ))}
         </ul>
         <Button
           className="budget-add-expense"
+          disabled={readOnly}
           onClick={() => {
             setAddPrefillCategoryId("");
             setAddOpen(true);
@@ -132,6 +146,8 @@ export function BudgetPage() {
           {copy.budget.addExpenseLabel}
         </Button>
         <ExpensePanel
+          key={month}
+          readOnly={readOnly}
           month={month}
           categories={budget.categories}
           onDeleteRequest={(transaction) => setDeleteTarget(transaction)}
@@ -139,7 +155,7 @@ export function BudgetPage() {
         <AddExpenseDialog
           open={addOpen}
           month={month}
-          categories={budget.categories}
+          categories={budget.categories.filter((c) => !c.archived)}
           initialCategoryId={addPrefillCategoryId}
           onClose={() => setAddOpen(false)}
           onSuccess={() => {
@@ -162,6 +178,7 @@ export function BudgetPage() {
           }}
         />
         <EditIncomeDialog
+          month={month}
           open={editIncomeOpen}
           budget={budget}
           onClose={() => setEditIncomeOpen(false)}
@@ -171,6 +188,8 @@ export function BudgetPage() {
           }}
         />
         <EditCategoryPlanDialog
+          month={month}
+          revision={monthQuery.data?.budget.revision}
           open={editCategory !== null}
           category={editCategory}
           onClose={() => setEditCategory(null)}
@@ -196,6 +215,9 @@ export function BudgetPage() {
         ]}
       />
       <main className="budget-main">
+        <p className="budget-currency">
+          {t("All amounts in ILS ₪", "כל הסכומים בשקלים ₪")}
+        </p>
         <MonthNav
           month={month}
           onNavigate={(nextValue) => navigate(`/budget?month=${nextValue}`)}

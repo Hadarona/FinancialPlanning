@@ -1,3 +1,4 @@
+import { t } from "../../../lib/locale.js";
 import { useId, useRef, useState } from "react";
 import { formatMoney } from "../../../lib/money.js";
 import { axisScale, compactAxisLabel, barTopRoundedPath } from "./chartMath.js";
@@ -16,7 +17,7 @@ const MARGIN = { top: 12, right: 8, bottom: 28, left: 48 };
 const PLOT_HEIGHT = 200;
 // Rotated labels descend below the axis by sin(35°) × label width; the
 // longest category ("Subscriptions") needs ~48px beyond the base margin.
-const ROTATED_LABEL_EXTRA = 40;
+const ROTATED_LABEL_EXTRA = 70;
 const BAR_GAP = 2; // surface gap between the bars of a group
 const MIN_BAR_WIDTH = 6;
 const MAX_BAR_WIDTH = 24;
@@ -36,19 +37,39 @@ export function BarChart({ months, categories }) {
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const patternBaseId = useId();
-  const width = useMeasuredWidth(containerRef);
+  const measuredWidth = useMeasuredWidth(containerRef);
+  const width = Math.max(
+    measuredWidth,
+    categories.length * 48 + MARGIN.left + MARGIN.right,
+  );
 
   const seriesCount = months.length;
   const plotWidth = Math.max(120, width - MARGIN.left - MARGIN.right);
   const groupWidth = plotWidth / categories.length;
   // Compact alternative below ~56px per label: rotate the category labels
   // so full words stay legible at small widths (D-INS-D5).
-  const rotateLabels = groupWidth < 56;
+  const rotateLabels = groupWidth < 110;
   const height =
     MARGIN.top + PLOT_HEIGHT + MARGIN.bottom + (rotateLabels ? ROTATED_LABEL_EXTRA : 0);
 
   const allValues = categories.flatMap((category) => category.totalsMinor);
   const scale = axisScale(Math.max(0, ...allValues));
+  const minimum = Math.min(0, ...allValues);
+  const axisMinimum = minimum < 0 ? -axisScale(-minimum).max : 0;
+  const ticks =
+    axisMinimum < 0
+      ? [
+          ...axisScale(-axisMinimum)
+            .ticks.filter((v) => v > 0)
+            .map((v) => -v)
+            .reverse(),
+          ...scale.ticks,
+        ]
+      : scale.ticks;
+  const yFor = (value) =>
+    MARGIN.top +
+    PLOT_HEIGHT -
+    ((value - axisMinimum) / (scale.max - axisMinimum)) * PLOT_HEIGHT;
 
   // Bars are computed from the measured width: never below 6px; the group
   // keeps a little side padding when space allows.
@@ -67,8 +88,8 @@ export function BarChart({ months, categories }) {
       groupStart +
       (groupWidth - groupContentWidth) / 2 +
       slotIndex * (barWidth + BAR_GAP);
-    const barHeight = (value / scale.max) * PLOT_HEIGHT;
-    const yTop = MARGIN.top + PLOT_HEIGHT - barHeight;
+    const barHeight = Math.abs(yFor(value) - yFor(0));
+    const yTop = Math.min(yFor(value), yFor(0));
     return { x, yTop, barHeight };
   }
 
@@ -94,8 +115,17 @@ export function BarChart({ months, categories }) {
 
   return (
     <figure className="chart-figure" ref={figureRef}>
-      <div className="chart-plot" ref={containerRef}>
+      {width > measuredWidth && (
+        <p className="chart-note">
+          {t(
+            "Swipe or scroll sideways to see all categories.",
+            "החליקו או גללו הצידה כדי לראות את כל הקטגוריות.",
+          )}
+        </p>
+      )}
+      <div className="chart-plot chart-plot-scroll" ref={containerRef}>
         <svg
+          style={{ minWidth: width }}
           width={width}
           height={height}
           viewBox={`0 0 ${width} ${height}`}
@@ -131,8 +161,8 @@ export function BarChart({ months, categories }) {
             </pattern>
           </defs>
 
-          {scale.ticks.map((tick) => {
-            const y = MARGIN.top + PLOT_HEIGHT - (tick / scale.max) * PLOT_HEIGHT;
+          {ticks.map((tick) => {
+            const y = yFor(tick);
             return (
               <g key={tick}>
                 <line
@@ -162,7 +192,7 @@ export function BarChart({ months, categories }) {
                 {months.map((monthEntry, slotIndex) => {
                   const value = category.totalsMinor[slotIndex] ?? 0;
                   const geometry = barGeometry(value, slotIndex, groupIndex);
-                  const text = `${category.label} — ${monthEntry.yearLabel}: ${formatMoney(value)} USD`;
+                  const text = `${category.label} — ${monthEntry.yearLabel}: ${formatMoney(value)} ILS`;
                   return (
                     <path
                       key={monthEntry.month}
@@ -189,7 +219,10 @@ export function BarChart({ months, categories }) {
                   textAnchor={rotateLabels ? "end" : "middle"}
                   transform={rotateLabels ? `rotate(-35 ${labelX} ${labelY})` : undefined}
                 >
-                  {category.label}
+                  {category.label.length > 18
+                    ? category.label.slice(0, 17) + "…"
+                    : category.label}
+                  <title>{category.label}</title>
                 </text>
               </g>
             );

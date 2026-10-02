@@ -3,7 +3,7 @@ export function createInsightsController({ insightsService }) {
     async getInsights(req, res, next) {
       try {
         const insights = await insightsService.getInsights(
-          req.user.id,
+          req.budgetOwnerId ?? req.user.id,
           req.validatedQuery.months,
         );
         res.status(200).json(insights);

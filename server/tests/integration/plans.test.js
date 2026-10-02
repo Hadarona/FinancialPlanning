@@ -96,6 +96,7 @@ describe("single-budget lifecycle (CR-001)", () => {
       const patchRes = await client.request("/budget", {
         method: "PATCH",
         body: JSON.stringify({
+          effectiveMonth: "2026-01",
           incomeMinor: 1300000,
           categories: [{ id: "fun", plannedMinor: 120000 }],
         }),
@@ -107,7 +108,7 @@ describe("single-budget lifecycle (CR-001)", () => {
       expect(budget.plannedMinor).toBe(1230000);
       expect(budget.availableMinor).toBe(70000);
       // Untouched categories keep their plans; the set never shrinks.
-      expect(budget.categories).toHaveLength(7);
+      expect(budget.categories).toHaveLength(8);
       expect(budget.categories.find((c) => c.id === "housing").plannedMinor).toBe(400000);
       expect(budget.categories.find((c) => c.id === "utilities").plannedMinor).toBe(
         120000,
@@ -135,12 +136,16 @@ describe("single-budget lifecycle (CR-001)", () => {
       ];
       const res = await client.request("/budget", {
         method: "PATCH",
-        body: JSON.stringify({ categories: seven }),
+        body: JSON.stringify({ effectiveMonth: "2026-01", categories: seven }),
       });
       expect(res.status).toBe(200);
       const { budget } = await res.json();
       expect(budget.plannedMinor).toBe(700000);
-      expect(budget.categories.every((c) => c.plannedMinor === 100000)).toBe(true);
+      expect(
+        budget.categories
+          .filter((c) => c.id !== "one-off")
+          .every((c) => c.plannedMinor === 100000),
+      ).toBe(true);
     },
     SLOW_TEST_TIMEOUT,
   );
@@ -152,18 +157,24 @@ describe("single-budget lifecycle (CR-001)", () => {
       const [first, second] = await Promise.all([
         client.request("/budget", {
           method: "PATCH",
-          body: JSON.stringify({ categories: [{ id: "housing", plannedMinor: 111100 }] }),
+          body: JSON.stringify({
+            effectiveMonth: "2026-01",
+            categories: [{ id: "housing", plannedMinor: 111100 }],
+          }),
         }),
         client.request("/budget", {
           method: "PATCH",
-          body: JSON.stringify({ categories: [{ id: "savings", plannedMinor: 222200 }] }),
+          body: JSON.stringify({
+            effectiveMonth: "2026-01",
+            categories: [{ id: "savings", plannedMinor: 222200 }],
+          }),
         }),
       ]);
       expect(first.status).toBe(200);
       expect(second.status).toBe(200);
 
       const stored = await pool.query(
-        "SELECT categories FROM budgets WHERE user_id = $1",
+        "SELECT v.categories FROM budgets b JOIN budget_versions v ON v.budget_id=b.id WHERE b.user_id = $1 ORDER BY v.effective_month DESC LIMIT 1",
         [userId],
       );
       const categories = stored.rows[0].categories;
@@ -171,7 +182,7 @@ describe("single-budget lifecycle (CR-001)", () => {
       // patched value is one of the two submitted outcomes (last write wins
       // per full-row update, but the row can never interleave into an
       // invalid shape).
-      expect(categories).toHaveLength(7);
+      expect(categories).toHaveLength(8);
       const byId = Object.fromEntries(categories.map((c) => [c.id, c.plannedMinor]));
       expect([111100, 400000]).toContain(byId.housing);
       expect([222200, 300000]).toContain(byId.savings);
@@ -250,7 +261,7 @@ describe("single-budget lifecycle (CR-001)", () => {
       // touches only B's budget.
       const patchB = await userB.client.request("/budget", {
         method: "PATCH",
-        body: JSON.stringify({ incomeMinor: 1 }),
+        body: JSON.stringify({ effectiveMonth: "2026-01", incomeMinor: 1 }),
       });
       expect(patchB.status).toBe(200);
 
@@ -267,7 +278,7 @@ describe("single-budget lifecycle (CR-001)", () => {
       const { client } = await registerUser();
       const res = await client.request("/budget", {
         method: "PATCH",
-        body: JSON.stringify({ incomeMinor: 900000 }),
+        body: JSON.stringify({ effectiveMonth: "2026-01", incomeMinor: 900000 }),
       });
       expect(res.status).toBe(200);
       const { budget } = await res.json();

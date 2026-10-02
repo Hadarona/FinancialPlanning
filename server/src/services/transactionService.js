@@ -13,8 +13,8 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * membership is a pure date-range comparison on occurred_on (decision #6).
  */
 export function createTransactionService({ budgetRepo, transactionRepo }) {
-  async function resolveBudget(userId) {
-    const budget = await budgetRepo.findByUser(userId);
+  async function resolveBudget(userId, month) {
+    const budget = await budgetRepo.findByUser(userId, month);
     if (!budget) {
       // Defensive "expenses but no budget" anomaly path (see budgetService).
       throw new AppError("NOT_FOUND", "No budget yet.");
@@ -23,11 +23,11 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
   }
 
   async function createTransaction(userId, month, payload) {
-    const budget = await resolveBudget(userId);
+    const budget = await resolveBudget(userId, month);
 
     // Category must exist inside the fixed category set (now seven).
     const category = budget.categories.find((entry) => entry.id === payload.categoryId);
-    if (!category) {
+    if (!category || category.archived) {
       throw new AppError("VALIDATION_ERROR", "Please check the highlighted fields.", {
         fieldErrors: { categoryId: "Choose a valid category." },
       });
@@ -54,7 +54,7 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
   }
 
   async function deleteTransaction(userId, month, transactionId) {
-    await resolveBudget(userId);
+    await resolveBudget(userId, month);
     const { firstDay, lastDay } = monthRange(month);
     const deleted = UUID_PATTERN.test(transactionId)
       ? await transactionRepo.deleteByIdAndUser({
@@ -70,7 +70,7 @@ export function createTransactionService({ budgetRepo, transactionRepo }) {
   }
 
   async function listTransactions(userId, month, { limit, offset }) {
-    await resolveBudget(userId);
+    await resolveBudget(userId, month);
     const { firstDay, lastDay } = monthRange(month);
     const [transactions, total] = await Promise.all([
       transactionRepo.listByRange({ userId, firstDay, lastDay, limit, offset }),

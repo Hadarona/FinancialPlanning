@@ -1,3 +1,5 @@
+import { language } from "./locale.js";
+import { hebrewCopy } from "./copy-he.js";
 // Copy strings mirrored verbatim from docs/design/figma-kit/data/content.json.
 // The kit does not define a dedicated "register" section; those strings are a
 // minimal, voice-consistent extension (noted as a deviation in the build
@@ -118,3 +120,5 @@ export const copy = {
     network: "You appear to be offline. Check your connection and try again.",
   },
 };
+
+if (language === "he") Object.assign(copy, hebrewCopy);

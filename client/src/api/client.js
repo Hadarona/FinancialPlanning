@@ -1,6 +1,11 @@
+import { t, language } from "../lib/locale.js";
 // Same-origin by default (`VITE_API_BASE` empty) so the Express-served
 // production build never needs a hard-coded machine URL; in dev, Vite's
 // proxy forwards /api to the server (see vite.config.js).
+export const getSelectedBudget = () => sessionStorage.getItem("selected-budget") || "";
+export const setSelectedBudget = (id) => sessionStorage.setItem("selected-budget", id);
+const budgetHeaders = () =>
+  getSelectedBudget() ? { "X-Budget-Id": getSelectedBudget() } : {};
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 // Requests whose own 401 means "not signed in yet" rather than "your
@@ -10,11 +15,18 @@ const AUTH_BOOTSTRAP_PATHS = new Set(["/auth/me", "/auth/login", "/auth/register
 
 export class ApiError extends Error {
   constructor({ code, status, message, fieldErrors, requestId }) {
-    super(message);
+    super(localizeError(message, code));
     this.name = "ApiError";
     this.code = code;
     this.status = status;
-    this.fieldErrors = fieldErrors;
+    this.fieldErrors =
+      fieldErrors &&
+      Object.fromEntries(
+        Object.entries(fieldErrors).map(([field, value]) => [
+          field,
+          localizeError(value, "VALIDATION_ERROR"),
+        ]),
+      );
     this.requestId = requestId;
   }
 }
@@ -35,7 +47,10 @@ async function request(path, { method = "GET", body, signal } = {}) {
   const response = await fetch(`${API_BASE}/api/v1${path}`, {
     method,
     credentials: "include",
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers: {
+      ...budgetHeaders(),
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     signal,
   });
@@ -82,4 +97,61 @@ export function describeAuthError(err, { conflictField } = {}) {
     return { fieldErrors: { [conflictField]: err.message }, formError: "" };
   }
   return { fieldErrors: {}, formError: err.message };
+}
+
+export async function uploadWorkbook(file, dateBasis = "purchase") {
+  if (file.size > 5 * 1024 * 1024)
+    throw new Error(t("Choose a file smaller than 5 MB.", "יש לבחור קובץ קטן מ־5 MB."));
+  const response = await fetch(
+    `${API_BASE}/api/v1/imports/preview?dateBasis=${dateBasis}`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        ...budgetHeaders(),
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+      body: file,
+    },
+  );
+  const data = await parseJsonSafely(response);
+  if (!response.ok) {
+    if (response.status === 401) window.dispatchEvent(new CustomEvent("session-expired"));
+    throw new ApiError({
+      status: response.status,
+      code: data?.error?.code,
+      message: data?.error?.message ?? "Import failed. Try again.",
+    });
+  }
+  return data;
+}
+
+function localizeError(message, code) {
+  if (language !== "he") return message;
+  const messages = {
+    "Incorrect email or password.": "האימייל או הסיסמה שגויים.",
+    "An account with that email already exists.": "כבר קיים חשבון עם כתובת האימייל הזאת.",
+    "The budget changed. Refresh before saving.":
+      "התקציב השתנה. רעננו את התכנית לפני השמירה.",
+    "This budget is read-only.": "יש לכם הרשאת צפייה בלבד בתקציב הזה.",
+    "Preview expired. Choose the file again.":
+      "התצוגה המקדימה פגה. יש לבחור שוב את הקובץ.",
+    "No supported transaction sheet found. Expected Date, Merchant and Amount columns.":
+      "לא נמצא גיליון עסקאות נתמך. נדרשות עמודות תאריך עסקה, בית עסק וסכום חיוב.",
+    "This is not a valid XLSX workbook.": "זה אינו קובץ אקסל תקין מסוג XLSX.",
+    "Choose an XLSX file up to 5 MB.": "יש לבחור קובץ XLSX בגודל עד 5 MB.",
+  };
+  return (
+    messages[message] ??
+    {
+      UNAUTHENTICATED: "יש להתחבר מחדש.",
+      FORBIDDEN: "אין הרשאה לפעולה הזאת.",
+      NOT_FOUND: "הפריט אינו זמין או שאין לכם גישה אליו.",
+      CONFLICT: "הנתונים השתנו. רעננו ונסו שוב.",
+      VALIDATION_ERROR: "בדקו שהפרטים שהזנתם תקינים.",
+      RATE_LIMITED: "בוצעו יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.",
+    }[code] ??
+    "משהו השתבש. נסו שוב."
+  );
 }

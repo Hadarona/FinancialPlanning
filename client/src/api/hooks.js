@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./client.js";
+import { apiClient, setSelectedBudget } from "./client.js";
 
 const AUTH_ME_KEY = ["auth", "me"];
 
@@ -83,10 +83,13 @@ export function useInsightsQuery(months) {
   });
 }
 
-export function useTransactionsQuery(month) {
+export function useTransactionsQuery(month, offset = 0) {
   return useQuery({
-    queryKey: ["transactions", month],
-    queryFn: () => apiClient.get(`/months/${month}/transactions`),
+    queryKey: offset ? ["transactions", month, offset] : ["transactions", month],
+    queryFn: () =>
+      apiClient.get(
+        `/months/${month}/transactions${offset ? `?offset=${offset}&limit=50` : ""}`,
+      ),
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -124,6 +127,7 @@ export function useLogoutMutation() {
     onSuccess: () => {
       // Clear every cached query, not just auth/me: no private data from the
       // previous session should survive into the logged-out state.
+      setSelectedBudget("");
       queryClient.clear();
     },
   });

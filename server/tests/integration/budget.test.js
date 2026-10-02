@@ -31,6 +31,7 @@ const SEVEN_IDS = [
   "savings",
   "subscriptions",
   "utilities",
+  "one-off",
 ];
 
 describe("single recurring budget (CR-001): /budget and /months/:month", () => {
@@ -64,7 +65,7 @@ describe("single recurring budget (CR-001): /budget and /months/:month", () => {
     expect(res.status).toBe(200);
     const { budget } = await res.json();
 
-    expect(budget.currencyCode).toBe("USD");
+    expect(budget.currencyCode).toBe("ILS");
     expect(budget.incomeMinor).toBe(1250000);
     expect(budget.plannedMinor).toBe(1200000);
     expect(budget.availableMinor).toBe(50000);
@@ -177,7 +178,10 @@ describe("single recurring budget (CR-001): /budget and /months/:month", () => {
     const { client, userId } = await registerUser(ctx.baseUrl);
     const patch = await client.request("/budget", {
       method: "PATCH",
-      body: JSON.stringify({ categories: [{ id: "fun", plannedMinor: 0 }] }),
+      body: JSON.stringify({
+        effectiveMonth: "2026-01",
+        categories: [{ id: "fun", plannedMinor: 0 }],
+      }),
     });
     expect(patch.status).toBe(200);
     await insertTransaction({

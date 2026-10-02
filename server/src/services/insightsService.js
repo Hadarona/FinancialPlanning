@@ -22,13 +22,14 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
    * (per category, per day) cross-check each other in `assertCoherent`. */
   async function aggregateMonth(userId, month) {
     const range = monthRange(month);
-    const [byCategory, byDay] = await Promise.all([
+    const [byCategory, byDay, budget] = await Promise.all([
       transactionRepo.sumByCategory(userId, range),
       transactionRepo.sumByDay(userId, range),
+      budgetRepo.findByUser(userId, month),
     ]);
     const sampleDates = cashFlowSampleDates(month);
     const cumulative = cumulativeAtDates(sampleDates, byDay);
-    return { month, byCategory, cumulative, sampleDates };
+    return { month, byCategory, cumulative, sampleDates, budget };
   }
 
   /** The per-category sum and the last cumulative point come from
@@ -73,9 +74,11 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
       assertCoherent(aggregate.month, aggregate.byCategory, aggregate.cumulative),
     );
 
-    const orderedCategories = [...budgetRow.categories].sort(
-      (a, b) => a.displayOrder - b.displayOrder,
-    );
+    const orderedCategories = [
+      ...new Map(
+        aggregates.flatMap((a) => a.budget.categories).map((c) => [c.id, c]),
+      ).values(),
+    ].sort((a, b) => a.displayOrder - b.displayOrder);
     // Combined spending per category across the selection drives the donut
     // (largest-remainder shares of the combined totals, decision #10).
     const combinedByCategory = orderedCategories.map((category) =>
@@ -84,7 +87,11 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
         0,
       ),
     );
-    const shares = largestRemainderShares(combinedByCategory);
+    // A pie cannot represent negative slices. Net spending stays signed in
+    // totals and comparison charts; shares describe positive net categories.
+    const shares = largestRemainderShares(
+      combinedByCategory.map((value) => Math.max(0, value)),
+    );
 
     const categories = orderedCategories.map((category, index) => ({
       id: category.id,
@@ -102,6 +109,12 @@ export function createInsightsService({ budgetRepo, transactionRepo }) {
           month: aggregate.month,
           label: monthName(aggregate.month),
           yearLabel: `${monthName(aggregate.month)} ${aggregate.month.slice(0, 4)}`,
+          incomeMinor: aggregate.budget.incomeMinor,
+          plannedMinor: aggregate.budget.categories.reduce(
+            (sum, c) => sum + c.plannedMinor,
+            0,
+          ),
+          remainingMinor: aggregate.budget.incomeMinor - totals[index],
           totalMinor: totals[index],
           cashFlow: {
             labels: aggregate.sampleDates.map(shortDateLabel),

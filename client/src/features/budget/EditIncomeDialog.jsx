@@ -1,3 +1,5 @@
+import { t } from "../../lib/locale.js";
+import { currentMonth } from "../../lib/dates.js";
 import { useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Dialog } from "../../components/ui/Dialog.jsx";
@@ -12,10 +14,11 @@ import "./EditBudgetDialogs.css";
 /**
  * Click-to-edit income popup (CR1-5). One labelled money field prefilled
  * with the current income, a live preview of the recomputed Available
- * (income − planned; both stay computed-only, CR1-7), Cancel/Save. Reuses
+ * (income âˆ’ planned; both stay computed-only, CR1-7), Cancel/Save. Reuses
  * the proven Dialog focus contract (trap, Esc, initial focus, focus return).
  */
 export function EditIncomeDialog({ open, budget, onClose, onSaved }) {
+  const [effectiveMonth, setEffectiveMonth] = useState(budget?.month ?? currentMonth());
   const [amount, setAmount] = useState("");
   const [fieldError, setFieldError] = useState("");
   const [formError, setFormError] = useState("");
@@ -24,6 +27,7 @@ export function EditIncomeDialog({ open, budget, onClose, onSaved }) {
   useEffect(() => {
     if (open && budget) {
       setAmount(minorToInputValue(budget.incomeMinor));
+      setEffectiveMonth(budget.month ?? currentMonth());
       setFieldError("");
       setFormError("");
     }
@@ -49,7 +53,11 @@ export function EditIncomeDialog({ open, budget, onClose, onSaved }) {
     setFieldError("");
     setFormError("");
     try {
-      await patchMutation.mutateAsync({ incomeMinor: parsedMinor });
+      await patchMutation.mutateAsync({
+        incomeMinor: parsedMinor,
+        effectiveMonth,
+        revision: budget.revision,
+      });
       onSaved();
     } catch (err) {
       if (err instanceof ApiError && err.fieldErrors) {
@@ -63,6 +71,15 @@ export function EditIncomeDialog({ open, budget, onClose, onSaved }) {
   return (
     <Dialog open={open} onClose={onClose} title={copy.budget.editIncomeTitle}>
       <form className="edit-budget-form" onSubmit={handleSubmit} noValidate>
+        <label>
+          {t("From this month onward", "מהחודש הזה והלאה")}
+          <input
+            type="month"
+            required
+            value={effectiveMonth}
+            onChange={(e) => setEffectiveMonth(e.target.value)}
+          />
+        </label>
         <TextInput
           label={copy.budget.incomeLabel}
           inputMode="decimal"
@@ -77,7 +94,7 @@ export function EditIncomeDialog({ open, budget, onClose, onSaved }) {
           {copy.budget.plannedLabel} {formatMoney(budget.plannedMinor)}
           {previewAvailable !== null ? (
             <>
-              {" · "}
+              {" Â· "}
               {copy.budget.availableLabel} {formatMoney(previewAvailable)}
             </>
           ) : null}
